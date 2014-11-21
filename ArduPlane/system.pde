@@ -7,7 +7,6 @@
 *****************************************************************************/
 
 #if CLI_ENABLED == ENABLED
-
 // Functions called from the top-level menu
 static int8_t   process_logs(uint8_t argc, const Menu::arg *argv);      // in Log.pde
 static int8_t   setup_mode(uint8_t argc, const Menu::arg *argv);        // in setup.pde
@@ -15,21 +14,19 @@ static int8_t   test_mode(uint8_t argc, const Menu::arg *argv);         // in te
 static int8_t   reboot_board(uint8_t argc, const Menu::arg *argv);
 
 // This is the help function
-// PSTR is an AVR macro to read strings from flash memory
-// printf_P is a version of print_f that reads from flash memory
 static int8_t   main_menu_help(uint8_t argc, const Menu::arg *argv)
 {
     cliSerial->printf_P(PSTR("Commands:\n"
-                         "  logs        log readback/setup mode\n"
-                         "  setup       setup mode\n"
-                         "  test        test mode\n"
-                         "  reboot      reboot to flight mode\n"
+                         "  logs\n"
+                         "  setup\n"
+                         "  test\n"
+                         "  reboot\n"
                          "\n"));
     return(0);
 }
 
 // Command/function table for the top-level menu.
-static const struct Menu::command main_menu_commands[] PROGMEM = {
+const struct Menu::command main_menu_commands[] PROGMEM = {
 //   command		function called
 //   =======        ===============
     {"logs",                process_logs},
@@ -51,15 +48,16 @@ static int8_t reboot_board(uint8_t argc, const Menu::arg *argv)
 // the user wants the CLI. It never exits
 static void run_cli(AP_HAL::UARTDriver *port)
 {
+    cliSerial = port;
+    Menu::set_port(port);
+    port->set_blocking_writes(true);
     // disable the failsafe code in the CLI
     hal.scheduler->register_timer_failsafe(NULL,1);
 
     // disable the mavlink delay callback
     hal.scheduler->register_delay_callback(NULL, 5);
 
-    cliSerial = port;
-    Menu::set_port(port);
-    port->set_blocking_writes(true);
+
 
     while (1) {
         main_menu.run();
@@ -70,22 +68,47 @@ static void run_cli(AP_HAL::UARTDriver *port)
 
 static void init_ardupilot()
 {
+    if (!hal.gpio->usb_connected()) {
+        // USB is not connected, this means UART0 may be a Xbee, with
+        // its darned bricking problem. We can't write to it for at
+        // least one second after powering up. Simplest solution for
+        // now is to delay for 1 second. Something more elegant may be
+        // added later
+        delay(1000);
+    }
+
     // Console serial port
     //
     // The console port buffers are defined to be sufficiently large to support
     // the MAVLink protocol efficiently
     //
-    hal.uartA->begin(SERIAL0_BAUD, 128, SERIAL_BUFSIZE);
+#if HIL_MODE != HIL_MODE_DISABLED
+    // we need more memory for HIL, as we get a much higher packet rate
+    hal.uartA->begin(SERIAL0_BAUD, 256, 256);
+#else
+    // use a bit less for non-HIL operation
+    hal.uartA->begin(SERIAL0_BAUD, 512, 128);
+#endif
 
     // GPS serial port.
     //
-    // standard gps running
+#if GPS_PROTOCOL != GPS_PROTOCOL_IMU
+    // standard gps running. Note that we need a 256 byte buffer for some
+    // GPS types (eg. UBLOX)
     hal.uartB->begin(38400, 256, 16);
+#endif
 
     cliSerial->printf_P(PSTR("\n\nInit " FIRMWARE_STRING
                          "\n\nFree RAM: %u\n"),
                         hal.util->available_memory());
 
+#if CONFIG_HAL_BOARD == HAL_BOARD_APM2
+    /*
+      run the timer a bit slower on APM2 to reduce the interrupt load
+      on the CPU
+     */
+    hal.scheduler->set_timer_speed(500);
+#endif
 
     //
     // Check the EEPROM format version before loading any parameters from EEPROM
@@ -97,6 +120,8 @@ static void init_ardupilot()
     // allow servo set on all channels except first 4
     ServoRelayEvents.set_channel_mask(0xFFF0);
 
+    relay.init();
+	
     set_control_channels();
 
     // reset the uartA baud rate after parameter load
@@ -184,7 +209,7 @@ static void init_ardupilot()
     init_rc_in();               // sets up rc channels from radio
     init_rc_out();              // sets up the timer libs
 
-    relay.init();
+
 
 #if FENCE_TRIGGERED_PIN > 0
     hal.gpio->pinMode(FENCE_TRIGGERED_PIN, OUTPUT);
