@@ -194,6 +194,8 @@ static void init_ardupilot()
 
     // identify ourselves correctly with the ground station
     mavlink_system.sysid = g.sysid_this_mav;
+    mavlink_system.type = MAV_TYPE_FIXED_WING;
+    mavlink_system.compid = 1;          //MAV_COMP_ID_IMU;   // We do not check for comp id
 
 #if LOGGING_ENABLED == ENABLED
     DataFlash.Init(log_structure, sizeof(log_structure)/sizeof(log_structure[0]));
@@ -228,6 +230,14 @@ static void init_ardupilot()
     // initialise airspeed sensor
     airspeed.init();
 
+    // give AHRS the airspeed sensor
+    ahrs.set_airspeed(&airspeed);
+
+	// Do GPS init
+	g_gps = &g_gps_driver;
+    // GPS Initialization
+    g_gps->init(hal.uartB, GPS::GPS_ENGINE_AIRBORNE_4G);
+
     if (g.compass_enabled==true) {
         if (!compass.init() || !compass.read()) {
             cliSerial->println_P(PSTR("Compass initialisation failed!"));
@@ -237,29 +247,12 @@ static void init_ardupilot()
         }
     }
 
-    // give AHRS the airspeed sensor
-    ahrs.set_airspeed(&airspeed);
-
-	// Do GPS init
-	g_gps = &g_gps_driver;
-    // GPS Initialization
-    g_gps->init(hal.uartB, GPS::GPS_ENGINE_AIRBORNE_4G);
-
-    //mavlink_system.sysid = MAV_SYSTEM_ID;				// Using g.sysid_this_mav
-    mavlink_system.compid = 1;          //MAV_COMP_ID_IMU;   // We do not check for comp id
-    mavlink_system.type = MAV_TYPE_FIXED_WING;
-
-
-
-
-
 #if FENCE_TRIGGERED_PIN > 0
     hal.gpio->pinMode(FENCE_TRIGGERED_PIN, OUTPUT);
     digitalWrite(FENCE_TRIGGERED_PIN, LOW);
 #endif
 
-
-
+#if CLI_ENABLED == ENABLED
     const prog_char_t *msg = PSTR("\nPress ENTER 3 times to start interactive setup\n");
     cliSerial->println_P(msg);
     if (gcs[1].initialised) {
@@ -268,15 +261,33 @@ static void init_ardupilot()
     if (num_gcs > 2 && gcs[2].initialised) {
         hal.uartD->println_P(msg);
     }
+#endif // CLI_ENABLED
 
-    startup_ground();
-    if (should_log(MASK_LOG_CMD))
-        Log_Write_Startup(TYPE_GROUNDSTART_MSG);
+#if HIL_MODE != HIL_MODE_DISABLED
+    while (!barometer.healthy) {
+        // the barometer becomes healthy when we get the first
+        // HIL_STATE message
+        gcs_send_text_P(SEVERITY_LOW, PSTR("Waiting for first HIL_STATE message"));
+        delay(1000);
+    }
+#endif
+
+#if HIL_MODE != HIL_MODE_ATTITUDE
+    // read Baro pressure at ground
+    //-----------------------------
+    init_barometer(true);
+#endif
 
     // initialise sonar
 #if CONFIG_SONAR == ENABLED
     init_sonar();
 #endif
+
+    startup_ground();
+    if (should_log(MASK_LOG_CMD))
+        Log_Write_Startup(TYPE_GROUNDSTART_MSG);
+
+
     // choose the nav controller
     set_nav_controller();
 
