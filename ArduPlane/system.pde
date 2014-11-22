@@ -125,16 +125,12 @@ static void init_ardupilot()
 
     relay.init();
 
-    bool enable_external_leds = true;
-
     // init EPM cargo gripper
 #if EPM_ENABLED == ENABLED
     epm.init();
-    enable_external_leds = !epm.enabled();
 #endif
 
     // initialise notify system
-    // disable external leds if epm is enabled because of pin conflict on the APM
     notify.init(false);
 
     // initialise battery monitor
