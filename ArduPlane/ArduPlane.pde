@@ -314,7 +314,7 @@ static AP_SpdHgtControl *SpdHgt_Controller = &TECS_controller;
 // a pin for reading the receiver RSSI voltage. 
 static AP_HAL::AnalogSource *rssi_analog_source;
 
-static AP_HAL::AnalogSource *vcc_pin;
+static AP_HAL::AnalogSource *board_vcc_analog_source;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Sonar

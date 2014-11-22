@@ -4,7 +4,7 @@
 static LowPassFilterInt32 altitude_filter;
 
 
-static void init_barometer(void)
+static void plane_init_barometer(void)
 {
     gcs_send_text_P(SEVERITY_LOW, PSTR("Calibrating barometer"));    
     barometer.calibrate();
@@ -103,3 +103,14 @@ static int32_t adjusted_altitude_cm(void)
     return current_loc.alt - (g.alt_offset*100);
 }
 
+static void init_compass()
+{
+    if (g.compass_enabled==true) {
+        if (!compass.init() || !compass.read()) {
+            cliSerial->println_P(PSTR("Compass initialisation failed!"));
+            g.compass_enabled = false;
+        } else {
+            ahrs.set_compass(&compass);
+        }
+    }
+}

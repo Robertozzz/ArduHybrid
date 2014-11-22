@@ -111,8 +111,11 @@ static void init_ardupilot()
 #endif
 
     //
-    // Check the EEPROM format version before loading any parameters from EEPROM
+    // Report firmware version code expect on console (check of actual EEPROM format version is done in load_parameters function)
     //
+    report_version();
+
+    // load parameters from EEPROM
     load_parameters();
 
     BoardConfig.init();
@@ -151,11 +154,8 @@ static void init_ardupilot()
             &sonar_mode_filter);
 #endif
 
-    rssi_analog_source = hal.analogin->channel(ANALOG_INPUT_NONE);
-    vcc_pin = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
-
-    // reset the uartA baud rate after parameter load
-    hal.uartA->begin(map_baudrate(g.serial0_baud, SERIAL0_BAUD));
+    rssi_analog_source      = hal.analogin->channel(g.rssi_pin);
+    board_vcc_analog_source = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
 
     // keep a record of how many resets have happened. This can be
     // used to detect in-flight resets
@@ -227,25 +227,19 @@ static void init_ardupilot()
  #endif // CONFIG_ADC
 #endif // HIL_MODE
 
-    // initialise airspeed sensor
-    airspeed.init();
-
-    // give AHRS the airspeed sensor
-    ahrs.set_airspeed(&airspeed);
-
 	// Do GPS init
 	g_gps = &g_gps_driver;
     // GPS Initialization
     g_gps->init(hal.uartB, GPS::GPS_ENGINE_AIRBORNE_4G);
 
-    if (g.compass_enabled==true) {
-        if (!compass.init() || !compass.read()) {
-            cliSerial->println_P(PSTR("Compass initialisation failed!"));
-            g.compass_enabled = false;
-        } else {
-            ahrs.set_compass(&compass);
-        }
-    }
+    if(g.compass_enabled)
+        init_compass();
+		
+    // initialise airspeed sensor
+    airspeed.init();
+
+    // give AHRS the airspeed sensor
+    ahrs.set_airspeed(&airspeed);
 
 #if FENCE_TRIGGERED_PIN > 0
     hal.gpio->pinMode(FENCE_TRIGGERED_PIN, OUTPUT);
@@ -275,7 +269,7 @@ static void init_ardupilot()
 #if HIL_MODE != HIL_MODE_ATTITUDE
     // read Baro pressure at ground
     //-----------------------------
-    init_barometer(true);
+    plane_init_barometer();
 #endif
 
     // initialise sonar
@@ -283,29 +277,30 @@ static void init_ardupilot()
     init_sonar();
 #endif
 
-    startup_ground();
+    
+    reset_control_switch();
     if (should_log(MASK_LOG_CMD))
         Log_Write_Startup(TYPE_GROUNDSTART_MSG);
 
 
     // choose the nav controller
     set_nav_controller();
-
+	
+    set_control_channels();
+	
+    startup_ground();
+	
     set_mode(MANUAL);
 
-    // set the correct flight mode
-    // ---------------------------
-    reset_control_switch();
+    cliSerial->print_P(PSTR("\nReady to FLY "));
 }
 
-//********************************************************************************
+//******************************************************************************
 //This function does all the calibrations, etc. that we need during a ground start
-//********************************************************************************
+//******************************************************************************
 static void startup_ground(void)
 {
-    set_mode(INITIALISING);
-
-    gcs_send_text_P(SEVERITY_LOW,PSTR("<startup_ground> GROUND START"));
+    gcs_send_text_P(SEVERITY_LOW,PSTR("GROUND START"));
 
 #if (GROUND_START_DELAY > 0)
     gcs_send_text_P(SEVERITY_LOW,PSTR("<startup_ground> With Delay"));
@@ -540,7 +535,7 @@ static void startup_INS_ground(bool do_accel_init)
 
     // read Baro pressure at ground
     //-----------------------------
-    init_barometer();
+    plane_init_barometer();
 
     if (airspeed.enabled()) {
         // initialize airspeed sensor
@@ -612,13 +607,12 @@ static void check_usb_mux(void)
 #endif
 }
 
-
 /*
  * Read Vcc vs 1.1v internal reference
  */
 uint16_t board_voltage(void)
 {
-    return vcc_pin->voltage_latest() * 1000;
+    return board_vcc_analog_source->voltage_latest() * 1000;
 }
 
 

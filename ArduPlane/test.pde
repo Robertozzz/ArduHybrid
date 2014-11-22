@@ -586,7 +586,7 @@ test_pressure(uint8_t argc, const Menu::arg *argv)
 
     home.alt        = 0;
     wp_distance = 0;
-    init_barometer();
+    plane_init_barometer();
 
     while(1) {
         delay(100);

@@ -280,25 +280,21 @@ static void init_ardupilot()
     // -------------------
     init_commands();
 
-    // initialise the flight mode and aux switch
-    // ---------------------------
+
     reset_control_switch();
     init_aux_switches();
-
-#if FRAME_CONFIG == HELI_FRAME
-    // trad heli specific initialisation
-    heli_init();
-#endif
-
-    startup_ground(true);
-
 #if LOGGING_ENABLED == ENABLED
     Log_Write_Startup();
 #endif
 
+
+
+    startup_ground(true);
+
+
+
     cliSerial->print_P(PSTR("\nReady to FLY "));
 }
-
 
 //******************************************************************************
 //This function does all the calibrations, etc. that we need during a ground start
@@ -564,7 +560,7 @@ static uint32_t map_baudrate(int8_t rate, uint32_t default_baud)
     case 111:  return 111100;
     case 115:  return 115200;
     }
-    //cliSerial->println_P(PSTR("Invalid baudrate"));
+    cliSerial->println_P(PSTR("Invalid baudrate"));
     return default_baud;
 }
 
@@ -599,9 +595,7 @@ uint16_t board_voltage(void)
     return board_vcc_analog_source->voltage_latest() * 1000;
 }
 
-//
-// print_flight_mode - prints flight mode to serial port.
-//
+
 static void
 print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
 {

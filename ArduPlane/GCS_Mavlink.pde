@@ -1224,7 +1224,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 packet.param2 == 1) {
                 startup_INS_ground(true);
             } else if (packet.param3 == 1) {
-                init_barometer();
+                plane_init_barometer();
                 if (airspeed.enabled()) {
                     zero_airspeed();
                 }

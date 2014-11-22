@@ -509,6 +509,13 @@ static void report_flight_modes()
     print_blanks(2);
 }
 
+static void report_version()
+{
+    cliSerial->printf_P(PSTR("FW Ver: %d\n"),(int)g.k_format_version);
+    print_divider();
+    print_blanks(2);
+}
+
 /***************************************************************************/
 // CLI utilities
 /***************************************************************************/
