@@ -277,6 +277,9 @@ static void init_ardupilot()
     init_sonar();
 #endif
 
+    // initialize commands
+    // -------------------
+    init_commands();
     
     reset_control_switch();
     if (should_log(MASK_LOG_CMD))
@@ -290,58 +293,39 @@ static void init_ardupilot()
 	
     startup_ground();
 	
-    set_mode(MANUAL);
-
-    cliSerial->print_P(PSTR("\nReady to FLY "));
-}
-
-//******************************************************************************
-//This function does all the calibrations, etc. that we need during a ground start
-//******************************************************************************
-static void startup_ground(void)
-{
-    gcs_send_text_P(SEVERITY_LOW,PSTR("GROUND START"));
-
-#if (GROUND_START_DELAY > 0)
-    gcs_send_text_P(SEVERITY_LOW,PSTR("<startup_ground> With Delay"));
-    delay(GROUND_START_DELAY * 1000);
-#endif
-
-    // Makes the servos wiggle
+	// Makes the servos wiggle
     // step 1 = 1 wiggle
     // -----------------------
     if (!g.skip_gyro_cal) {
         demo_servos(1);
     }
-
-    //INS ground start
-    //------------------------
-    //
-    startup_INS_ground(false);
-
-    // read the radio to set trims
+	
+	    // read the radio to set trims
     // ---------------------------
     trim_radio();               // This was commented out as a HACK.  Why?  I don't find a problem.
 
-    // Save the settings for in-air restart
-    // ------------------------------------
-    //save_EEPROM_groundstart();
-
-    // initialize commands
-    // -------------------
-    init_commands();
-
-    // Makes the servos wiggle - 3 times signals ready to fly
-    // -----------------------
-    if (!g.skip_gyro_cal) {
-        demo_servos(3);
-    }
-
-    // reset last heartbeat time, so we don't trigger failsafe on slow
+	    // reset last heartbeat time, so we don't trigger failsafe on slow
     // startup
     failsafe.last_heartbeat_ms = millis();
+	
+    set_mode(MANUAL);
 
-    // we don't want writes to the serial port to cause us to pause
+	//INS ground start
+    //------------------------
+    //
+    startup_INS_ground(false);
+	
+	// Makes the servos wiggle - 3 times signals ready to fly
+    // -----------------------
+	    if (!g.skip_gyro_cal) {
+        demo_servos(3);
+    }
+	
+	// Save the settings for in-air restart
+    // ------------------------------------
+    //save_EEPROM_groundstart();
+	
+	// we don't want writes to the serial port to cause us to pause
     // mid-flight, so set the serial ports non-blocking once we are
     // ready to fly
     hal.uartA->set_blocking_writes(false);
@@ -355,8 +339,15 @@ static void startup_ground(void)
     // of GPS config in uBlox when non-blocking
     hal.uartB->set_blocking_writes(false);
 #endif
+	
+    cliSerial->print_P(PSTR("\nReady to FLY "));
+}
 
-    gcs_send_text_P(SEVERITY_LOW,PSTR("\n\n Ready to FLY."));
+//******************************************************************************
+//This function does all the calibrations, etc. that we need during a ground start
+//******************************************************************************
+static void startup_ground(void)
+{
 }
 
 static void set_mode(enum FlightMode mode)
