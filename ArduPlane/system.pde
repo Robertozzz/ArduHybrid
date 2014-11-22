@@ -121,8 +121,38 @@ static void init_ardupilot()
     ServoRelayEvents.set_channel_mask(0xFFF0);
 
     relay.init();
-	
-    set_control_channels();
+
+    bool enable_external_leds = true;
+
+    // init EPM cargo gripper
+#if EPM_ENABLED == ENABLED
+    epm.init();
+    enable_external_leds = !epm.enabled();
+#endif
+
+    // initialise notify system
+    // disable external leds if epm is enabled because of pin conflict on the APM
+    notify.init(enable_external_leds);
+
+    // initialise battery monitor
+    battery.init();
+
+#if CONFIG_SONAR == ENABLED
+ #if CONFIG_SONAR_SOURCE == SONAR_SOURCE_ADC
+    sonar_analog_source = new AP_ADC_AnalogSource(
+            &adc, CONFIG_SONAR_SOURCE_ADC_CHANNEL, 0.25);
+ #elif CONFIG_SONAR_SOURCE == SONAR_SOURCE_ANALOG_PIN
+    sonar_analog_source = hal.analogin->channel(
+            CONFIG_SONAR_SOURCE_ANALOG_PIN);
+ #else
+  #warning "Invalid CONFIG_SONAR_SOURCE"
+ #endif
+    sonar = new AP_RangeFinder_MaxsonarXL(sonar_analog_source,
+            &sonar_mode_filter);
+#endif
+
+    rssi_analog_source = hal.analogin->channel(ANALOG_INPUT_NONE);
+    vcc_pin = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
 
     // reset the uartA baud rate after parameter load
     hal.uartA->begin(map_baudrate(g.serial0_baud, SERIAL0_BAUD));
@@ -131,39 +161,44 @@ static void init_ardupilot()
     // used to detect in-flight resets
     g.num_resets.set_and_save(g.num_resets+1);
 
-    // init baro before we start the GCS, so that the CLI baro test works
+#if HIL_MODE != HIL_MODE_ATTITUDE
     barometer.init();
-
-    // initialise sonar
-    init_sonar();
+#endif
 
     // init the GCS
     gcs[0].init(hal.uartA);
 
+    // Register the mavlink service callback. This will run
+    // anytime there are more than 5ms remaining in a call to
+    // hal.scheduler->delay.
+    hal.scheduler->register_delay_callback(mavlink_delay_cb, 5);
+	
     // we start by assuming USB connected, as we initialed the serial
     // port with SERIAL0_BAUD. check_usb_mux() fixes this if need be.    
     usb_connected = true;
     check_usb_mux();
 
-    // we have a 2nd serial port for telemetry
-    hal.uartC->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD),
-                     128, SERIAL1_BUFSIZE);
+#if CONFIG_HAL_BOARD != HAL_BOARD_APM2
+    // we have a 2nd serial port for telemetry on all boards except
+    // APM2. We actually do have one on APM2 but it isn't necessary as
+    // a MUX is used
+    hal.uartC->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD), 128, 128);
     gcs[1].init(hal.uartC);
-
+#endif
 #if MAVLINK_COMM_NUM_BUFFERS > 2
     if (hal.uartD != NULL) {
-        hal.uartD->begin(map_baudrate(g.serial2_baud, SERIAL2_BAUD),
-                         128, SERIAL2_BUFSIZE);        
+        hal.uartD->begin(map_baudrate(g.serial2_baud, SERIAL2_BAUD), 128, 128);
         gcs[2].init(hal.uartD);
     }
 #endif
 
+    // identify ourselves correctly with the ground station
     mavlink_system.sysid = g.sysid_this_mav;
 
 #if LOGGING_ENABLED == ENABLED
     DataFlash.Init(log_structure, sizeof(log_structure)/sizeof(log_structure[0]));
     if (!DataFlash.CardInserted()) {
-        gcs_send_text_P(SEVERITY_LOW, PSTR("No dataflash card inserted"));
+        gcs_send_text_P(SEVERITY_LOW, PSTR("No dataflash inserted"));
         g.log_bitmask.set(0);
     } else if (DataFlash.NeedErase()) {
         gcs_send_text_P(SEVERITY_LOW, PSTR("ERASING LOGS"));
@@ -174,13 +209,21 @@ static void init_ardupilot()
     }
 #endif
 
-    // Register mavlink_delay_cb, which will run anytime you have
-    // more than 5ms remaining in your call to hal.scheduler->delay
-    hal.scheduler->register_delay_callback(mavlink_delay_cb, 5);
+    init_rc_in();
+    init_rc_out();
 
-#if CONFIG_INS_TYPE == CONFIG_INS_OILPAN || CONFIG_HAL_BOARD == HAL_BOARD_APM1
-    apm1_adc.Init();      // APM ADC library initialization
-#endif
+    /*
+     *  setup the 'main loop is dead' check. Note that this relies on
+     *  the RC library being initialised.
+     */
+    hal.scheduler->register_timer_failsafe(failsafe_check, 1000);
+
+#if HIL_MODE != HIL_MODE_ATTITUDE
+ #if CONFIG_ADC == ENABLED
+    // begin filtering the ADC Gyros
+    adc.Init();           // APM ADC library initialization
+ #endif // CONFIG_ADC
+#endif // HIL_MODE
 
     // initialise airspeed sensor
     airspeed.init();
@@ -206,8 +249,7 @@ static void init_ardupilot()
     mavlink_system.compid = 1;          //MAV_COMP_ID_IMU;   // We do not check for comp id
     mavlink_system.type = MAV_TYPE_FIXED_WING;
 
-    init_rc_in();               // sets up rc channels from radio
-    init_rc_out();              // sets up the timer libs
+
 
 
 
@@ -216,11 +258,7 @@ static void init_ardupilot()
     digitalWrite(FENCE_TRIGGERED_PIN, LOW);
 #endif
 
-    /*
-     *  setup the 'main loop is dead' check. Note that this relies on
-     *  the RC library being initialised.
-     */
-    hal.scheduler->register_timer_failsafe(failsafe_check, 1000);
+
 
     const prog_char_t *msg = PSTR("\nPress ENTER 3 times to start interactive setup\n");
     cliSerial->println_P(msg);
@@ -235,6 +273,10 @@ static void init_ardupilot()
     if (should_log(MASK_LOG_CMD))
         Log_Write_Startup(TYPE_GROUNDSTART_MSG);
 
+    // initialise sonar
+#if CONFIG_SONAR == ENABLED
+    init_sonar();
+#endif
     // choose the nav controller
     set_nav_controller();
 

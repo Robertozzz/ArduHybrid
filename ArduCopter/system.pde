@@ -209,8 +209,8 @@ static void init_ardupilot()
     }
 #endif
 
-    init_rc_in();               // sets up rc channels from radio
-    init_rc_out();              // sets up motors and output to escs
+    init_rc_in();
+    init_rc_out();
 
     /*
      *  setup the 'main loop is dead' check. Note that this relies on

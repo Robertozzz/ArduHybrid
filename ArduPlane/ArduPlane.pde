@@ -751,14 +751,6 @@ void setup() {
 
     AP_Notify::flags.failsafe_battery = false;
 
-    notify.init(false);
-
-    battery.init();
-
-    rssi_analog_source = hal.analogin->channel(ANALOG_INPUT_NONE);
-
-    vcc_pin = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
-
     init_ardupilot();
 
     // initialise the main loop scheduler
