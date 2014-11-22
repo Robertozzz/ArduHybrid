@@ -595,7 +595,6 @@ uint16_t board_voltage(void)
     return board_vcc_analog_source->voltage_latest() * 1000;
 }
 
-
 static void
 print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
 {

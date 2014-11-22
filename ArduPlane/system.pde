@@ -489,7 +489,6 @@ static void check_short_failsafe()
     }
 }
 
-
 static void startup_INS_ground(bool do_accel_init)
 {
 #if HIL_MODE != HIL_MODE_DISABLED
@@ -553,60 +552,6 @@ static void resetPerfData(void) {
     perf_mon_timer                  = millis();
 }
 
-
-/*
- *  map from a 8 bit EEPROM baud rate to a real baud rate
- */
-static uint32_t map_baudrate(int8_t rate, uint32_t default_baud)
-{
-    switch (rate) {
-    case 1:    return 1200;
-    case 2:    return 2400;
-    case 4:    return 4800;
-    case 9:    return 9600;
-    case 19:   return 19200;
-    case 38:   return 38400;
-    case 57:   return 57600;
-    case 111:  return 111100;
-    case 115:  return 115200;
-    }
-    cliSerial->println_P(PSTR("Invalid baudrate"));
-    return default_baud;
-}
-
-
-static void check_usb_mux(void)
-{
-    bool usb_check = hal.gpio->usb_connected();
-    if (usb_check == usb_connected) {
-        return;
-    }
-
-    // the user has switched to/from the telemetry port
-    usb_connected = usb_check;
-
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM2
-    // the APM2 has a MUX setup where the first serial port switches
-    // between USB and a TTL serial connection. When on USB we use
-    // SERIAL0_BAUD, but when connected as a TTL serial port we run it
-    // at SERIAL1_BAUD.
-    if (usb_connected) {
-        hal.uartA->begin(SERIAL0_BAUD);
-    } else {
-        hal.uartA->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD));
-    }
-#endif
-}
-
-/*
- * Read Vcc vs 1.1v internal reference
- */
-uint16_t board_voltage(void)
-{
-    return board_vcc_analog_source->voltage_latest() * 1000;
-}
-
-
 static void
 print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
 {
@@ -655,7 +600,6 @@ static void print_comma(void)
     cliSerial->print_P(PSTR(","));
 }
 
-
 /*
   write to a servo
  */
@@ -698,4 +642,55 @@ static bool should_log(uint32_t mask)
         in_mavlink_delay = false;
     }
     return ret;
+}
+
+/*
+ *  map from a 8 bit EEPROM baud rate to a real baud rate
+ */
+static uint32_t map_baudrate(int8_t rate, uint32_t default_baud)
+{
+    switch (rate) {
+    case 1:    return 1200;
+    case 2:    return 2400;
+    case 4:    return 4800;
+    case 9:    return 9600;
+    case 19:   return 19200;
+    case 38:   return 38400;
+    case 57:   return 57600;
+    case 111:  return 111100;
+    case 115:  return 115200;
+    }
+    cliSerial->println_P(PSTR("Invalid baudrate"));
+    return default_baud;
+}
+
+static void check_usb_mux(void)
+{
+    bool usb_check = hal.gpio->usb_connected();
+    if (usb_check == usb_connected) {
+        return;
+    }
+
+    // the user has switched to/from the telemetry port
+    usb_connected = usb_check;
+
+#if CONFIG_HAL_BOARD == HAL_BOARD_APM2
+    // the APM2 has a MUX setup where the first serial port switches
+    // between USB and a TTL serial connection. When on USB we use
+    // SERIAL0_BAUD, but when connected as a TTL serial port we run it
+    // at SERIAL1_BAUD.
+    if (usb_connected) {
+        hal.uartA->begin(SERIAL0_BAUD);
+    } else {
+        hal.uartA->begin(map_baudrate(g.serial1_baud, SERIAL1_BAUD));
+    }
+#endif
+}
+
+/*
+ * Read Vcc vs 1.1v internal reference
+ */
+uint16_t board_voltage(void)
+{
+    return board_vcc_analog_source->voltage_latest() * 1000;
 }
