@@ -135,7 +135,7 @@ static void init_ardupilot()
 
     // initialise notify system
     // disable external leds if epm is enabled because of pin conflict on the APM
-    notify.init(enable_external_leds);
+    notify.init(false);
 
     // initialise battery monitor
     battery.init();
