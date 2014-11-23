@@ -140,7 +140,7 @@ static void init_ardupilot()
 
     // initialise battery monitor
     battery.init();
-    
+
 #if CONFIG_SONAR == ENABLED
  #if CONFIG_SONAR_SOURCE == SONAR_SOURCE_ADC
     sonar_analog_source = new AP_ADC_AnalogSource(
@@ -201,7 +201,9 @@ static void init_ardupilot()
     } else if (DataFlash.NeedErase()) {
         gcs_send_text_P(SEVERITY_LOW, PSTR("ERASING LOGS"));
         do_erase_logs();
-        gcs[0].reset_cli_timeout();
+        for (uint8_t i=0; i<num_gcs; i++) {
+            gcs[i].reset_cli_timeout();
+        }
     }
 #endif
 
@@ -276,9 +278,10 @@ static void init_ardupilot()
     // -------------------
     init_commands();
 
-
     reset_control_switch();
+	
     init_aux_switches();
+	
 #if LOGGING_ENABLED == ENABLED
     Log_Write_Startup();
 #endif

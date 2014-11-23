@@ -122,7 +122,9 @@ static void init_ardupilot()
 
     // allow servo set on all channels except first 4
     ServoRelayEvents.set_channel_mask(0xFFF0);
-
+	
+    set_control_channels();
+	
     relay.init();
 
     // init EPM cargo gripper
@@ -168,9 +170,9 @@ static void init_ardupilot()
     // anytime there are more than 5ms remaining in a call to
     // hal.scheduler->delay.
     hal.scheduler->register_delay_callback(mavlink_delay_cb, 5);
-	
+
     // we start by assuming USB connected, as we initialed the serial
-    // port with SERIAL0_BAUD. check_usb_mux() fixes this if need be.    
+    // port with SERIAL0_BAUD. check_usb_mux() fixes this if need be.
     usb_connected = true;
     check_usb_mux();
 
@@ -223,8 +225,8 @@ static void init_ardupilot()
  #endif // CONFIG_ADC
 #endif // HIL_MODE
 
-	// Do GPS init
-	g_gps = &g_gps_driver;
+    // Do GPS init
+    g_gps = &g_gps_driver;
     // GPS Initialization
     g_gps->init(hal.uartB, GPS::GPS_ENGINE_AIRBORNE_4G);
 
@@ -276,43 +278,33 @@ static void init_ardupilot()
     // initialize commands
     // -------------------
     init_commands();
-    
+
     reset_control_switch();
-    if (should_log(MASK_LOG_CMD))
-        Log_Write_Startup(TYPE_GROUNDSTART_MSG);
+#if LOGGING_ENABLED == ENABLED
+    Log_Write_Startup();
+#endif
 
 
     // choose the nav controller
     set_nav_controller();
 	
-    set_control_channels();
-	
-    startup_ground();
-	
-	// Makes the servos wiggle
-    // step 1 = 1 wiggle
-    // -----------------------
+	// Makes the servos wiggle once
     if (!g.skip_gyro_cal) {
         demo_servos(1);
     }
 	
 	    // read the radio to set trims
-    // ---------------------------
-    trim_radio();               // This was commented out as a HACK.  Why?  I don't find a problem.
+    trim_radio();
 
-	    // reset last heartbeat time, so we don't trigger failsafe on slow
-    // startup
+	    // reset last heartbeat time, so we don't trigger failsafe on slow startup
     failsafe.last_heartbeat_ms = millis();
 	
     set_mode(MANUAL);
 
 	//INS ground start
-    //------------------------
-    //
     startup_INS_ground(false);
 	
 	// Makes the servos wiggle - 3 times signals ready to fly
-    // -----------------------
 	    if (!g.skip_gyro_cal) {
         demo_servos(3);
     }
@@ -342,10 +334,9 @@ static void init_ardupilot()
 //******************************************************************************
 //This function does all the calibrations, etc. that we need during a ground start
 //******************************************************************************
-static void startup_ground(void)
-{
-}
 
+
+//OLD STARTUP GROUND
 static void set_mode(enum FlightMode mode)
 {
     if(control_mode == mode) {
