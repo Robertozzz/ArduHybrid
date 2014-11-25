@@ -288,7 +288,7 @@ static void init_ardupilot()
 
 
 
-    startup_ground(true);
+    startup_ground();
 
 
 
@@ -298,69 +298,24 @@ static void init_ardupilot()
 //******************************************************************************
 //This function does all the calibrations, etc. that we need during a ground start
 //******************************************************************************
-static void startup_ground(bool force_gyro_cal)
+static void startup_ground()
 {
     gcs_send_text_P(SEVERITY_LOW,PSTR("GROUND START"));
 
     // initialise ahrs (may push imu calibration into the mpu6000 if using that device).
     ahrs.init();
+    ahrs.set_fast_gains(true);
 
     // Warm up and read Gyro offsets
     // -----------------------------
-    ins.init(force_gyro_cal?AP_InertialSensor::COLD_START:AP_InertialSensor::WARM_START,
-             ins_sample_rate);
+    ins.init(AP_InertialSensor::COLD_START,ins_sample_rate);
+			 
  #if CLI_ENABLED == ENABLED
     report_ins();
  #endif
 
-    // setup fast AHRS gains to get right attitude
-    ahrs.set_fast_gains(true);
-
     // set landed flag
     set_land_complete(true);
-}
-
-// returns true if the GPS is ok and home position is set
-static bool GPS_ok()
-{
-    if (g_gps != NULL && ap.home_is_set && g_gps->status() == GPS::GPS_OK_FIX_3D && !gps_glitch.glitching() && !failsafe.gps) {
-        return true;
-    }else{
-        return false;
-    }
-}
-
-// returns true or false whether mode requires GPS
-static bool mode_requires_GPS(uint8_t mode) {
-    switch(mode) {
-        case AUTO:
-        case GUIDED:
-        case LOITER:
-        case RTL:
-        case CIRCLE:
-        case POSITION:
-        case DRIFT:
-            return true;
-        default:
-            return false;
-    }
-
-    return false;
-}
-
-// manual_flight_mode - returns true if flight mode is completely manual (i.e. roll, pitch and yaw controlled by pilot)
-static bool manual_flight_mode(uint8_t mode) {
-    switch(mode) {
-        case ACRO:
-        case STABILIZE:
-        case DRIFT:
-        case SPORT:
-            return true;
-        default:
-            return false;
-    }
-
-    return false;
 }
 
 // set_mode - change flight mode and perform any necessary initialisation
@@ -512,6 +467,98 @@ static bool set_mode(uint8_t mode)
     return success;
 }
 
+static void
+print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
+{
+    switch (mode) {
+    case STABILIZE:
+        port->print_P(PSTR("STABILIZE"));
+        break;
+    case ACRO:
+        port->print_P(PSTR("ACRO"));
+        break;
+    case ALT_HOLD:
+        port->print_P(PSTR("ALT_HOLD"));
+        break;
+    case AUTO:
+        port->print_P(PSTR("AUTO"));
+        break;
+    case GUIDED:
+        port->print_P(PSTR("GUIDED"));
+        break;
+    case LOITER:
+        port->print_P(PSTR("LOITER"));
+        break;
+    case RTL:
+        port->print_P(PSTR("RTL"));
+        break;
+    case CIRCLE:
+        port->print_P(PSTR("CIRCLE"));
+        break;
+    case POSITION:
+        port->print_P(PSTR("POSITION"));
+        break;
+    case LAND:
+        port->print_P(PSTR("LAND"));
+        break;
+    case OF_LOITER:
+        port->print_P(PSTR("OF_LOITER"));
+        break;
+    case DRIFT:
+        port->print_P(PSTR("DRIFT"));
+        break;
+    case SPORT:
+        port->print_P(PSTR("SPORT"));
+        break;
+    default:
+        port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
+        break;
+    }
+}
+
+// returns true if the GPS is ok and home position is set
+static bool GPS_ok()
+{
+    if (g_gps != NULL && ap.home_is_set && g_gps->status() == GPS::GPS_OK_FIX_3D && !gps_glitch.glitching() && !failsafe.gps) {
+        return true;
+    }else{
+        return false;
+    }
+}
+
+// returns true or false whether mode requires GPS
+static bool mode_requires_GPS(uint8_t mode) {
+    switch(mode) {
+        case AUTO:
+        case GUIDED:
+        case LOITER:
+        case RTL:
+        case CIRCLE:
+        case POSITION:
+        case DRIFT:
+            return true;
+        default:
+            return false;
+    }
+
+    return false;
+}
+
+// manual_flight_mode - returns true if flight mode is completely manual (i.e. roll, pitch and yaw controlled by pilot)
+static bool manual_flight_mode(uint8_t mode) {
+    switch(mode) {
+        case ACRO:
+        case STABILIZE:
+        case DRIFT:
+        case SPORT:
+            return true;
+        default:
+            return false;
+    }
+
+    return false;
+}
+
 // update_auto_armed - update status of auto_armed flag
 static void update_auto_armed()
 {
@@ -592,53 +639,4 @@ static void check_usb_mux(void)
 uint16_t board_voltage(void)
 {
     return board_vcc_analog_source->voltage_latest() * 1000;
-}
-
-static void
-print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
-{
-    switch (mode) {
-    case STABILIZE:
-        port->print_P(PSTR("STABILIZE"));
-        break;
-    case ACRO:
-        port->print_P(PSTR("ACRO"));
-        break;
-    case ALT_HOLD:
-        port->print_P(PSTR("ALT_HOLD"));
-        break;
-    case AUTO:
-        port->print_P(PSTR("AUTO"));
-        break;
-    case GUIDED:
-        port->print_P(PSTR("GUIDED"));
-        break;
-    case LOITER:
-        port->print_P(PSTR("LOITER"));
-        break;
-    case RTL:
-        port->print_P(PSTR("RTL"));
-        break;
-    case CIRCLE:
-        port->print_P(PSTR("CIRCLE"));
-        break;
-    case POSITION:
-        port->print_P(PSTR("POSITION"));
-        break;
-    case LAND:
-        port->print_P(PSTR("LAND"));
-        break;
-    case OF_LOITER:
-        port->print_P(PSTR("OF_LOITER"));
-        break;
-    case DRIFT:
-        port->print_P(PSTR("DRIFT"));
-        break;
-    case SPORT:
-        port->print_P(PSTR("SPORT"));
-        break;
-    default:
-        port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
-        break;
-    }
 }

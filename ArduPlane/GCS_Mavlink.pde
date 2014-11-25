@@ -1205,24 +1205,25 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         switch(packet.command) {
 
         case MAV_CMD_NAV_LOITER_UNLIM:
-            set_mode(LOITER);
+            plane_set_mode(LOITER);
             result = MAV_RESULT_ACCEPTED;
             break;
 
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-            set_mode(RTL);
+            plane_set_mode(RTL);
             result = MAV_RESULT_ACCEPTED;
             break;
 
         case MAV_CMD_MISSION_START:
-            set_mode(AUTO);
+            plane_set_mode(AUTO);
             result = MAV_RESULT_ACCEPTED;
             break;
 
         case MAV_CMD_PREFLIGHT_CALIBRATION:
             if (packet.param1 == 1 ||
                 packet.param2 == 1) {
-                startup_INS_ground(true);
+                ins.init_accel();
+                ahrs.set_trim(Vector3f(0,0,0));             // clear out saved trim
             } else if (packet.param3 == 1) {
                 plane_init_barometer();
                 if (airspeed.enabled()) {
@@ -1282,19 +1283,19 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
             switch ((uint16_t)packet.param1) {
             case MAV_MODE_MANUAL_ARMED:
             case MAV_MODE_MANUAL_DISARMED:
-                set_mode(MANUAL);
+                plane_set_mode(MANUAL);
                 result = MAV_RESULT_ACCEPTED;
                 break;
 
             case MAV_MODE_AUTO_ARMED:
             case MAV_MODE_AUTO_DISARMED:
-                set_mode(AUTO);
+                plane_set_mode(AUTO);
                 result = MAV_RESULT_ACCEPTED;
                 break;
 
             case MAV_MODE_STABILIZE_DISARMED:
             case MAV_MODE_STABILIZE_ARMED:
-                set_mode(FLY_BY_WIRE_A);
+                plane_set_mode(FLY_BY_WIRE_A);
                 result = MAV_RESULT_ACCEPTED;
                 break;
 
@@ -1372,7 +1373,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
         case AUTO:
         case RTL:
         case LOITER:
-            set_mode((enum FlightMode)packet.custom_mode);
+            plane_set_mode((enum FlightMode)packet.custom_mode);
             break;
         }
 
@@ -1835,7 +1836,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 guided_WP.alt += home.alt;
             }
 
-            set_mode(GUIDED);
+            plane_set_mode(GUIDED);
 
             // make any new wp uploaded instant (in case we are already in Guided mode)
             set_guided_WP();

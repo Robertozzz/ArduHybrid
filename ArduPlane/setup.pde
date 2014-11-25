@@ -376,7 +376,7 @@ setup_erase(uint8_t argc, const Menu::arg *argv)
 static int8_t
 setup_level(uint8_t argc, const Menu::arg *argv)
 {
-    startup_INS_ground(true);
+    startup_ground();
     return 0;
 }
 

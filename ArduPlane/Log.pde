@@ -288,21 +288,13 @@ struct PACKED log_Startup {
     uint8_t command_total;
 };
 
-static void Log_Write_Startup(uint8_t type)
+// Write Startup packet
+static void Log_Write_Startup()
 {
     struct log_Startup pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_STARTUP_MSG),
-        startup_type    : type,
-        command_total   : g.command_total
+        LOG_PACKET_HEADER_INIT(LOG_STARTUP_MSG)
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
-
-    // write all commands to the dataflash as well
-    struct Location cmd;
-    for (uint8_t i = 0; i <= g.command_total; i++) {
-        cmd = get_cmd_with_index(i);
-        Log_Write_Cmd(i, &cmd);
-    }
 }
 
 struct PACKED log_Control_Tuning {

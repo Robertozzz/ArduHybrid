@@ -292,7 +292,7 @@ static void geofence_check(bool altitude_check_only)
             control_mode = STABILIZE;
         }
 
-        set_mode(GUIDED);
+        plane_set_mode(GUIDED);
         if (g.fence_action == FENCE_ACTION_GUIDED_THR_PASS) {
             guided_throttle_passthru = true;
         }

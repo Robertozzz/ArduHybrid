@@ -19,9 +19,9 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
         failsafe.saved_mode = control_mode;
         failsafe.saved_mode_set = 1;
         if(g.short_fs_action == 2) {
-            set_mode(FLY_BY_WIRE_A);
+            plane_set_mode(FLY_BY_WIRE_A);
         } else {
-            set_mode(CIRCLE);
+            plane_set_mode(CIRCLE);
         }
         break;
 
@@ -32,9 +32,9 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
             failsafe.saved_mode = control_mode;
             failsafe.saved_mode_set = 1;
             if(g.short_fs_action == 2) {
-                set_mode(FLY_BY_WIRE_A);
+                plane_set_mode(FLY_BY_WIRE_A);
             } else {
-                set_mode(CIRCLE);
+                plane_set_mode(CIRCLE);
             }
         }
         break;
@@ -65,9 +65,9 @@ static void failsafe_long_on_event(enum failsafe_state fstype)
     case TRAINING:
     case CIRCLE:
         if(g.long_fs_action == 2) {
-            set_mode(FLY_BY_WIRE_A);
+            plane_set_mode(FLY_BY_WIRE_A);
         } else {
-            set_mode(RTL);
+            plane_set_mode(RTL);
         }
         break;
 
@@ -75,9 +75,9 @@ static void failsafe_long_on_event(enum failsafe_state fstype)
     case GUIDED:
     case LOITER:
         if(g.long_fs_action == 2) {
-            set_mode(FLY_BY_WIRE_A);
+            plane_set_mode(FLY_BY_WIRE_A);
         } else if (g.long_fs_action == 1) {
-            set_mode(RTL);
+            plane_set_mode(RTL);
         }
         break;
 
@@ -98,7 +98,7 @@ static void failsafe_short_off_event()
     // --------------------------------------------------------
     if (control_mode == CIRCLE && failsafe.saved_mode_set) {
         failsafe.saved_mode_set = 0;
-        set_mode(failsafe.saved_mode);
+        plane_set_mode(failsafe.saved_mode);
     }
 }
 
@@ -109,7 +109,7 @@ void low_battery_event(void)
     }
     gcs_send_text_fmt(PSTR("Low Battery %.2fV Used %.0f mAh"),
                       battery.voltage(), battery.current_total_mah());
-    set_mode(RTL);
+    plane_set_mode(RTL);
     aparm.throttle_cruise.load();
     failsafe.low_battery = true;
     AP_Notify::flags.failsafe_battery = true;

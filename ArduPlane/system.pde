@@ -289,9 +289,7 @@ static void init_ardupilot()
     set_nav_controller();
 	
 	// Makes the servos wiggle once
-    if (!g.skip_gyro_cal) {
-        demo_servos(1);
-    }
+    if (!g.skip_gyro_cal) { demo_servos(1); }
 	
 	    // read the radio to set trims
     trim_radio();
@@ -299,15 +297,13 @@ static void init_ardupilot()
 	    // reset last heartbeat time, so we don't trigger failsafe on slow startup
     failsafe.last_heartbeat_ms = millis();
 	
-    set_mode(MANUAL);
+    plane_set_mode(MANUAL);
 
 	//INS ground start
-    startup_INS_ground(false);
+    startup_ground();
 	
 	// Makes the servos wiggle - 3 times signals ready to fly
-	    if (!g.skip_gyro_cal) {
-        demo_servos(3);
-    }
+	    if (!g.skip_gyro_cal) { demo_servos(3); }
 	
 	// Save the settings for in-air restart
     // ------------------------------------
@@ -334,10 +330,37 @@ static void init_ardupilot()
 //******************************************************************************
 //This function does all the calibrations, etc. that we need during a ground start
 //******************************************************************************
+static void startup_ground()
+{
+    gcs_send_text_P(SEVERITY_LOW,PSTR("GROUND START"));
 
+    // initialise ahrs (may push imu calibration into the mpu6000 if using that device).
+    ahrs.init();
+    ahrs.set_fly_forward(true);
+    ahrs.set_wind_estimation(true);
+	
+    // Warm up and read Gyro offsets
+    // -----------------------------
+    ins.init(AP_InertialSensor::COLD_START,ins_sample_rate);
 
-//OLD STARTUP GROUND
-static void set_mode(enum FlightMode mode)
+	
+ // ahrs.reset();  // necessary??
+	  
+	  
+    if (airspeed.enabled()) {
+        // initialize airspeed sensor
+        // --------------------------
+        zero_airspeed();
+    } else {
+        gcs_send_text_P(SEVERITY_LOW,PSTR("NO airspeed"));
+    }
+}
+
+// plane_set_mode - change flight mode and perform any necessary initialisation
+// optional force parameter used to force the flight mode change (used only first time mode is set)
+// returns true if mode was succesfully set
+// ACRO, STABILIZE, ALTHOLD, LAND, DRIFT and SPORT can always be set successfully but the return state of other flight modes should be checked and the caller should deal with failures appropriately
+static void plane_set_mode(enum FlightMode mode)
 {
     if(control_mode == mode) {
         // don't switch modes if we are already in the correct mode.
@@ -421,6 +444,49 @@ static void set_mode(enum FlightMode mode)
     yawController.reset_I();    
 }
 
+static void
+print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
+{
+    switch (mode) {
+    case MANUAL:
+        port->print_P(PSTR("Manual"));
+        break;
+    case CIRCLE:
+        port->print_P(PSTR("Circle"));
+        break;
+    case STABILIZE:
+        port->print_P(PSTR("Stabilize"));
+        break;
+    case TRAINING:
+        port->print_P(PSTR("Training"));
+        break;
+    case ACRO:
+        port->print_P(PSTR("ACRO"));
+        break;
+    case FLY_BY_WIRE_A:
+        port->print_P(PSTR("FBW_A"));
+        break;
+    case FLY_BY_WIRE_B:
+        port->print_P(PSTR("FBW_B"));
+        break;
+    case CRUISE:
+        port->print_P(PSTR("CRUISE"));
+        break;
+    case AUTO:
+        port->print_P(PSTR("AUTO"));
+        break;
+    case RTL:
+        port->print_P(PSTR("RTL"));
+        break;
+    case LOITER:
+        port->print_P(PSTR("Loiter"));
+        break;
+    default:
+        port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
+        break;
+    }
+}
+
 static void check_long_failsafe()
 {
     uint32_t tnow = millis();
@@ -476,60 +542,6 @@ static void check_short_failsafe()
     }
 }
 
-static void startup_INS_ground(bool do_accel_init)
-{
-#if HIL_MODE != HIL_MODE_DISABLED
-    while (!barometer.healthy) {
-        // the barometer becomes healthy when we get the first
-        // HIL_STATE message
-        gcs_send_text_P(SEVERITY_LOW, PSTR("Waiting for first HIL_STATE message"));
-        delay(1000);
-    }
-#endif
-
-    AP_InertialSensor::Start_style style;
-    if (g.skip_gyro_cal && !do_accel_init) {
-        style = AP_InertialSensor::WARM_START;
-    } else {
-        style = AP_InertialSensor::COLD_START;
-    }
-
-    if (style == AP_InertialSensor::COLD_START) {
-        gcs_send_text_P(SEVERITY_MEDIUM, PSTR("Beginning INS calibration; do not move plane"));
-        mavlink_delay(100);
-    }
-
-    ahrs.init();
-    ahrs.set_fly_forward(true);
-    ahrs.set_wind_estimation(true);
-
-    ins.init(style, ins_sample_rate);
-    if (do_accel_init) {
-        ins.init_accel();
-        ahrs.set_trim(Vector3f(0, 0, 0));
-    }
-    ahrs.reset();
-
-    // read Baro pressure at ground
-    //-----------------------------
-    plane_init_barometer();
-
-    if (airspeed.enabled()) {
-        // initialize airspeed sensor
-        // --------------------------
-        zero_airspeed();
-    } else {
-        gcs_send_text_P(SEVERITY_LOW,PSTR("NO airspeed"));
-    }
-}
-
-// updates the status of the notify objects
-// should be called at 50hz
-static void update_notify()
-{
-    notify.update();
-}
-
 static void resetPerfData(void) {
     mainLoop_count                  = 0;
     G_Dt_max                        = 0;
@@ -539,69 +551,9 @@ static void resetPerfData(void) {
     perf_mon_timer                  = millis();
 }
 
-static void
-print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
-{
-    switch (mode) {
-    case MANUAL:
-        port->print_P(PSTR("Manual"));
-        break;
-    case CIRCLE:
-        port->print_P(PSTR("Circle"));
-        break;
-    case STABILIZE:
-        port->print_P(PSTR("Stabilize"));
-        break;
-    case TRAINING:
-        port->print_P(PSTR("Training"));
-        break;
-    case ACRO:
-        port->print_P(PSTR("ACRO"));
-        break;
-    case FLY_BY_WIRE_A:
-        port->print_P(PSTR("FBW_A"));
-        break;
-    case FLY_BY_WIRE_B:
-        port->print_P(PSTR("FBW_B"));
-        break;
-    case CRUISE:
-        port->print_P(PSTR("CRUISE"));
-        break;
-    case AUTO:
-        port->print_P(PSTR("AUTO"));
-        break;
-    case RTL:
-        port->print_P(PSTR("RTL"));
-        break;
-    case LOITER:
-        port->print_P(PSTR("Loiter"));
-        break;
-    default:
-        port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
-        break;
-    }
-}
-
 static void print_comma(void)
 {
     cliSerial->print_P(PSTR(","));
-}
-
-/*
-  write to a servo
- */
-static void servo_write(uint8_t ch, uint16_t pwm)
-{
-#if HIL_MODE != HIL_MODE_DISABLED
-    if (!g.hil_servos) {
-        if (ch < 8) {
-            RC_Channel::rc_channel(ch)->radio_out = pwm;
-        }
-        return;
-    }
-#endif
-    hal.rcout->enable_ch(ch);
-    hal.rcout->write(ch, pwm);
 }
 
 /*

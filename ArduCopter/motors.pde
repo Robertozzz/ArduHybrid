@@ -165,7 +165,7 @@ static void init_arm_motors()
 
     if(did_ground_start == false) {
         did_ground_start = true;
-        startup_ground(true);
+        startup_ground();
     }
 
 #if HIL_MODE != HIL_MODE_ATTITUDE
