@@ -29,7 +29,7 @@ static int32_t read_barometer(void)
 static void init_sonar(void)
 {
 #if CONFIG_HAL_BOARD == HAL_BOARD_APM1
-    sonar.Init(&apm1_adc);
+    sonar.Init(&adc);
 #else
     sonar.Init(NULL);
 #endif

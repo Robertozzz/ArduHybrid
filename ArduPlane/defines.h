@@ -226,12 +226,12 @@ enum log_messages {
 #define NOINLINE __attribute__((noinline))
 
 // InertialSensor driver types
-#define CONFIG_INS_OILPAN  1
-#define CONFIG_INS_MPU6000 2
-#define CONFIG_INS_HIL     3
-#define CONFIG_INS_PX4     4
-#define CONFIG_INS_FLYMAPLE 5
-#define CONFIG_INS_L3G4200D 6
+#define CONFIG_IMU_OILPAN  1
+#define CONFIG_IMU_MPU6000 2
+#define CONFIG_IMU_HIL     3
+#define CONFIG_IMU_PX4     4
+#define CONFIG_IMU_FLYMAPLE 5
+#define CONFIG_IMU_L3G4200D 6
 
 // barometer driver types
 #define AP_BARO_BMP085   1

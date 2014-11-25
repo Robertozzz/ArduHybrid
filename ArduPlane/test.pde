@@ -374,18 +374,18 @@ test_shell(uint8_t argc, const Menu::arg *argv)
 //-------------------------------------------------------------------------------------------
 // tests in this section are for real sensors or sensors that have been simulated
 
-#if CONFIG_INS_TYPE == CONFIG_INS_OILPAN || CONFIG_HAL_BOARD == HAL_BOARD_APM1
+#if CONFIG_IMU_TYPE == CONFIG_IMU_OILPAN || CONFIG_HAL_BOARD == HAL_BOARD_APM1
 static int8_t
 test_adc(uint8_t argc, const Menu::arg *argv)
 {
     print_hit_enter();
-    apm1_adc.Init();
+    adc.Init();
     delay(1000);
     cliSerial->printf_P(PSTR("ADC\n"));
     delay(1000);
 
     while(1) {
-        for (int8_t i=0; i<9; i++) cliSerial->printf_P(PSTR("%.1f\t"),apm1_adc.Ch(i));
+        for (int8_t i=0; i<9; i++) cliSerial->printf_P(PSTR("%.1f\t"),adc.Ch(i));
         cliSerial->println();
         delay(100);
         if(cliSerial->available() > 0) {
@@ -393,7 +393,7 @@ test_adc(uint8_t argc, const Menu::arg *argv)
         }
     }
 }
-#endif // CONFIG_INS_TYPE
+#endif // CONFIG_IMU_TYPE
 
 static int8_t
 test_gps(uint8_t argc, const Menu::arg *argv)

@@ -180,7 +180,6 @@ static AP_Scheduler scheduler;
 static AP_Notify notify;
 
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // prototypes
 ////////////////////////////////////////////////////////////////////////////////
@@ -317,7 +316,7 @@ static AP_AHRS_DCM             ahrs(ins, g_gps);
 
 
  #if CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
- // When building for SITL we use the HIL barometer and compass drivers
+  // When building for SITL we use the HIL barometer and compass drivers
 static SITL sitl;
 #endif
 
@@ -354,7 +353,6 @@ static GCS_MAVLINK gcs[MAVLINK_COMM_NUM_BUFFERS];
 ////////////////////////////////////////////////////////////////////////////////
 // SONAR selection
 ////////////////////////////////////////////////////////////////////////////////
-//
 ModeFilterInt16_Size3 sonar_mode_filter(1);
 #if CONFIG_SONAR == ENABLED
 static AP_HAL::AnalogSource *sonar_analog_source;

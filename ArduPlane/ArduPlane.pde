@@ -125,7 +125,7 @@ static Parameters g;
 
 // main loop scheduler
 static AP_Scheduler scheduler;
- 
+
 // AP_Notify instance
 static AP_Notify notify;
 
@@ -135,9 +135,9 @@ static RC_Channel *channel_pitch;
 static RC_Channel *channel_throttle;
 static RC_Channel *channel_rudder;
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // prototypes
+////////////////////////////////////////////////////////////////////////////////
 static void update_events(void);
 void gcs_send_text_fmt(const prog_char_t *fmt, ...);
 static void print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode);
@@ -179,10 +179,10 @@ static int32_t pitch_limit_min_cd;
 //
 // There are three basic options related to flight sensor selection.
 //
-// - Normal flight mode.  Real sensors are used.
-// - HIL Attitude mode.  Most sensors are disabled, as the HIL
+// - Normal flight mode. Real sensors are used.
+// - HIL Attitude mode. Most sensors are disabled, as the HIL
 //   protocol supplies attitude information directly.
-// - HIL Sensors mode.  Synthetic sensors are configured that
+// - HIL Sensors mode. Synthetic sensors are configured that
 //   supply data from the simulation.
 //
 
@@ -190,86 +190,83 @@ static int32_t pitch_limit_min_cd;
 static GPS         *g_gps;
 
 // flight modes convenience array
-static AP_Int8 *flight_modes = &g.flight_mode1;
+static AP_Int8          *flight_modes = &g.flight_mode1;
 
-#if CONFIG_BARO == AP_BARO_BMP085
-static AP_Baro_BMP085 barometer;
-#elif CONFIG_BARO == AP_BARO_PX4
-static AP_Baro_PX4 barometer;
-#elif CONFIG_BARO == AP_BARO_HIL
-static AP_Baro_HIL barometer;
-#elif CONFIG_BARO == AP_BARO_MS5611
- #if CONFIG_MS5611_SERIAL == AP_BARO_MS5611_SPI
- static AP_Baro_MS5611 barometer(&AP_Baro_MS5611::spi);
- #elif CONFIG_MS5611_SERIAL == AP_BARO_MS5611_I2C
- static AP_Baro_MS5611 barometer(&AP_Baro_MS5611::i2c);
- #else
- #error Unrecognized CONFIG_MS5611_SERIAL setting.
+#if HIL_MODE == HIL_MODE_DISABLED
+
+ #if CONFIG_ADC == ENABLED
+static AP_ADC_ADS7844 adc;
  #endif
-#else
- #error Unrecognized CONFIG_BARO setting
+
+ #if CONFIG_IMU_TYPE == CONFIG_IMU_MPU6000
+static AP_InertialSensor_MPU6000 ins;
+#elif CONFIG_IMU_TYPE == CONFIG_IMU_OILPAN
+static AP_InertialSensor_Oilpan ins(&adc);
+#elif CONFIG_IMU_TYPE == CONFIG_IMU_SITL
+static AP_InertialSensor_HIL ins;
+#elif CONFIG_IMU_TYPE == CONFIG_IMU_PX4
+static AP_InertialSensor_PX4 ins;
+#elif CONFIG_IMU_TYPE == CONFIG_IMU_FLYMAPLE
+AP_InertialSensor_Flymaple ins;
+#elif CONFIG_IMU_TYPE == CONFIG_IMU_L3G4200D
+AP_InertialSensor_L3G4200D ins;
 #endif
 
-#if CONFIG_COMPASS == AP_COMPASS_PX4
-static AP_Compass_PX4 compass;
-#elif CONFIG_COMPASS == AP_COMPASS_HMC5843
-static AP_Compass_HMC5843 compass;
-#elif CONFIG_COMPASS == AP_COMPASS_HIL
+ #if CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
+ // When building for SITL we use the HIL barometer and compass drivers
+static AP_Baro_HIL barometer;
 static AP_Compass_HIL compass;
-#else
- #error Unrecognized CONFIG_COMPASS setting
-#endif
+static SITL sitl;
+ #else
+// Otherwise, instantiate a real barometer and compass driver
+  #if CONFIG_BARO == AP_BARO_BMP085
+static AP_Baro_BMP085 barometer;
+  #elif CONFIG_BARO == AP_BARO_PX4
+static AP_Baro_PX4 barometer;
+  #elif CONFIG_BARO == AP_BARO_MS5611
+   #if CONFIG_MS5611_SERIAL == AP_BARO_MS5611_SPI
+static AP_Baro_MS5611 barometer(&AP_Baro_MS5611::spi);
+   #elif CONFIG_MS5611_SERIAL == AP_BARO_MS5611_I2C
+static AP_Baro_MS5611 barometer(&AP_Baro_MS5611::i2c);
+   #else
+    #error Unrecognized CONFIG_MS5611_SERIAL setting.
+   #endif
+  #endif
 
-// GPS selection
-#if   GPS_PROTOCOL == GPS_PROTOCOL_AUTO
+ #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+static AP_Compass_PX4 compass;
+ #else
+static AP_Compass_HMC5843 compass;
+ #endif
+ #endif
+
+// real GPS selection
+ #if   GPS_PROTOCOL == GPS_PROTOCOL_AUTO
 AP_GPS_Auto     g_gps_driver(&g_gps);
 
-#elif GPS_PROTOCOL == GPS_PROTOCOL_NMEA
+ #elif GPS_PROTOCOL == GPS_PROTOCOL_NMEA
 AP_GPS_NMEA     g_gps_driver;
 
-#elif GPS_PROTOCOL == GPS_PROTOCOL_SIRF
+ #elif GPS_PROTOCOL == GPS_PROTOCOL_SIRF
 AP_GPS_SIRF     g_gps_driver;
 
-#elif GPS_PROTOCOL == GPS_PROTOCOL_UBLOX
+ #elif GPS_PROTOCOL == GPS_PROTOCOL_UBLOX
 AP_GPS_UBLOX    g_gps_driver;
 
-#elif GPS_PROTOCOL == GPS_PROTOCOL_MTK
+ #elif GPS_PROTOCOL == GPS_PROTOCOL_MTK
 AP_GPS_MTK      g_gps_driver;
 
-#elif GPS_PROTOCOL == GPS_PROTOCOL_MTK19
+ #elif GPS_PROTOCOL == GPS_PROTOCOL_MTK19
 AP_GPS_MTK19    g_gps_driver;
 
-#elif GPS_PROTOCOL == GPS_PROTOCOL_NONE
+ #elif GPS_PROTOCOL == GPS_PROTOCOL_NONE
 AP_GPS_None     g_gps_driver;
 
-#elif GPS_PROTOCOL == GPS_PROTOCOL_HIL
-AP_GPS_HIL      g_gps_driver;
-
-#else
+ #else
   #error Unrecognised GPS_PROTOCOL setting.
-#endif // GPS PROTOCOL
+ #endif // GPS PROTOCOL
 
-#if CONFIG_INS_TYPE == CONFIG_INS_OILPAN || CONFIG_HAL_BOARD == HAL_BOARD_APM1
-AP_ADC_ADS7844 apm1_adc;
-#endif
-
-#if CONFIG_INS_TYPE == CONFIG_INS_MPU6000
-AP_InertialSensor_MPU6000 ins;
-#elif CONFIG_INS_TYPE == CONFIG_INS_PX4
-AP_InertialSensor_PX4 ins;
-#elif CONFIG_INS_TYPE == CONFIG_INS_HIL
-AP_InertialSensor_HIL ins;
-#elif CONFIG_INS_TYPE == CONFIG_INS_OILPAN
-AP_InertialSensor_Oilpan ins( &apm1_adc );
-#elif CONFIG_INS_TYPE == CONFIG_INS_FLYMAPLE
-AP_InertialSensor_Flymaple ins;
-#elif CONFIG_INS_TYPE == CONFIG_INS_L3G4200D
-AP_InertialSensor_L3G4200D ins;
-#else
-  #error Unrecognised CONFIG_INS_TYPE setting.
-#endif // CONFIG_INS_TYPE
-
-AP_AHRS_DCM ahrs(ins, g_gps);
+static AP_AHRS_DCM ahrs(ins, g_gps);
 
 static AP_L1_Control L1_controller(ahrs);
 static AP_TECS TECS_controller(ahrs, aparm);
@@ -281,9 +278,38 @@ static AP_YawController   yawController(ahrs, aparm);
 static AP_SteerController steerController(ahrs);
 
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
-SITL sitl;
+#elif HIL_MODE == HIL_MODE_SENSORS
+// sensor emulators
+static AP_ADC_HIL              adc;
+static AP_Baro_HIL      barometer;
+static AP_Compass_HIL          compass;
+static AP_GPS_HIL              g_gps_driver;
+static AP_InertialSensor_HIL   ins;
+static AP_AHRS_DCM             ahrs(ins, g_gps);
+
+
+ #if CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
+  // When building for SITL we use the HIL barometer and compass drivers
+static SITL sitl;
 #endif
+
+#elif HIL_MODE == HIL_MODE_ATTITUDE
+static AP_ADC_HIL              adc;
+static AP_InertialSensor_HIL   ins;
+static AP_AHRS_HIL             ahrs(ins, g_gps);
+static AP_GPS_HIL              g_gps_driver;
+static AP_Compass_HIL          compass;                  // never used
+static AP_Baro_HIL      barometer;
+
+#if CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
+ // When building for SITL we use the HIL barometer and compass drivers
+static SITL sitl;
+#endif
+
+#else
+ #error Unrecognised HIL_MODE setting.
+#endif // HIL MODE
+
 
 // Training mode
 static bool training_manual_roll;  // user has manual roll control
@@ -312,31 +338,13 @@ static AP_Navigation *nav_controller = &L1_controller;
 static AP_SpdHgtControl *SpdHgt_Controller = &TECS_controller;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Analog Inputs
-////////////////////////////////////////////////////////////////////////////////
-
-// a pin for reading the receiver RSSI voltage. 
-static AP_HAL::AnalogSource *rssi_analog_source;
-
-static AP_HAL::AnalogSource *board_vcc_analog_source;
-
-////////////////////////////////////////////////////////////////////////////////
-// Sonar
+// SONAR selection
 ////////////////////////////////////////////////////////////////////////////////
 static AP_RangeFinder_analog sonar;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Relay
+// User variables
 ////////////////////////////////////////////////////////////////////////////////
-static AP_Relay relay;
-
-// handle servo and relay events
-static AP_ServoRelayEvents ServoRelayEvents(relay);
-
-// Camera
-#if CAMERA == ENABLED
-static AP_Camera camera(&relay);
-#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Global variables
@@ -359,7 +367,7 @@ static bool usb_connected;
  *               See libraries/RC_Channel/RC_Channel_aux.h for more information
  */
 
-////////////////////////////////////////////////////////////////////////////////
+ ////////////////////////////////////////////////////////////////////////////////
 // Radio
 ////////////////////////////////////////////////////////////////////////////////
 // This is the state of the flight control system
@@ -395,7 +403,6 @@ static struct {
     ch1_temp : 1500,
     ch2_temp : 1500
 };
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // Failsafe
@@ -436,7 +443,6 @@ static struct {
     uint32_t last_radio_status_remrssi_ms;
 } failsafe;
 
-
 ////////////////////////////////////////////////////////////////////////////////
 // GPS variables
 ////////////////////////////////////////////////////////////////////////////////
@@ -468,6 +474,40 @@ static uint8_t non_nav_command_index;
 // This is the command type (eg navigate to waypoint) of the active navigation command
 static uint8_t nav_command_ID          = NO_COMMAND;
 static uint8_t non_nav_command_ID      = NO_COMMAND;
+
+////////////////////////////////////////////////////////////////////////////////
+// Analog Inputs
+////////////////////////////////////////////////////////////////////////////////
+
+// a pin for reading the receiver RSSI voltage. 
+static AP_HAL::AnalogSource *rssi_analog_source;
+
+static AP_HAL::AnalogSource *board_vcc_analog_source;
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Relay
+////////////////////////////////////////////////////////////////////////////////
+static AP_Relay relay;
+
+// handle servo and relay events
+static AP_ServoRelayEvents ServoRelayEvents(relay);
+
+// Camera
+#if CAMERA == ENABLED
+static AP_Camera camera(&relay);
+#endif
+
+
+
+
+
+
+
+
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 // Airspeed
