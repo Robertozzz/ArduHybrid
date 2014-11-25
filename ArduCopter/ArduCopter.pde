@@ -100,12 +100,12 @@
 #include <DataFlash.h>          // ArduPilot Mega Flash Memory Library
 #include <AP_ADC.h>             // ArduPilot Mega Analog to Digital Converter Library
 #include <AP_ADC_AnalogSource.h>
-#include <AP_Baro.h>
+#include <AP_Baro.h>        	// ArduPilot barometer library
 #include <AP_Compass.h>         // ArduPilot Mega Magnetometer Library
 #include <AP_Math.h>            // ArduPilot Mega Vector/Matrix math Library
 #include <AP_Curve.h>           // Curve used to linearlise throttle pwm to thrust
 #include <AP_InertialSensor.h>  // ArduPilot Mega Inertial Sensor (accel & gyro) Library
-#include <AP_AHRS.h>
+#include <AP_AHRS.h>         	// ArduPilot Mega DCM Library
 #include <APM_PI.h>             // PI library
 #include <AC_PID.h>             // PID library
 #include <RC_Channel.h>         // RC Channel Library
@@ -139,6 +139,7 @@
 
 // AP_HAL to Arduino compatibility layer
 #include "compat.h"
+
 // Configuration
 #include "defines.h"
 #include "config.h"
@@ -203,7 +204,6 @@ static DataFlash_File DataFlash("logs");
 #else
 static DataFlash_Empty DataFlash;
 #endif
-
 
 ////////////////////////////////////////////////////////////////////////////////
 // the rate we run the main loop at
@@ -420,6 +420,7 @@ static union {
 // This is the state of the flight control system
 // There are multiple states defined such as STABILIZE, ACRO,
 static int8_t control_mode = STABILIZE;
+
 // Used to maintain the state of the previous control switch position
 // This is set to -1 when we need to re-read the switch
 static uint8_t oldSwitchPosition;

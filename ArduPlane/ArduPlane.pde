@@ -28,69 +28,16 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #include <math.h>
-#include <stdarg.h>
 #include <stdio.h>
+#include <stdarg.h>
 
+// Common dependencies
 #include <AP_Common.h>
 #include <AP_Progmem.h>
-#include <AP_HAL.h>
 #include <AP_Menu.h>
 #include <AP_Param.h>
-#include <AP_GPS.h>         // ArduPilot GPS library
-#include <AP_Baro.h>        // ArduPilot barometer library
-#include <AP_Compass.h>     // ArduPilot Mega Magnetometer Library
-#include <AP_Math.h>        // ArduPilot Mega Vector/Matrix math Library
-#include <AP_ADC.h>         // ArduPilot Mega Analog to Digital Converter Library
-#include <AP_ADC_AnalogSource.h>
-#include <AP_InertialSensor.h> // Inertial Sensor Library
-#include <AP_AHRS.h>         // ArduPilot Mega DCM Library
-#include <RC_Channel.h>     // RC Channel Library
-#include <AP_RangeFinder.h>     // Range finder library
-#include <Filter.h>                     // Filter library
-#include <AP_Buffer.h>      // APM FIFO Buffer
-#include <AP_Relay.h>       // APM relay
-#include <AP_Camera.h>          // Photo or video camera
-#include <AP_Airspeed.h>
-
-#include <APM_OBC.h>
-#include <APM_Control.h>
-#include <GCS.h>
-#include <GCS_MAVLink.h>    // MAVLink GCS definitions
-#include <AP_Mount.h>           // Camera/Antenna mount
-#include <AP_Declination.h> // ArduPilot Mega Declination Helper Library
-#include <DataFlash.h>
-#include <SITL.h>
-#include <AP_Scheduler.h>       // main loop scheduler
-
-#include <AP_Navigation.h>
-#include <AP_L1_Control.h>
-#include <AP_RCMapper.h>        // RC input mapping library
-
-#include <AP_Vehicle.h>
-#include <AP_SpdHgtControl.h>
-#include <AP_TECS.h>
-
-#include <AP_Notify.h>      // Notify library
-#include <AP_BattMonitor.h> // Battery monitor library
-
-#include <AP_Arming.h>
-#include <AP_BoardConfig.h>
-#include <AP_ServoRelayEvents.h>
-
-// Pre-AP_HAL compatibility
-#include "compat.h"
-
-// Configuration
-#include "config.h"
-
-// Local modules
-#include "defines.h"
-
-// key aircraft parameters passed to multiple libraries
-static AP_Vehicle::FixedWing aparm;
-
-#include "Parameters.h"
-
+// AP_HAL
+#include <AP_HAL.h>
 #include <AP_HAL_AVR.h>
 #include <AP_HAL_AVR_SITL.h>
 #include <AP_HAL_PX4.h>
@@ -98,22 +45,75 @@ static AP_Vehicle::FixedWing aparm;
 #include <AP_HAL_Linux.h>
 #include <AP_HAL_Empty.h>
 
-AP_HAL::BetterStream* cliSerial;
-
-const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
-
-
-////////////////////////////////////////////////////////////////////////////////
-// Outback Challenge Failsafe Support
-////////////////////////////////////////////////////////////////////////////////
-#if OBC_FAILSAFE == ENABLED
-APM_OBC obc;
+// Application dependencies
+#include <GCS_MAVLink.h>        // MAVLink GCS definitions
+#include <AP_GPS.h>             // ArduPilot GPS library
+#include <DataFlash.h>          // ArduPilot Mega Flash Memory Library
+#include <AP_ADC.h>             // ArduPilot Mega Analog to Digital Converter Library
+#include <AP_ADC_AnalogSource.h>
+#include <AP_Baro.h>        	// ArduPilot barometer library
+#include <AP_Compass.h>         // ArduPilot Mega Magnetometer Library
+#include <AP_Math.h>            // ArduPilot Mega Vector/Matrix math Library
+#include <AP_InertialSensor.h>  // ArduPilot Mega Inertial Sensor (accel & gyro) Library
+#include <AP_AHRS.h>         	// ArduPilot Mega DCM Library
+#include <RC_Channel.h>         // RC Channel Library
+#include <AP_RangeFinder.h>     // Range finder library
+#include <Filter.h>             // Filter library
+#include <AP_Buffer.h>          // APM FIFO Buffer
+#include <AP_Relay.h>           // APM relay
+#include <AP_ServoRelayEvents.h>
+#include <AP_Camera.h>          // Photo or video camera
+#include <AP_Mount.h>           // Camera/Antenna mount
+#include <AP_Airspeed.h>        // needed for AHRS build
+#include <AP_Vehicle.h>         // needed for AHRS build
+#include <AP_Declination.h>     // ArduPilot Mega Declination Helper Library
+#include <SITL.h>               // software in the loop support
+#include <AP_Scheduler.h>       // main loop scheduler
+#include <AP_RCMapper.h>        // RC input mapping library
+#include <AP_Notify.h>          // Notify library
+#include <AP_BattMonitor.h>     // Battery monitor library
+#include <AP_BoardConfig.h>     // board configuration library
+#if EPM_ENABLED == ENABLED
+#include <AP_EPM.h>				// EPM cargo gripper stuff
 #endif
 
+#include <AP_Navigation.h>
+#include <AP_L1_Control.h>
+#include <AP_SpdHgtControl.h>
+#include <AP_TECS.h>
+#include <AP_Arming.h>
+
+// AP_HAL to Arduino compatibility layer
+#include "compat.h"
+
+// Configuration
+#include "defines.h"
+#include "config.h"
+
+// Local modules
+#include "Parameters.h"
+#include "GCS.h"
+#include <APM_OBC.h>
+#include <APM_Control.h>
+
+// key aircraft parameters passed to multiple libraries
+static AP_Vehicle::FixedWing aparm;
+
 ////////////////////////////////////////////////////////////////////////////////
-// the rate we run the main loop at
+// cliSerial
 ////////////////////////////////////////////////////////////////////////////////
-static const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
+// cliSerial isn't strictly necessary - it is an alias for hal.console. It may
+// be deprecated in favor of hal.console in later releases.
+static AP_HAL::BetterStream* cliSerial;
+
+// N.B. we need to keep a static declaration which isn't guarded by macros
+// at the top to cooperate with the prototype mangler.
+
+////////////////////////////////////////////////////////////////////////////////
+// AP_HAL instance
+////////////////////////////////////////////////////////////////////////////////
+
+const AP_HAL::HAL& hal = AP_HAL_BOARD_DRIVER;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Parameters
@@ -126,11 +126,8 @@ static Parameters g;
 // main loop scheduler
 static AP_Scheduler scheduler;
  
-// mapping between input channels
-static RCMapper rcmap;
-
-// board specific config
-static AP_BoardConfig BoardConfig;
+// AP_Notify instance
+static AP_Notify notify;
 
 // primary control channels
 static RC_Channel *channel_roll;
@@ -138,8 +135,6 @@ static RC_Channel *channel_pitch;
 static RC_Channel *channel_throttle;
 static RC_Channel *channel_rudder;
 
-// notification object for LEDs, buzzers etc (parameter set to false disables external leds)
-static AP_Notify notify;
 
 ////////////////////////////////////////////////////////////////////////////////
 // prototypes
@@ -147,15 +142,13 @@ static void update_events(void);
 void gcs_send_text_fmt(const prog_char_t *fmt, ...);
 static void print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode);
 
-
 ////////////////////////////////////////////////////////////////////////////////
-// DataFlash
+// Dataflash
 ////////////////////////////////////////////////////////////////////////////////
-#if LOGGING_ENABLED == ENABLED
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM1
-static DataFlash_APM1 DataFlash;
-#elif CONFIG_HAL_BOARD == HAL_BOARD_APM2
+#if CONFIG_HAL_BOARD == HAL_BOARD_APM2
 static DataFlash_APM2 DataFlash;
+#elif CONFIG_HAL_BOARD == HAL_BOARD_APM1
+static DataFlash_APM1 DataFlash;
 #elif CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
 static DataFlash_File DataFlash("logs");
 //static DataFlash_SITL DataFlash;
@@ -164,10 +157,14 @@ static DataFlash_File DataFlash("/fs/microsd/APM/LOGS");
 #elif CONFIG_HAL_BOARD == HAL_BOARD_LINUX
 static DataFlash_File DataFlash("logs");
 #else
-// no dataflash driver
-DataFlash_Empty DataFlash;
+static DataFlash_Empty DataFlash;
 #endif
-#endif
+
+////////////////////////////////////////////////////////////////////////////////
+// the rate we run the main loop at
+////////////////////////////////////////////////////////////////////////////////
+static const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
+
 
 // has a log download started?
 static bool in_log_download;
@@ -193,7 +190,7 @@ static int32_t pitch_limit_min_cd;
 static GPS         *g_gps;
 
 // flight modes convenience array
-static AP_Int8          *flight_modes = &g.flight_mode1;
+static AP_Int8 *flight_modes = &g.flight_mode1;
 
 #if CONFIG_BARO == AP_BARO_BMP085
 static AP_Baro_BMP085 barometer;
@@ -296,6 +293,13 @@ static bool training_manual_pitch; // user has manual pitch control
 static bool guided_throttle_passthru;
 
 ////////////////////////////////////////////////////////////////////////////////
+// Outback Challenge Failsafe Support
+////////////////////////////////////////////////////////////////////////////////
+#if OBC_FAILSAFE == ENABLED
+APM_OBC obc;
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
 // GCS selection
 ////////////////////////////////////////////////////////////////////////////////
 static const uint8_t num_gcs = MAVLINK_COMM_NUM_BUFFERS;
@@ -365,6 +369,13 @@ static enum FlightMode control_mode  = INITIALISING;
 // Used to maintain the state of the previous control switch position
 // This is set to 254 when we need to re-read the switch
 static uint8_t oldSwitchPosition = 254;
+static RCMapper rcmap;
+
+// board specific config
+static AP_BoardConfig BoardConfig;
+
+// receiver RSSI
+static uint8_t receiver_rssi;
 
 // This is used to enable the inverted flight feature
 static bool inverted_flight     = false;
@@ -476,8 +487,7 @@ static int16_t airspeed_nudge_cm;
 // 0-(throttle_max - throttle_cruise) : throttle nudge in Auto mode using top 1/2 of throttle stick travel
 static int16_t throttle_nudge = 0;
 
-// receiver RSSI
-static uint8_t receiver_rssi;
+
 
 
 ////////////////////////////////////////////////////////////////////////////////
