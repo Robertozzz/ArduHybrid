@@ -268,16 +268,6 @@ AP_GPS_None     g_gps_driver;
 
 static AP_AHRS_DCM ahrs(ins, g_gps);
 
-static AP_L1_Control L1_controller(ahrs);
-static AP_TECS TECS_controller(ahrs, aparm);
-
-// Attitude to servo controllers
-static AP_RollController  rollController(ahrs, aparm);
-static AP_PitchController pitchController(ahrs, aparm);
-static AP_YawController   yawController(ahrs, aparm);
-static AP_SteerController steerController(ahrs);
-
-
 #elif HIL_MODE == HIL_MODE_SENSORS
 // sensor emulators
 static AP_ADC_HIL              adc;
@@ -310,6 +300,15 @@ static SITL sitl;
  #error Unrecognised HIL_MODE setting.
 #endif // HIL MODE
 
+static AP_L1_Control L1_controller(ahrs);
+static AP_TECS TECS_controller(ahrs, aparm);
+
+// Attitude to servo controllers
+static AP_RollController  rollController(ahrs, aparm);
+static AP_PitchController pitchController(ahrs, aparm);
+static AP_YawController   yawController(ahrs, aparm);
+static AP_SteerController steerController(ahrs);
+
 
 // Training mode
 static bool training_manual_roll;  // user has manual roll control
@@ -319,23 +318,10 @@ static bool training_manual_pitch; // user has manual pitch control
 static bool guided_throttle_passthru;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Outback Challenge Failsafe Support
-////////////////////////////////////////////////////////////////////////////////
-#if OBC_FAILSAFE == ENABLED
-APM_OBC obc;
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
 // GCS selection
 ////////////////////////////////////////////////////////////////////////////////
 static const uint8_t num_gcs = MAVLINK_COMM_NUM_BUFFERS;
 static GCS_MAVLINK gcs[MAVLINK_COMM_NUM_BUFFERS];
-
-// selected navigation controller
-static AP_Navigation *nav_controller = &L1_controller;
-
-// selected navigation controller
-static AP_SpdHgtControl *SpdHgt_Controller = &TECS_controller;
 
 ////////////////////////////////////////////////////////////////////////////////
 // SONAR selection
@@ -349,9 +335,6 @@ static AP_RangeFinder_analog sonar;
 ////////////////////////////////////////////////////////////////////////////////
 // Global variables
 ////////////////////////////////////////////////////////////////////////////////
-
-// remember if USB is connected, so we can adjust baud rate
-static bool usb_connected;
 
 /* Radio values
  *               Channel assignments
@@ -367,7 +350,7 @@ static bool usb_connected;
  *               See libraries/RC_Channel/RC_Channel_aux.h for more information
  */
 
- ////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 // Radio
 ////////////////////////////////////////////////////////////////////////////////
 // This is the state of the flight control system
@@ -408,39 +391,17 @@ static struct {
 // Failsafe
 ////////////////////////////////////////////////////////////////////////////////
 static struct {
-    // A flag if GCS joystick control is in use
-    uint8_t rc_override_active:1;
-
-    // Used to track if the value on channel 3 (throtttle) has fallen below the failsafe threshold
-    // RC receiver should be set up to output a low throttle value when signal is lost
-    uint8_t ch3_failsafe:1;
-
-    // has the saved mode for failsafe been set?
-    uint8_t saved_mode_set:1;
-
-    // flag to hold whether battery low voltage threshold has been breached
-    uint8_t low_battery:1;
-
-    // saved flight mode
-    enum FlightMode saved_mode;
-
-    // A tracking variable for type of failsafe active
-    // Used for failsafe based on loss of RC signal or GCS signal
-    int16_t state;
-
-    // number of low ch3 values
-    uint8_t ch3_counter;
-
-    // the time when the last HEARTBEAT message arrived from a GCS
-    uint32_t last_heartbeat_ms;
-
-    // A timer used to track how long we have been in a "short failsafe" condition due to loss of RC signal
-    uint32_t ch3_timer_ms;
-
+    uint8_t rc_override_active:1; 	// A flag if GCS joystick control is in use
+    uint8_t ch3_failsafe:1; 		// Used to track if the value on channel 3 (throtttle) has fallen below the failsafe threshold
+    uint8_t saved_mode_set:1; 		// has the saved mode for failsafe been set?
+    uint8_t low_battery:1; 			// flag to hold whether battery low voltage threshold has been breached
+    enum FlightMode saved_mode;		// saved flight mode
+    int16_t state;					// A tracking variable for type of failsafe active, Used for failsafe based on loss of RC signal or GCS signal
+    uint8_t ch3_counter;			// number of low ch3 values
+    uint32_t last_heartbeat_ms;		// the time when the last HEARTBEAT message arrived from a GCS
+    uint32_t ch3_timer_ms;			// A timer used to track how long we have been in a "short failsafe" condition due to loss of RC signal
     uint32_t last_valid_rc_ms;
-
-    // last RADIO status packet
-    uint32_t last_radio_status_remrssi_ms;
+    uint32_t last_radio_status_remrssi_ms;// last RADIO status packet
 } failsafe;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -449,7 +410,7 @@ static struct {
 // This is used to scale GPS values for EEPROM storage
 // 10^7 times Decimal GPS means 1 == 1cm
 // This approximation makes calculations integer and it's easy to read
-static const float t7                        = 10000000.0;
+static const float t7 = 10000000.0;
 // We use atan2 and other trig techniques to calaculate angles
 // A counter used to count down valid gps fixes to allow the gps estimate to settle
 // before recording our home position (and executing a ground start if we booted with an air start)
@@ -458,13 +419,14 @@ static uint8_t ground_start_count      = 5;
 // on the ground or in the air.  Used to decide if a ground start is appropriate if we
 // booted with an air start.
 static int16_t ground_start_avg;
-
 // true if we have a position estimate from AHRS
 static bool have_position;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Location & Navigation
 ////////////////////////////////////////////////////////////////////////////////
+// Distance between plane and next waypoint.  Meters !!!!!!!!!!!!!!
+static uint32_t wp_distance;
 
 // There may be two active commands in Auto mode.
 // This indicates the active navigation command by index number
@@ -476,38 +438,112 @@ static uint8_t nav_command_ID          = NO_COMMAND;
 static uint8_t non_nav_command_ID      = NO_COMMAND;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Analog Inputs
+// 3D Location vectors
 ////////////////////////////////////////////////////////////////////////////////
-
-// a pin for reading the receiver RSSI voltage. 
-static AP_HAL::AnalogSource *rssi_analog_source;
-
-static AP_HAL::AnalogSource *board_vcc_analog_source;
-
-
+// home location is stored when we have a good GPS lock and arm the copter
+// Can be reset each the copter is re-armed
+static struct   Location home;
+// Flag for if we have g_gps lock and have set the home location
+static bool home_is_set;
+// The location of the previous waypoint.  Used for track following and altitude ramp calculations
+static struct   Location prev_WP;
+// The plane's current location
+static struct   Location current_loc;
+// The location of the current/active waypoint.  Used for altitude ramp, track following and loiter calculations.
+static struct   Location next_WP;
+// The location of the active waypoint in Guided mode.
+static struct   Location guided_WP;
+// The location structure information from the Nav command being processed
+static struct   Location next_nav_command;
+// The location structure information from the Non-Nav command being processed
+static struct   Location next_nonnav_command;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Relay
 ////////////////////////////////////////////////////////////////////////////////
 static AP_Relay relay;
-
 // handle servo and relay events
 static AP_ServoRelayEvents ServoRelayEvents(relay);
 
-// Camera
+//Reference to the camera object (it uses the relay object inside it)
 #if CAMERA == ENABLED
-static AP_Camera camera(&relay);
+  static AP_Camera camera(&relay);
 #endif
 
+////////////////////////////////////////////////////////////////////////////////
+// Battery Sensors
+////////////////////////////////////////////////////////////////////////////////
+static AP_BattMonitor battery;
 
+// a pin for reading the receiver RSSI voltage. 
+static AP_HAL::AnalogSource* rssi_analog_source;
 
+// Input sources for battery voltage, battery current, board vcc
+static AP_HAL::AnalogSource* board_vcc_analog_source;
 
+////////////////////////////////////////////////////////////////////////////////
+// flight mode specific
+////////////////////////////////////////////////////////////////////////////////
+// Flag for using gps ground course instead of INS yaw.  Set false when takeoff command in process.
+static bool takeoff_complete    = true;
+// Flag to indicate if we have landed.
+//Set land_complete if we are within 2 seconds distance or within 3 meters altitude of touchdown
+static bool land_complete;
+// Altitude threshold to complete a takeoff command in autonomous modes.  Centimeters
+static int32_t takeoff_altitude_cm;
 
+// Minimum pitch to hold during takeoff command execution.  Hundredths of a degree
+static int16_t takeoff_pitch_cd;
 
+// true if we are in an auto-throttle mode, which means
+// we need to run the speed/height controller
+static bool auto_throttle_mode;
 
+// this controls throttle suppression in auto modes
+static bool throttle_suppressed;
 
+////////////////////////////////////////////////////////////////////////////////
+// Conditional command
+////////////////////////////////////////////////////////////////////////////////
+// A value used in condition commands (eg delay, change alt, etc.)
+// For example in a change altitude command, it is the altitude to change to.
+static int32_t condition_value;  // used in condition commands (eg delay, change alt, etc.)
+// A starting value used to check the status of a conditional command.
+// For example in a delay command the condition_start records that start time for the delay
+static uint32_t condition_start;
 
+////////////////////////////////////////////////////////////////////////////////
+// IMU variables
+////////////////////////////////////////////////////////////////////////////////
+// Integration time (in seconds) for the gyros (DCM algorithm)
+// Updated with the fast loop
+static float G_Dt                                               = 0.02f;
+// A value used in condition commands.  For example the rate at which to change altitude.
+static int16_t condition_rate;
 
+////////////////////////////////////////////////////////////////////////////////
+// System Timers
+////////////////////////////////////////////////////////////////////////////////
+// Time in microseconds of start of main control loop
+static uint32_t fast_loopTimer_us;
+// Counter of main loop executions.  Used for performance monitoring and failsafe processing
+static uint16_t mainLoop_count;
+// Number of milliseconds used in last main loop cycle
+static uint32_t delta_us_fast_loop;
+
+// Camera/Antenna mount tracking and stabilisation stuff
+// --------------------------------------
+#if MOUNT == ENABLED
+// current_loc uses the baro/gps soloution for altitude rather than gps only.
+// mabe one could use current_loc for lat/lon too and eliminate g_gps alltogether?
+static AP_Mount camera_mount(&current_loc, g_gps, ahrs, 0);
+#endif
+
+#if MOUNT2 == ENABLED
+// current_loc uses the baro/gps soloution for altitude rather than gps only.
+// mabe one could use current_loc for lat/lon too and eliminate g_gps alltogether?
+static AP_Mount camera_mount2(&current_loc, g_gps, ahrs, 1);
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 // Airspeed
@@ -527,9 +563,6 @@ static int16_t airspeed_nudge_cm;
 // 0-(throttle_max - throttle_cruise) : throttle nudge in Auto mode using top 1/2 of throttle stick travel
 static int16_t throttle_nudge = 0;
 
-
-
-
 ////////////////////////////////////////////////////////////////////////////////
 // Ground speed
 ////////////////////////////////////////////////////////////////////////////////
@@ -538,11 +571,6 @@ static int32_t groundspeed_undershoot = 0;
 
 // Difference between current altitude and desired altitude.  Centimeters
 static int32_t altitude_error_cm;
-
-////////////////////////////////////////////////////////////////////////////////
-// Battery Sensors
-////////////////////////////////////////////////////////////////////////////////
-static AP_BattMonitor battery;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Airspeed Sensors
@@ -585,32 +613,6 @@ static struct {
 	hold_course_cd : -1,
 };
 
-
-////////////////////////////////////////////////////////////////////////////////
-// flight mode specific
-////////////////////////////////////////////////////////////////////////////////
-// Flag for using gps ground course instead of INS yaw.  Set false when takeoff command in process.
-static bool takeoff_complete    = true;
-// Flag to indicate if we have landed.
-//Set land_complete if we are within 2 seconds distance or within 3 meters altitude of touchdown
-static bool land_complete;
-// Altitude threshold to complete a takeoff command in autonomous modes.  Centimeters
-static int32_t takeoff_altitude_cm;
-
-// Minimum pitch to hold during takeoff command execution.  Hundredths of a degree
-static int16_t takeoff_pitch_cd;
-
-// true if we are in an auto-throttle mode, which means
-// we need to run the speed/height controller
-static bool auto_throttle_mode;
-
-// this controls throttle suppression in auto modes
-static bool throttle_suppressed;
-
-////////////////////////////////////////////////////////////////////////////////
-// Loiter management
-////////////////////////////////////////////////////////////////////////////////
-
 ////////////////////////////////////////////////////////////////////////////////
 // Navigation control variables
 ////////////////////////////////////////////////////////////////////////////////
@@ -623,9 +625,6 @@ static int32_t nav_pitch_cd;
 ////////////////////////////////////////////////////////////////////////////////
 // Waypoint distances
 ////////////////////////////////////////////////////////////////////////////////
-// Distance between plane and next waypoint.  Meters
-static uint32_t wp_distance;
-
 // Distance between previous and next waypoint.  Meters
 static uint32_t wp_totalDistance;
 
@@ -652,40 +651,6 @@ static struct {
     uint32_t time_max_ms;
 } loiter;
 
-
-////////////////////////////////////////////////////////////////////////////////
-// Conditional command
-////////////////////////////////////////////////////////////////////////////////
-// A value used in condition commands (eg delay, change alt, etc.)
-// For example in a change altitude command, it is the altitude to change to.
-static int32_t condition_value;
-// A starting value used to check the status of a conditional command.
-// For example in a delay command the condition_start records that start time for the delay
-static uint32_t condition_start;
-// A value used in condition commands.  For example the rate at which to change altitude.
-static int16_t condition_rate;
-
-////////////////////////////////////////////////////////////////////////////////
-// 3D Location vectors
-// Location structure defined in AP_Common
-////////////////////////////////////////////////////////////////////////////////
-// The home location used for RTL.  The location is set when we first get stable GPS lock
-static struct   Location home;
-// Flag for if we have g_gps lock and have set the home location
-static bool home_is_set;
-// The location of the previous waypoint.  Used for track following and altitude ramp calculations
-static struct   Location prev_WP;
-// The plane's current location
-static struct   Location current_loc;
-// The location of the current/active waypoint.  Used for altitude ramp, track following and loiter calculations.
-static struct   Location next_WP;
-// The location of the active waypoint in Guided mode.
-static struct   Location guided_WP;
-// The location structure information from the Nav command being processed
-static struct   Location next_nav_command;
-// The location structure information from the Non-Nav command being processed
-static struct   Location next_nonnav_command;
-
 ////////////////////////////////////////////////////////////////////////////////
 // Altitude / Climb rate control
 ////////////////////////////////////////////////////////////////////////////////
@@ -693,13 +658,6 @@ static struct   Location next_nonnav_command;
 static int32_t target_altitude_cm;
 // Altitude difference between previous and current waypoint.  Centimeters
 static int32_t offset_altitude_cm;
-
-////////////////////////////////////////////////////////////////////////////////
-// INS variables
-////////////////////////////////////////////////////////////////////////////////
-// The main loop execution time.  Seconds
-//This is the time between calls to the DCM algorithm and is the Integration time for the gyros.
-static float G_Dt                                               = 0.02f;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
@@ -712,40 +670,32 @@ static uint32_t G_Dt_max = 0;
 static uint8_t gps_fix_count = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
-// System Timers
-////////////////////////////////////////////////////////////////////////////////
-// Time in microseconds of start of main control loop
-static uint32_t fast_loopTimer_us;
-
-// Number of milliseconds used in last main loop cycle
-static uint32_t delta_us_fast_loop;
-
-// Counter of main loop executions.  Used for performance monitoring and failsafe processing
-static uint16_t mainLoop_count;
-
-// Camera/Antenna mount tracking and stabilisation stuff
-// --------------------------------------
-#if MOUNT == ENABLED
-// current_loc uses the baro/gps soloution for altitude rather than gps only.
-// mabe one could use current_loc for lat/lon too and eliminate g_gps alltogether?
-static AP_Mount camera_mount(&current_loc, g_gps, ahrs, 0);
-#endif
-
-#if MOUNT2 == ENABLED
-// current_loc uses the baro/gps soloution for altitude rather than gps only.
-// mabe one could use current_loc for lat/lon too and eliminate g_gps alltogether?
-static AP_Mount camera_mount2(&current_loc, g_gps, ahrs, 1);
-#endif
-
-////////////////////////////////////////////////////////////////////////////////
 // Arming/Disarming mangement class
 ////////////////////////////////////////////////////////////////////////////////
 static AP_Arming arming(ahrs, barometer, home_is_set, gcs_send_text_P);
 
 ////////////////////////////////////////////////////////////////////////////////
+// Outback Challenge Failsafe Support
+////////////////////////////////////////////////////////////////////////////////
+#if OBC_FAILSAFE == ENABLED
+APM_OBC obc;
+#endif
+
+// selected navigation controller
+static AP_Navigation *nav_controller = &L1_controller;
+
+// selected navigation controller
+static AP_SpdHgtControl *SpdHgt_Controller = &TECS_controller;
+
+// remember if USB is connected, so we can adjust baud rate
+static bool usb_connected;
+
+////////////////////////////////////////////////////////////////////////////////
 // Top-level logic
 ////////////////////////////////////////////////////////////////////////////////
 
+// setup the var_info table
+AP_Param param_loader(var_info, WP_START_BYTE);
 /*
   scheduler table - all regular tasks are listed here, along with how
   often they should be called (in 20ms units) and the maximum time
@@ -790,13 +740,12 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
     { update_logging2,        5,   1700 },
 };
 
-// setup the var_info table
-AP_Param param_loader(var_info, WP_START_BYTE);
+
 
 void setup() {
     cliSerial = hal.console;
 
-    // load the default values of variables listed in var_info[]
+    // Load the default values of variables listed in var_info[]
     AP_Param::setup_sketch_defaults();
 
     AP_Notify::flags.failsafe_battery = false;
@@ -805,6 +754,24 @@ void setup() {
 
     // initialise the main loop scheduler
     scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
+}
+
+/*
+  if the compass is enabled then try to accumulate a reading
+ */
+static void compass_accumulate(void)
+{
+    if (g.compass_enabled) {
+        compass.accumulate();
+    }
+}
+
+/*
+  try to accumulate a baro reading
+ */
+static void barometer_accumulate(void)
+{
+    barometer.accumulate();
 }
 
 void loop()
@@ -839,6 +806,24 @@ void loop()
     scheduler.run(remaining);
 }
 
+/*
+  update camera mount
+ */
+static void update_mount(void)
+{
+#if MOUNT == ENABLED
+    camera_mount.update_mount_position();
+#endif
+
+#if MOUNT2 == ENABLED
+    camera_mount2.update_mount_position();
+#endif
+
+#if CAMERA == ENABLED
+    camera.trigger_pic_cleanup();
+#endif
+}
+ 
 // update AHRS system
 static void ahrs_update()
 {
@@ -874,23 +859,6 @@ static void update_speed_height(void)
 }
 
 
-/*
-  update camera mount
- */
-static void update_mount(void)
-{
-#if MOUNT == ENABLED
-    camera_mount.update_mount_position();
-#endif
-
-#if MOUNT2 == ENABLED
-    camera_mount2.update_mount_position();
-#endif
-
-#if CAMERA == ENABLED
-    camera.trigger_pic_cleanup();
-#endif
-}
 
 /*
   read and update compass
@@ -908,23 +876,6 @@ static void update_compass(void)
     }
 }
 
-/*
-  if the compass is enabled then try to accumulate a reading
- */
-static void compass_accumulate(void)
-{
-    if (g.compass_enabled) {
-        compass.accumulate();
-    }    
-}
-
-/*
-  try to accumulate a baro reading
- */
-static void barometer_accumulate(void)
-{
-    barometer.accumulate();
-}
 
 /*
   do 10Hz logging
