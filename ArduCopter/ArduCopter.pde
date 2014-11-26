@@ -137,6 +137,12 @@
 #include <AP_EPM.h>				// EPM cargo gripper stuff
 #endif
 
+#include <AP_Navigation.h>		// Plane
+#include <AP_L1_Control.h>		// Plane
+#include <AP_SpdHgtControl.h>	// Plane
+#include <AP_TECS.h>			// Plane
+#include <AP_Arming.h>			// Plane
+
 // AP_HAL to Arduino compatibility layer
 #include "compat.h"
 
@@ -148,6 +154,11 @@
 // Local modules
 #include "Parameters.h"
 #include "GCS.h"
+#include <APM_OBC.h>			// Plane
+#include <APM_Control.h>		// Plane
+
+// key aircraft parameters passed to multiple libraries
+static AP_Vehicle::FixedWing aparm;	// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // cliSerial
@@ -179,6 +190,11 @@ static AP_Scheduler scheduler;
 // AP_Notify instance
 static AP_Notify notify;
 
+// primary control channels
+static RC_Channel *channel_roll;		// Plane
+static RC_Channel *channel_pitch;		// Plane
+static RC_Channel *channel_throttle;	// Plane
+static RC_Channel *channel_rudder;		// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // prototypes

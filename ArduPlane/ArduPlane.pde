@@ -77,11 +77,11 @@
 #include <AP_EPM.h>				// EPM cargo gripper stuff
 #endif
 
-#include <AP_Navigation.h>
-#include <AP_L1_Control.h>
-#include <AP_SpdHgtControl.h>
-#include <AP_TECS.h>
-#include <AP_Arming.h>
+#include <AP_Navigation.h>		// Plane
+#include <AP_L1_Control.h>		// Plane
+#include <AP_SpdHgtControl.h>	// Plane
+#include <AP_TECS.h>			// Plane
+#include <AP_Arming.h>			// Plane
 
 // AP_HAL to Arduino compatibility layer
 #include "compat.h"
@@ -93,11 +93,11 @@
 // Local modules
 #include "Parameters.h"
 #include "GCS.h"
-#include <APM_OBC.h>
-#include <APM_Control.h>
+#include <APM_OBC.h>			// Plane
+#include <APM_Control.h>		// Plane
 
 // key aircraft parameters passed to multiple libraries
-static AP_Vehicle::FixedWing aparm;
+static AP_Vehicle::FixedWing aparm; // Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // cliSerial
@@ -326,6 +326,12 @@ static GCS_MAVLINK gcs[MAVLINK_COMM_NUM_BUFFERS];
 ////////////////////////////////////////////////////////////////////////////////
 // SONAR selection
 ////////////////////////////////////////////////////////////////////////////////
+ModeFilterInt16_Size3 sonar_mode_filter(1);
+#if CONFIG_SONAR == ENABLED
+static AP_HAL::AnalogSource *sonar_analog_source;
+static AP_RangeFinder_MaxsonarXL *sonar;
+#endif
+
 static AP_RangeFinder_analog sonar;
 
 ////////////////////////////////////////////////////////////////////////////////
