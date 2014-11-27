@@ -343,7 +343,7 @@ static bool verify_land()
 
     // Set land_complete if we are within 2 seconds distance or within
     // 3 meters altitude of the landing point
-    if ((wp_distance <= (g.land_flare_sec*g_gps->ground_speed_cm*0.01f))
+    if ((plane_wp_distance <= (g.land_flare_sec*g_gps->ground_speed_cm*0.01f))
         || (adjusted_altitude_cm() <= next_WP.alt + g.land_flare_alt*100)) {
 
         land_complete = true;
@@ -389,7 +389,7 @@ static bool verify_nav_wp()
     nav_controller->update_waypoint(prev_WP, next_WP);
 
     // see if the user has specified a maximum distance to waypoint
-    if (g.waypoint_max_radius > 0 && wp_distance > (uint16_t)g.waypoint_max_radius) {
+    if (g.waypoint_max_radius > 0 && plane_wp_distance > (uint16_t)g.waypoint_max_radius) {
         if (location_passed_point(current_loc, prev_WP, next_WP)) {
             // this is needed to ensure completion of the waypoint
             prev_WP = current_loc;
@@ -397,7 +397,7 @@ static bool verify_nav_wp()
         return false;
     }
     
-    if (wp_distance <= nav_controller->turn_distance(g.waypoint_radius)) {
+    if (plane_wp_distance <= nav_controller->turn_distance(g.waypoint_radius)) {
         gcs_send_text_fmt(PSTR("Reached Waypoint #%i dist %um"),
                           (unsigned)nav_command_index,
                           (unsigned)get_distance(current_loc, next_WP));
@@ -451,7 +451,7 @@ static bool verify_loiter_turns()
 static bool verify_RTL()
 {
     update_loiter();
-	if (wp_distance <= (uint32_t)max(g.waypoint_radius,0) || 
+	if (plane_wp_distance <= (uint32_t)max(g.waypoint_radius,0) || 
         nav_controller->reached_loiter_target()) {
 			gcs_send_text_P(SEVERITY_LOW,PSTR("Reached home"));
 			return true;
@@ -513,7 +513,7 @@ static bool verify_change_alt()
 
 static bool verify_within_distance()
 {
-    if (wp_distance < max(condition_value,0)) {
+    if (plane_wp_distance < max(condition_value,0)) {
         condition_value = 0;
         return true;
     }

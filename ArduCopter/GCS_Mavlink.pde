@@ -12,12 +12,8 @@ static bool mavlink_active;
 // true if we are out of time in our event timeslice
 static bool	gcs_out_of_time;
 
-
 // check if a message will fit in the payload space available
 #define CHECK_PAYLOAD_SIZE(id) if (payload_space < MAVLINK_MSG_ID_ ## id ## _LEN) return false
-
-// prototype this for use inside the GCS class
-static void gcs_send_text_fmt(const prog_char_t *fmt, ...);
 
 static void gcs_send_heartbeat(void)
 {

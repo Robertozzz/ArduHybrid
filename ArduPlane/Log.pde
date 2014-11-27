@@ -337,7 +337,7 @@ struct PACKED log_Nav_Tuning {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
     uint16_t yaw;
-    uint32_t wp_distance;
+    uint32_t plane_wp_distance;
     uint16_t target_bearing_cd;
     uint16_t nav_bearing_cd;
     int16_t altitude_error_cm;
@@ -353,7 +353,7 @@ static void Log_Write_Nav_Tuning()
         LOG_PACKET_HEADER_INIT(LOG_NTUN_MSG),
         time_ms             : hal.scheduler->millis(),
         yaw                 : (uint16_t)ahrs.yaw_sensor,
-        wp_distance         : wp_distance,
+        plane_wp_distance         : plane_wp_distance,
         target_bearing_cd   : (uint16_t)nav_controller->target_bearing_cd(),
         nav_bearing_cd      : (uint16_t)nav_controller->nav_bearing_cd(),
         altitude_error_cm   : (int16_t)altitude_error_cm,

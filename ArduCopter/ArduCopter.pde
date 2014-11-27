@@ -194,13 +194,14 @@ static AP_Notify notify;
 static RC_Channel *channel_roll;		// Plane
 static RC_Channel *channel_pitch;		// Plane
 static RC_Channel *channel_throttle;	// Plane
-static RC_Channel *channel_rudder;		// Plane
+static RC_Channel *channel_rudder;		// Plane 
 
 ////////////////////////////////////////////////////////////////////////////////
 // prototypes
 ////////////////////////////////////////////////////////////////////////////////
 static void update_events(void);
 static void print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode);
+static void gcs_send_text_fmt(const prog_char_t *fmt, ...);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Dataflash
@@ -224,6 +225,13 @@ static DataFlash_Empty DataFlash;
 // the rate we run the main loop at
 ////////////////////////////////////////////////////////////////////////////////
 static const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_100HZ;
+
+// has a log download started?
+static bool in_log_download;			// Plane
+
+// scaled roll limit based on pitch
+static int32_t roll_limit_cd;			// Plane
+static int32_t pitch_limit_min_cd;		// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // Sensors
@@ -353,6 +361,23 @@ static SITL sitl;
  #error Unrecognised HIL_MODE setting.
 #endif // HIL MODE
 
+static AP_L1_Control L1_controller(ahrs);				// Plane
+static AP_TECS TECS_controller(ahrs, aparm);			// Plane
+
+// Attitude to servo controllers
+static AP_RollController  rollController(ahrs, aparm);	// Plane
+static AP_PitchController pitchController(ahrs, aparm);	// Plane
+static AP_YawController   yawController(ahrs, aparm);	// Plane
+static AP_SteerController steerController(ahrs);		// Plane
+
+
+// Training mode
+static bool training_manual_roll;						// Plane
+static bool training_manual_pitch;						// Plane
+
+// should throttle be pass-thru in guided?
+static bool guided_throttle_passthru;					// Plane
+
 ////////////////////////////////////////////////////////////////////////////////
 // GCS selection
 ////////////////////////////////////////////////////////////////////////////////
@@ -439,6 +464,25 @@ static AP_BoardConfig BoardConfig;
 // receiver RSSI
 static uint8_t receiver_rssi;
 
+// This is used to enable the inverted flight feature
+static bool inverted_flight     = false;	// Plane
+
+static struct {								// Plane
+    // These are trim values used for elevon control
+    // For elevons radio_in[CH_ROLL] and radio_in[CH_PITCH] are
+    // equivalent aileron and elevator, not left and right elevon
+    uint16_t trim1;
+    uint16_t trim2;
+    // These are used in the calculation of elevon1_trim and elevon2_trim
+    uint16_t ch1_temp;
+    uint16_t ch2_temp;
+} elevon = {								// Plane
+	trim1 : 1500,
+    trim2 : 1500,
+    ch1_temp : 1500,
+    ch2_temp : 1500
+};											// END Plane
+
 ////////////////////////////////////////////////////////////////////////////////
 // Failsafe
 ////////////////////////////////////////////////////////////////////////////////
@@ -465,6 +509,13 @@ static const float t7 = 10000000.0;
 static float scaleLongUp = 1;
 // Sometimes we need to remove the scaling for distance calcs
 static float scaleLongDown = 1;
+// Used to compute a speed estimate from the first valid gps fixes to decide if we are
+// on the ground or in the air.  Used to decide if a ground start is appropriate if we
+// booted with an air start.
+static int16_t ground_start_avg;		// Plane
+// true if we have a position estimate from AHRS
+static bool have_position;				// Plane
+
 ////////////////////////////////////////////////////////////////////////////////
 // Location & Navigation
 ////////////////////////////////////////////////////////////////////////////////
@@ -478,10 +529,17 @@ static int32_t home_bearing;
 static int32_t home_distance;
 // distance between plane and next waypoint in cm.
 static uint32_t wp_distance;
+// Plane Distance between plane and next waypoint.  
+static uint32_t plane_wp_distance;								// Plane
 // navigation mode - options include NAV_NONE, NAV_LOITER, NAV_CIRCLE, NAV_WP
 static uint8_t nav_mode;
 // Register containing the index of the current navigation command in the mission script
 static int16_t command_nav_index;
+// There may be two active commands in Auto mode.
+// This indicates the active navigation command by index number
+static uint8_t nav_command_index; 								// Plane
+// This indicates the active non-navigation command by index number
+static uint8_t non_nav_command_index;							// Plane
 // Register containing the index of the previous navigation command in the mission script
 // Used to manage the execution of conditional commands
 static uint8_t prev_nav_index;
@@ -497,6 +555,9 @@ static int16_t control_roll;            // desired roll angle of copter in centi
 static int16_t control_pitch;           // desired pitch angle of copter in centi-degrees
 static uint8_t rtl_state;               // records state of rtl (initial climb, returning home, etc)
 static uint8_t land_state;              // records state of land (flying to location, descending)
+// This is the command type (eg navigate to waypoint) of the active navigation command
+static uint8_t nav_command_ID          = NO_COMMAND;	// Plane
+static uint8_t non_nav_command_ID      = NO_COMMAND;	// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // 3D Location vectors

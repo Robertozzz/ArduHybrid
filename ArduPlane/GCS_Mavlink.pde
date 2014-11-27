@@ -15,6 +15,8 @@ static bool	gcs_out_of_time;
 // check if a message will fit in the payload space available
 #define CHECK_PAYLOAD_SIZE(id) if (payload_space < MAVLINK_MSG_ID_ ## id ## _LEN) return false
 
+// prototype this for use inside the GCS class
+
 /*
  *  !!NOTE!!
  *
@@ -276,7 +278,7 @@ static void NOINLINE send_nav_controller_output(mavlink_channel_t chan)
         nav_pitch_cd * 0.01,
         nav_controller->nav_bearing_cd() * 0.01f,
         nav_controller->target_bearing_cd() * 0.01f,
-        wp_distance,
+        plane_wp_distance,
         altitude_error_cm * 0.01,
         airspeed_error_cm,
         nav_controller->crosstrack_error());

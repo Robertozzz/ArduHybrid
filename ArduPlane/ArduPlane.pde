@@ -97,7 +97,7 @@
 #include <APM_Control.h>		// Plane
 
 // key aircraft parameters passed to multiple libraries
-static AP_Vehicle::FixedWing aparm; // Plane
+static AP_Vehicle::FixedWing aparm;	// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // cliSerial
@@ -130,17 +130,17 @@ static AP_Scheduler scheduler;
 static AP_Notify notify;
 
 // primary control channels
-static RC_Channel *channel_roll;
-static RC_Channel *channel_pitch;
-static RC_Channel *channel_throttle;
-static RC_Channel *channel_rudder;
+static RC_Channel *channel_roll;		// Plane
+static RC_Channel *channel_pitch;		// Plane
+static RC_Channel *channel_throttle;	// Plane
+static RC_Channel *channel_rudder;		// Plane 
 
 ////////////////////////////////////////////////////////////////////////////////
 // prototypes
 ////////////////////////////////////////////////////////////////////////////////
 static void update_events(void);
-void gcs_send_text_fmt(const prog_char_t *fmt, ...);
 static void print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode);
+static void gcs_send_text_fmt(const prog_char_t *fmt, ...);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Dataflash
@@ -165,13 +165,12 @@ static DataFlash_Empty DataFlash;
 ////////////////////////////////////////////////////////////////////////////////
 static const AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
 
-
 // has a log download started?
-static bool in_log_download;
+static bool in_log_download;			// Plane
 
 // scaled roll limit based on pitch
-static int32_t roll_limit_cd;
-static int32_t pitch_limit_min_cd;
+static int32_t roll_limit_cd;			// Plane
+static int32_t pitch_limit_min_cd;		// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // Sensors
@@ -190,7 +189,7 @@ static int32_t pitch_limit_min_cd;
 static GPS         *g_gps;
 
 // flight modes convenience array
-static AP_Int8          *flight_modes = &g.flight_mode1;
+static AP_Int8 *flight_modes = &g.flight_mode1;
 
 #if HIL_MODE == HIL_MODE_DISABLED
 
@@ -300,22 +299,22 @@ static SITL sitl;
  #error Unrecognised HIL_MODE setting.
 #endif // HIL MODE
 
-static AP_L1_Control L1_controller(ahrs);
-static AP_TECS TECS_controller(ahrs, aparm);
+static AP_L1_Control L1_controller(ahrs);				// Plane
+static AP_TECS TECS_controller(ahrs, aparm);			// Plane
 
 // Attitude to servo controllers
-static AP_RollController  rollController(ahrs, aparm);
-static AP_PitchController pitchController(ahrs, aparm);
-static AP_YawController   yawController(ahrs, aparm);
-static AP_SteerController steerController(ahrs);
+static AP_RollController  rollController(ahrs, aparm);	// Plane
+static AP_PitchController pitchController(ahrs, aparm);	// Plane
+static AP_YawController   yawController(ahrs, aparm);	// Plane
+static AP_SteerController steerController(ahrs);		// Plane
 
 
 // Training mode
-static bool training_manual_roll;  // user has manual roll control
-static bool training_manual_pitch; // user has manual pitch control
+static bool training_manual_roll;						// Plane
+static bool training_manual_pitch;						// Plane
 
 // should throttle be pass-thru in guided?
-static bool guided_throttle_passthru;
+static bool guided_throttle_passthru;					// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // GCS selection
@@ -375,9 +374,9 @@ static AP_BoardConfig BoardConfig;
 static uint8_t receiver_rssi;
 
 // This is used to enable the inverted flight feature
-static bool inverted_flight     = false;
+static bool inverted_flight     = false;	// Plane
 
-static struct {
+static struct {								// Plane
     // These are trim values used for elevon control
     // For elevons radio_in[CH_ROLL] and radio_in[CH_PITCH] are
     // equivalent aileron and elevator, not left and right elevon
@@ -386,12 +385,12 @@ static struct {
     // These are used in the calculation of elevon1_trim and elevon2_trim
     uint16_t ch1_temp;
     uint16_t ch2_temp;
-} elevon = {
+} elevon = {								// Plane
 	trim1 : 1500,
     trim2 : 1500,
     ch1_temp : 1500,
     ch2_temp : 1500
-};
+};											// END Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // Failsafe
@@ -424,24 +423,23 @@ static uint8_t ground_start_count      = 5;
 // Used to compute a speed estimate from the first valid gps fixes to decide if we are
 // on the ground or in the air.  Used to decide if a ground start is appropriate if we
 // booted with an air start.
-static int16_t ground_start_avg;
+static int16_t ground_start_avg;		// Plane
 // true if we have a position estimate from AHRS
-static bool have_position;
+static bool have_position;				// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // Location & Navigation
 ////////////////////////////////////////////////////////////////////////////////
-// Distance between plane and next waypoint.  Meters !!!!!!!!!!!!!!
-static uint32_t wp_distance;
-
+// Plane Distance between plane and next waypoint.  
+static uint32_t plane_wp_distance;								// Plane
 // There may be two active commands in Auto mode.
 // This indicates the active navigation command by index number
-static uint8_t nav_command_index;
+static uint8_t nav_command_index; 								// Plane
 // This indicates the active non-navigation command by index number
-static uint8_t non_nav_command_index;
+static uint8_t non_nav_command_index;							// Plane
 // This is the command type (eg navigate to waypoint) of the active navigation command
-static uint8_t nav_command_ID          = NO_COMMAND;
-static uint8_t non_nav_command_ID      = NO_COMMAND;
+static uint8_t nav_command_ID          = NO_COMMAND;	// Plane
+static uint8_t non_nav_command_ID      = NO_COMMAND;	// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // 3D Location vectors
@@ -1319,7 +1317,7 @@ static void update_flight_mode(void)
 
 static void update_navigation()
 {
-    // wp_distance is in ACTUAL meters, not the *100 meters we get from the GPS
+    // plane_wp_distance is in ACTUAL meters, not the *100 meters we get from the GPS
     // ------------------------------------------------------------------------
 
     // distance and bearing calcs only

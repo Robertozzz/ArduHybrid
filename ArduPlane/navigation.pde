@@ -60,9 +60,9 @@ static void navigate()
 
     // waypoint distance from plane
     // ----------------------------
-    wp_distance = get_distance(current_loc, next_WP);
+    plane_wp_distance = get_distance(current_loc, next_WP);
 
-    if (wp_distance < 0) {
+    if (plane_wp_distance < 0) {
         gcs_send_text_P(SEVERITY_HIGH,PSTR("WP error - distance < 0"));
         return;
     }
@@ -139,7 +139,7 @@ static void calc_altitude_error()
         target_altitude_cm = next_WP.alt;
     } else if (offset_altitude_cm != 0) {
         // control climb/descent rate
-        target_altitude_cm = next_WP.alt - (offset_altitude_cm*((float)(wp_distance-30) / (float)(wp_totalDistance-30)));
+        target_altitude_cm = next_WP.alt - (offset_altitude_cm*((float)(plane_wp_distance-30) / (float)(wp_totalDistance-30)));
 
         // stay within a certain range
         if (prev_WP.alt > next_WP.alt) {
@@ -234,7 +234,7 @@ static void setup_glide_slope(void)
     // establish the distance we are travelling to the next waypoint,
     // for calculating out rate of change of altitude
     wp_totalDistance        = get_distance(current_loc, next_WP);
-    wp_distance             = wp_totalDistance;
+    plane_wp_distance             = wp_totalDistance;
 
     /*
       work out if we will gradually change altitude, or try to get to
