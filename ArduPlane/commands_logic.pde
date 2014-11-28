@@ -612,7 +612,7 @@ static void do_set_home()
         home.lng        = next_nonnav_command.lng;                                      // Lon * 10**7
         home.lat        = next_nonnav_command.lat;                                      // Lat * 10**7
         home.alt        = max(next_nonnav_command.alt, 0);
-        home_is_set = true;
+        ap.home_is_set = true;
     }
 }
 

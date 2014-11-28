@@ -355,6 +355,34 @@ static AP_RangeFinder_analog sonar;
  *               See libraries/RC_Channel/RC_Channel_aux.h for more information
  */
 
+//Documentation of GLobals:
+static union {
+    struct {
+        uint8_t home_is_set         : 1; // 0
+        uint8_t simple_mode         : 2; // 1,2 // This is the state of simple mode : 0 = disabled ; 1 = SIMPLE ; 2 = SUPERSIMPLE
+
+        uint8_t pre_arm_rc_check    : 1; // 3   // true if rc input pre-arm checks have been completed successfully
+        uint8_t pre_arm_check       : 1; // 4   // true if all pre-arm checks (rc, accel calibration, gps lock) have been performed
+        uint8_t auto_armed          : 1; // 5   // stops auto missions from beginning until throttle is raised
+        uint8_t logging_started     : 1; // 6   // true if dataflash logging has started
+
+        uint8_t do_flip             : 1; // 7   // Used to enable flip code
+        uint8_t takeoff_complete    : 1; // 8
+        uint8_t land_complete       : 1; // 9   // true if we have detected a landing
+
+        uint8_t new_radio_frame     : 1; // 10      // Set true if we have new PWM data to act on from the Radio
+        uint8_t CH7_flag            : 2; // 11,12   // ch7 aux switch : 0 is low or false, 1 is center or true, 2 is high
+        uint8_t CH8_flag            : 2; // 13,14   // ch8 aux switch : 0 is low or false, 1 is center or true, 2 is high
+        uint8_t usb_connected       : 1; // 15      // true if APM is powered from USB connection
+        uint8_t yaw_stopped         : 1; // 16      // Used to manage the Yaw hold capabilities
+
+        uint8_t disable_stab_rate_limit : 1; // 17  // disables limits rate request from the stability controller
+
+        uint8_t rc_receiver_present : 1; // 18  // true if we have an rc receiver present (i.e. if we've ever received an update
+    };
+    uint32_t value;
+} ap;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Radio
 ////////////////////////////////////////////////////////////////////////////////
@@ -447,8 +475,6 @@ static uint8_t non_nav_command_ID      = NO_COMMAND;	// Plane
 // home location is stored when we have a good GPS lock and arm the copter
 // Can be reset each the copter is re-armed
 static struct   Location home;
-// Flag for if we have g_gps lock and have set the home location
-static bool home_is_set;
 // The location of the previous waypoint.  Used for track following and altitude ramp calculations
 static struct   Location prev_WP;
 // The plane's current location
@@ -676,7 +702,7 @@ static uint8_t gps_fix_count = 0;
 ////////////////////////////////////////////////////////////////////////////////
 // Arming/Disarming mangement class
 ////////////////////////////////////////////////////////////////////////////////
-static AP_Arming arming(ahrs, barometer, home_is_set, gcs_send_text_P);
+static AP_Arming arming(ahrs, barometer, ap.home_is_set, gcs_send_text_P);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Outback Challenge Failsafe Support
@@ -690,9 +716,6 @@ static AP_Navigation *nav_controller = &L1_controller;
 
 // selected navigation controller
 static AP_SpdHgtControl *SpdHgt_Controller = &TECS_controller;
-
-// remember if USB is connected, so we can adjust baud rate
-static bool usb_connected;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Top-level logic

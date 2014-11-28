@@ -73,7 +73,7 @@ static void read_battery(void)
 {
     battery.read();
 
-    if (!usb_connected && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah)) {
+    if (!ap.usb_connected && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah)) {
         low_battery_event();
     }
 }
