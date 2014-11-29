@@ -565,8 +565,18 @@ static uint8_t non_nav_command_ID      = NO_COMMAND;	// Plane
 // home location is stored when we have a good GPS lock and arm the copter
 // Can be reset each the copter is re-armed
 static struct   Location home;
-// Current location of the copter
+// Current location
 static struct   Location current_loc;
+// The location of the previous waypoint.  Used for track following and altitude ramp calculations
+static struct   Location prev_WP;				// Plane
+// The location of the current/active waypoint.  Used for altitude ramp, track following and loiter calculations.
+static struct   Location next_WP;				// Plane
+// The location of the active waypoint in Guided mode.
+static struct   Location guided_WP;				// Plane
+// The location structure information from the Nav command being processed
+static struct   Location next_nav_command;		// Plane
+// The location structure information from the Non-Nav command being processed
+static struct   Location next_nonnav_command;	// Plane
 // Holds the current loaded command from the EEPROM for navigation
 static struct   Location command_nav_queue;
 // Holds the current loaded command from the EEPROM for conditional scripts
@@ -602,6 +612,15 @@ static AP_HAL::AnalogSource* board_vcc_analog_source;
 static int16_t angle_boost;
 // counter to verify landings
 static uint16_t land_detector;
+// Altitude threshold to complete a takeoff command in autonomous modes.  Centimeters
+static int32_t takeoff_altitude_cm;				// Plane
+// Minimum pitch to hold during takeoff command execution.  Hundredths of a degree
+static int16_t takeoff_pitch_cd;				// Plane
+// true if we are in an auto-throttle mode, which means
+// we need to run the speed/height controller
+static bool auto_throttle_mode;					// Plane
+// this controls throttle suppression in auto modes
+static bool throttle_suppressed;				// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // Conditional command
@@ -619,6 +638,8 @@ static uint32_t condition_start;
 // Integration time (in seconds) for the gyros (DCM algorithm)
 // Updated with the fast loop
 static float G_Dt = 0.02;
+// A value used in condition commands.  For example the rate at which to change altitude.
+static int16_t condition_rate;
 
 ////////////////////////////////////////////////////////////////////////////////
 // System Timers
