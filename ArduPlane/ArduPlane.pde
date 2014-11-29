@@ -514,11 +514,6 @@ static AP_HAL::AnalogSource* board_vcc_analog_source;
 ////////////////////////////////////////////////////////////////////////////////
 // flight mode specific
 ////////////////////////////////////////////////////////////////////////////////
-// Flag for using gps ground course instead of INS yaw.  Set false when takeoff command in process.
-static bool takeoff_complete    = true;
-// Flag to indicate if we have landed.
-//Set land_complete if we are within 2 seconds distance or within 3 meters altitude of touchdown
-static bool land_complete;
 // Altitude threshold to complete a takeoff command in autonomous modes.  Centimeters
 static int32_t takeoff_altitude_cm;
 
@@ -1148,7 +1143,7 @@ static void handle_auto_mode(void)
     case MAV_CMD_NAV_LAND:
         calc_nav_roll();
         
-        if (land_complete) {
+        if (ap.land_complete) {
             // during final approach constrain roll to the range
             // allowed for level flight
             nav_roll_cd = constrain_int32(nav_roll_cd, -g.level_roll_limit*100UL, g.level_roll_limit*100UL);
@@ -1165,7 +1160,7 @@ static void handle_auto_mode(void)
         }
         calc_throttle();
         
-        if (land_complete) {
+        if (ap.land_complete) {
             // we are in the final stage of a landing - force
             // zero throttle
             channel_throttle->servo_out = 0;
@@ -1176,7 +1171,7 @@ static void handle_auto_mode(void)
         // we are doing normal AUTO flight, the special cases
         // are for takeoff and landing
         steer_state.hold_course_cd = -1;
-        land_complete = false;
+        ap.land_complete = false;
         calc_nav_roll();
         calc_nav_pitch();
         calc_throttle();
@@ -1400,9 +1395,9 @@ static void update_alt()
         AP_SpdHgtControl::FlightStage flight_stage = AP_SpdHgtControl::FLIGHT_NORMAL;
         
         if (control_mode==AUTO) {
-            if (takeoff_complete == false) {
+            if (ap.takeoff_complete == false) {
                 flight_stage = AP_SpdHgtControl::FLIGHT_TAKEOFF;
-            } else if (nav_command_ID == MAV_CMD_NAV_LAND && land_complete == true) {
+            } else if (nav_command_ID == MAV_CMD_NAV_LAND && ap.land_complete == true) {
                 flight_stage = AP_SpdHgtControl::FLIGHT_LAND_FINAL;
             } else if (nav_command_ID == MAV_CMD_NAV_LAND) {
                 flight_stage = AP_SpdHgtControl::FLIGHT_LAND_APPROACH; 

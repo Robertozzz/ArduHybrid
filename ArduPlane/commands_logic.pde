@@ -6,12 +6,12 @@
 static void
 handle_process_nav_cmd()
 {
-    // set land_complete to false to stop us zeroing the throttle
-    land_complete = false;
+    // set ap.land_complete to false to stop us zeroing the throttle
+    ap.land_complete = false;
 
-    // set takeoff_complete to true so we don't add extra evevator
+    // set takeoff_complete to true so we don't add extra elevator
     // except in a takeoff 
-    takeoff_complete = true;
+    ap.takeoff_complete = true;
 
     gcs_send_text_fmt(PSTR("Executing nav command ID #%i"),next_nav_command.id);
     switch(next_nav_command.id) {
@@ -258,7 +258,7 @@ static void do_takeoff()
     takeoff_altitude_cm     = next_nav_command.alt;
     next_WP.lat             = home.lat + 1000;          // so we don't have bad calcs
     next_WP.lng             = home.lng + 1000;          // so we don't have bad calcs
-    takeoff_complete        = false;                            // set flag to use gps ground course during TO.  IMU will be doing yaw drift correction
+    ap.takeoff_complete        = false;                            // set flag to use gps ground course during TO.  IMU will be doing yaw drift correction
     // Flag also used to override "on the ground" throttle disable
 }
 
@@ -326,7 +326,7 @@ static bool verify_takeoff()
     // see if we have reached takeoff altitude
     if (adjusted_altitude_cm() > takeoff_altitude_cm) {
         steer_state.hold_course_cd = -1;
-        takeoff_complete = true;
+        ap.takeoff_complete = true;
         next_WP = prev_WP = current_loc;
         return true;
     } else {
@@ -341,12 +341,12 @@ static bool verify_land()
     // so we don't verify command completion. Instead we use this to
     // adjust final landing parameters
 
-    // Set land_complete if we are within 2 seconds distance or within
+    // Set ap.land_complete if we are within 2 seconds distance or within
     // 3 meters altitude of the landing point
     if ((plane_wp_distance <= (g.land_flare_sec*g_gps->ground_speed_cm*0.01f))
         || (adjusted_altitude_cm() <= next_WP.alt + g.land_flare_alt*100)) {
 
-        land_complete = true;
+        ap.land_complete = true;
 
         if (steer_state.hold_course_cd == -1) {
             // we have just reached the threshold of to flare for landing.
