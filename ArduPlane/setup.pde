@@ -1,24 +1,22 @@
-// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
+	// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 #if CLI_ENABLED == ENABLED
 
 // Functions called from the setup menu
-static int8_t   setup_radio                             (uint8_t argc, const Menu::arg *argv);
-static int8_t   setup_show                              (uint8_t argc, const Menu::arg *argv);
-static int8_t   setup_factory                   (uint8_t argc, const Menu::arg *argv);
-static int8_t   setup_flightmodes               (uint8_t argc, const Menu::arg *argv);
-static int8_t   setup_level                             (uint8_t argc, const Menu::arg *argv);
-#if !defined( __AVR_ATmega1280__ )
-static int8_t   setup_accel_scale                       (uint8_t argc, const Menu::arg *argv);
-static int8_t   setup_set                               (uint8_t argc, const Menu::arg *argv);
-#endif
-static int8_t   setup_erase                             (uint8_t argc, const Menu::arg *argv);
-static int8_t   setup_compass                   (uint8_t argc, const Menu::arg *argv);
-static int8_t   setup_declination               (uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_accel_scale		(uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_compass			(uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_erase				(uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_flightmodes		(uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_radio				(uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_factory			(uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_set				(uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_show				(uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_declination		(uint8_t argc, const Menu::arg *argv);
+static int8_t	setup_level				(uint8_t argc, const Menu::arg *argv);
 
 
 // Command/function table for the setup menu
-static const struct Menu::command setup_menu_commands[] PROGMEM = {
+const struct Menu::command setup_menu_commands[] PROGMEM = {
     // command			function called
     // =======          ===============
     {"reset",                       setup_factory},

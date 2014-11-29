@@ -568,7 +568,7 @@ static AP_Mount camera_mount2(&current_loc, g_gps, ahrs, 1);
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
-// Airspeed
+// Airspeed				// Plane
 ////////////////////////////////////////////////////////////////////////////////
 // The calculated airspeed to use in FBW-B.  Also used in higher modes for insuring min ground speed is met.
 // Also used for flap deployment criteria.  Centimeters per second.
@@ -586,13 +586,10 @@ static int16_t airspeed_nudge_cm;
 static int16_t throttle_nudge = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Ground speed
+// Ground speed			// Plane
 ////////////////////////////////////////////////////////////////////////////////
 // The amount current ground speed is below min ground speed.  Centimeters per second
 static int32_t groundspeed_undershoot = 0;
-
-// Difference between current altitude and desired altitude.  Centimeters
-static int32_t altitude_error_cm;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Airspeed Sensors
@@ -600,9 +597,10 @@ static int32_t altitude_error_cm;
 AP_Airspeed airspeed(aparm);
 
 ////////////////////////////////////////////////////////////////////////////////
-// ACRO controller state
+// ACRO Mode
 ////////////////////////////////////////////////////////////////////////////////
-static struct {
+//// ACRO roll pitch and rates need changing!!!
+static struct {					// Plane
     bool locked_roll;
     bool locked_pitch;
     float locked_roll_err;
@@ -610,7 +608,7 @@ static struct {
 } acro_state;
 
 ////////////////////////////////////////////////////////////////////////////////
-// CRUISE controller state
+// CRUISE controller state		// Plane
 ////////////////////////////////////////////////////////////////////////////////
 static struct {
     bool locked_heading;
@@ -619,7 +617,7 @@ static struct {
 } cruise_state;
 
 ////////////////////////////////////////////////////////////////////////////////
-// ground steering controller state
+// ground steering controller state		// Plane
 ////////////////////////////////////////////////////////////////////////////////
 static struct {
 	// Direction held during phases of takeoff and landing centidegrees
@@ -636,24 +634,15 @@ static struct {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-// Navigation control variables
-////////////////////////////////////////////////////////////////////////////////
-// The instantaneous desired bank angle.  Hundredths of a degree
-static int32_t nav_roll_cd;
-
-// The instantaneous desired pitch angle.  Hundredths of a degree
-static int32_t nav_pitch_cd;
-
-////////////////////////////////////////////////////////////////////////////////
-// Waypoint distances
+// Waypoint distances		// Plane
 ////////////////////////////////////////////////////////////////////////////////
 // Distance between previous and next waypoint.  Meters
 static uint32_t wp_totalDistance;
 
-/*
-  meta data to support counting the number of circles in a loiter
- */
-static struct {
+////////////////////////////////////////////////////////////////////////////////
+// Circle Mode / Loiter control
+////////////////////////////////////////////////////////////////////////////////
+static struct {			// Plane
     // previous target bearing, used to update sum_cd
     int32_t old_target_bearing_cd;
 
@@ -674,13 +663,26 @@ static struct {
 } loiter;
 
 ////////////////////////////////////////////////////////////////////////////////
-// Altitude / Climb rate control
+// Altitude
 ////////////////////////////////////////////////////////////////////////////////
+// Baro alt ???????? duplicate
+// Altitude error can be combined????
+// Difference between current altitude and desired altitude.  Centimeters
+static int32_t altitude_error_cm;			// Plane
 // The current desired altitude.  Altitude is linearly ramped between waypoints.  Centimeters
-static int32_t target_altitude_cm;
+static int32_t target_altitude_cm;			// Plane
 // Altitude difference between previous and current waypoint.  Centimeters
-static int32_t offset_altitude_cm;
+static int32_t offset_altitude_cm;			// Plane
 
+////////////////////////////////////////////////////////////////////////////////
+// Navigation control variables
+////////////////////////////////////////////////////////////////////////////////
+// The instantaneous desired bank angle.  Hundredths of a degree
+static int32_t nav_roll_cd;
+
+// The instantaneous desired pitch angle.  Hundredths of a degree
+static int32_t nav_pitch_cd;
+ 
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////

@@ -657,9 +657,6 @@ static uint32_t rtl_loiter_start_time;
 // Used to exit the roll and pitch auto trim function
 static uint8_t auto_trim_counter;
 
-#if CLI_ENABLED == ENABLED
-    static int8_t   setup_show (uint8_t argc, const Menu::arg *argv);
-#endif
 // Camera/Antenna mount tracking and stabilisation stuff
 // --------------------------------------
 #if MOUNT == ENABLED
@@ -673,6 +670,35 @@ static AP_Mount camera_mount(&current_loc, g_gps, ahrs, 0);
 // mabe one could use current_loc for lat/lon too and eliminate g_gps alltogether?
 static AP_Mount camera_mount2(&current_loc, g_gps, ahrs, 1);
 #endif
+
+////////////////////////////////////////////////////////////////////////////////
+// Airspeed				// Plane
+////////////////////////////////////////////////////////////////////////////////
+// The calculated airspeed to use in FBW-B.  Also used in higher modes for insuring min ground speed is met.
+// Also used for flap deployment criteria.  Centimeters per second.
+static int32_t target_airspeed_cm;
+
+// The difference between current and desired airspeed.  Used in the pitch controller.  Centimeters per second.
+static float airspeed_error_cm;
+
+// An amount that the airspeed should be increased in auto modes based on the user positioning the
+// throttle stick in the top half of the range.  Centimeters per second.
+static int16_t airspeed_nudge_cm;
+
+// Similar to airspeed_nudge, but used when no airspeed sensor.
+// 0-(throttle_max - throttle_cruise) : throttle nudge in Auto mode using top 1/2 of throttle stick travel
+static int16_t throttle_nudge = 0;
+
+////////////////////////////////////////////////////////////////////////////////
+// Ground speed			// Plane
+////////////////////////////////////////////////////////////////////////////////
+// The amount current ground speed is below min ground speed.  Centimeters per second
+static int32_t groundspeed_undershoot = 0;
+
+////////////////////////////////////////////////////////////////////////////////
+// Airspeed Sensors
+////////////////////////////////////////////////////////////////////////////////
+AP_Airspeed airspeed(aparm);
 
 ////////////////////////////////////////////////////////////////////////////////
 // SIMPLE Mode
@@ -719,11 +745,50 @@ static int32_t acro_pitch_rate;             // desired pitch rate while acro mod
 static int32_t acro_yaw_rate;               // desired yaw rate while acro mode
 static float acro_level_mix;                // scales back roll, pitch and yaw inversely proportional to input from pilot
 
+static struct {					// Plane
+    bool locked_roll;
+    bool locked_pitch;
+    float locked_roll_err;
+    int32_t locked_pitch_cd;
+} acro_state;
+
+////////////////////////////////////////////////////////////////////////////////
+// CRUISE controller state		// Plane
+////////////////////////////////////////////////////////////////////////////////
+static struct {
+    bool locked_heading;
+    int32_t locked_heading_cd;
+    uint32_t lock_timer_ms;
+} cruise_state;
+
 // Filters
 #if FRAME_CONFIG == HELI_FRAME
 //static LowPassFilterFloat rate_roll_filter;    // Rate Roll filter
 //static LowPassFilterFloat rate_pitch_filter;   // Rate Pitch filter
 #endif // HELI_FRAME
+
+////////////////////////////////////////////////////////////////////////////////
+// ground steering controller state		// Plane
+////////////////////////////////////////////////////////////////////////////////
+static struct {
+	// Direction held during phases of takeoff and landing centidegrees
+	// A value of -1 indicates the course has not been set/is not in use
+	// this is a 0..36000 value, or -1 for disabled
+    int32_t hold_course_cd;
+
+    // locked_course and locked_course_cd are used in stabilize mode 
+    // when ground steering is active
+    bool locked_course;
+    float locked_course_err;
+} steer_state = {
+	hold_course_cd : -1,
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// Waypoint distances		// Plane
+////////////////////////////////////////////////////////////////////////////////
+// Distance between previous and next waypoint.  Meters
+static uint32_t wp_totalDistance;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Circle Mode / Loiter control
@@ -742,6 +807,26 @@ static float circle_angular_velocity_max;       // circle mode's max angular vel
 static uint16_t loiter_time_max;
 // How long have we been loitering - The start time in millis
 static uint32_t loiter_time;
+
+static struct {			// Plane
+    // previous target bearing, used to update sum_cd
+    int32_t old_target_bearing_cd;
+
+    // Total desired rotation in a loiter.  Used for Loiter Turns commands. 
+    int32_t total_cd;
+
+    // total angle completed in the loiter so far
+    int32_t sum_cd;
+
+	// Direction for loiter. 1 for clockwise, -1 for counter-clockwise
+    int8_t direction;
+
+	// start time of the loiter.  Milliseconds.
+    uint32_t start_time_ms;
+
+	// The amount of time we should stay in a loiter for the Loiter Time command.  Milliseconds.
+    uint32_t time_max_ms;
+} loiter;
 
 ////////////////////////////////////////////////////////////////////////////////
 // CH7 and CH8 save waypoint control
@@ -766,6 +851,13 @@ static float target_sonar_alt;      // desired altitude in cm above the ground
 // The altitude as reported by Baro in cm – Values can be quite high
 static int32_t baro_alt;
 
+// Difference between current altitude and desired altitude.  Centimeters
+static int32_t altitude_error_cm;			// Plane
+// The current desired altitude.  Altitude is linearly ramped between waypoints.  Centimeters
+static int32_t target_altitude_cm;			// Plane
+// Altitude difference between previous and current waypoint.  Centimeters
+static int32_t offset_altitude_cm;			// Plane
+
 ////////////////////////////////////////////////////////////////////////////////
 // flight modes
 ////////////////////////////////////////////////////////////////////////////////
@@ -778,6 +870,15 @@ static uint8_t yaw_mode = STABILIZE_YAW;
 static uint8_t roll_pitch_mode = STABILIZE_RP;
 // The current desired control scheme for altitude hold
 static uint8_t throttle_mode = STABILIZE_THR;
+
+////////////////////////////////////////////////////////////////////////////////
+// Navigation control variables
+////////////////////////////////////////////////////////////////////////////////
+// The instantaneous desired bank angle.  Hundredths of a degree
+static int32_t nav_roll_cd;
+
+// The instantaneous desired pitch angle.  Hundredths of a degree
+static int32_t nav_pitch_cd;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Navigation Roll/Pitch functions
@@ -827,6 +928,9 @@ static AC_WPNav wp_nav(&inertial_nav, &ahrs, &g.pi_loiter_lat, &g.pi_loiter_lon,
 static int16_t pmTest1;
 // The maximum main loop execution time recorded in the current performance monitoring interval
 static uint32_t perf_info_max_time = 0;
+
+// The number of gps fixes recorded in the current performance monitoring interval
+static uint8_t gps_fix_count = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // AC_Fence library to reduce fly-aways
@@ -1039,7 +1143,6 @@ void loop()
     mainLoop_count++;
 
     // Execute the fast loop
-    // ---------------------
     fast_loop();
 
     // tell the scheduler one tick has passed
