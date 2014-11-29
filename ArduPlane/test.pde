@@ -440,8 +440,8 @@ test_ins(uint8_t argc, const Menu::arg *argv)
 
     while(1) {
         delay(20);
-        if (hal.scheduler->micros() - fast_loopTimer_us > 19000UL) {
-            fast_loopTimer_us       = hal.scheduler->micros();
+        if (hal.scheduler->micros() - fast_loopTimer > 19000UL) {
+            fast_loopTimer       = hal.scheduler->micros();
 
             // INS
             // ---
@@ -504,8 +504,8 @@ test_mag(uint8_t argc, const Menu::arg *argv)
 
     while(1) {
         delay(20);
-        if (hal.scheduler->micros() - fast_loopTimer_us > 19000UL) {
-            fast_loopTimer_us       = hal.scheduler->micros();
+        if (hal.scheduler->micros() - fast_loopTimer > 19000UL) {
+            fast_loopTimer       = hal.scheduler->micros();
 
             // INS
             // ---

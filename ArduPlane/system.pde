@@ -544,7 +544,7 @@ static void check_short_failsafe()
 
 static void resetPerfData(void) {
     mainLoop_count                  = 0;
-    G_Dt_max                        = 0;
+    perf_info_max_time              = 0;
     ahrs.renorm_range_count         = 0;
     ahrs.renorm_blowup_count        = 0;
     gps_fix_count                   = 0;

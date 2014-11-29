@@ -648,8 +648,11 @@ static int16_t condition_rate;
 static uint32_t fast_loopTimer;
 // Counter of main loop executions.  Used for performance monitoring and failsafe processing
 static uint16_t mainLoop_count;
+// Number of milliseconds used in last main loop cycle
+static uint32_t delta_us_fast_loop;
 // Loiter timer - Records how long we have been in loiter
 static uint32_t rtl_loiter_start_time;
+
 
 // Used to exit the roll and pitch auto trim function
 static uint8_t auto_trim_counter;
@@ -822,6 +825,8 @@ static AC_WPNav wp_nav(&inertial_nav, &ahrs, &g.pi_loiter_lat, &g.pi_loiter_lon,
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////
 static int16_t pmTest1;
+// The maximum main loop execution time recorded in the current performance monitoring interval
+static uint32_t perf_info_max_time = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 // AC_Fence library to reduce fly-aways
@@ -1026,6 +1031,7 @@ void loop()
     perf_info_check_loop_time(timer - fast_loopTimer);
 
     // used by PI Loops
+	delta_us_fast_loop  	= timer - fast_loopTimer;
     G_Dt                    = (float)(timer - fast_loopTimer) / 1000000.f;
     fast_loopTimer          = timer;
 

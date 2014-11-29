@@ -193,7 +193,7 @@ struct PACKED log_Performance {
     LOG_PACKET_HEADER;
     uint32_t loop_time;
     uint16_t main_loop_count;
-    uint32_t g_dt_max;
+    uint32_t perf_info_max_time;
     uint8_t  renorm_count;
     uint8_t  renorm_blowup;
     int16_t  gyro_drift_x;
@@ -210,7 +210,7 @@ static void Log_Write_Performance()
         LOG_PACKET_HEADER_INIT(LOG_PERFORMANCE_MSG),
         loop_time       : millis() - perf_mon_timer,
         main_loop_count : mainLoop_count,
-        g_dt_max        : G_Dt_max,
+        perf_info_max_time        : perf_info_max_time,
         renorm_count    : ahrs.renorm_range_count,
         renorm_blowup   : ahrs.renorm_blowup_count,
         gyro_drift_x    : (int16_t)(ahrs.get_gyro_drift().x * 1000),

@@ -539,7 +539,7 @@ static uint32_t condition_start;
 ////////////////////////////////////////////////////////////////////////////////
 // Integration time (in seconds) for the gyros (DCM algorithm)
 // Updated with the fast loop
-static float G_Dt = 0.02f;
+static float G_Dt = 0.02;
 // A value used in condition commands.  For example the rate at which to change altitude.
 static int16_t condition_rate;
 
@@ -547,7 +547,7 @@ static int16_t condition_rate;
 // System Timers
 ////////////////////////////////////////////////////////////////////////////////
 // Time in microseconds of main control loop
-static uint32_t fast_loopTimer_us;
+static uint32_t fast_loopTimer;
 // Counter of main loop executions.  Used for performance monitoring and failsafe processing
 static uint16_t mainLoop_count;
 // Number of milliseconds used in last main loop cycle
@@ -687,7 +687,7 @@ static int32_t offset_altitude_cm;
 // Timer used to accrue data and trigger recording of the performanc monitoring log message
 static uint32_t perf_mon_timer;
 // The maximum main loop execution time recorded in the current performance monitoring interval
-static uint32_t G_Dt_max = 0;
+static uint32_t perf_info_max_time = 0;
 // The number of gps fixes recorded in the current performance monitoring interval
 static uint8_t gps_fix_count = 0;
 
@@ -799,15 +799,17 @@ void loop()
     if (!ins.wait_for_sample(1000)) {
         return;
     }
-    uint32_t timer = hal.scheduler->micros();
+    uint32_t timer = micros();
 
-    delta_us_fast_loop  = timer - fast_loopTimer_us;
-    G_Dt                = delta_us_fast_loop * 1.0e-6f;
-    fast_loopTimer_us   = timer;
+	// check loop time
+    perf_info_check_loop_time(timer - fast_loopTimer);
+		
+    // used by PI Loops
+	delta_us_fast_loop  	= timer - fast_loopTimer;
+    G_Dt                    = (float)(timer - fast_loopTimer) / 1000000.f;
+    fast_loopTimer          = timer;
 
-    if (delta_us_fast_loop > G_Dt_max)
-        G_Dt_max = delta_us_fast_loop;
-
+    // for mainloop failure monitoring
     mainLoop_count++;
 
     // tell the scheduler one tick has passed
@@ -818,11 +820,9 @@ void loop()
     // in multiples of the main loop tick. So if they don't run on
     // the first call to the scheduler they won't run on a later
     // call until scheduler.tick() is called again
-    uint32_t remaining = (timer + 20000) - hal.scheduler->micros();
-    if (remaining > 19500) {
-        remaining = 19500;
-    }
-    scheduler.run(remaining);
+    uint32_t time_available = (timer + 20000) - micros();
+    if (time_available > 19500) { time_available = 19500; }
+    scheduler.run(time_available);
 }
 
 /*
@@ -987,11 +987,11 @@ static void one_second_loop()
 static void log_perf_info()
 {
     if (scheduler.debug() != 0) {
-        hal.console->printf_P(PSTR("G_Dt_max=%lu\n"), (unsigned long)G_Dt_max);
+        hal.console->printf_P(PSTR("perf_info_max_time=%lu\n"), (unsigned long)perf_info_max_time);
     }
     if (should_log(MASK_LOG_PM))
         Log_Write_Performance();
-    G_Dt_max = 0;
+    perf_info_max_time = 0;
     resetPerfData();
 }
 
