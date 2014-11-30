@@ -34,7 +34,7 @@ public:
     //////////////////////////////////////////////////////////////////
     // STOP!!! DO NOT CHANGE THIS VALUE UNTIL YOU FULLY UNDERSTAND THE
     // COMMENTS ABOVE. IF UNSURE, ASK ANOTHER DEVELOPER!!!
-    static const uint16_t k_format_version = 13;
+	static const uint16_t	k_format_version = 13;
     //////////////////////////////////////////////////////////////////
 
 
@@ -45,147 +45,135 @@ public:
     //
     static const uint16_t k_software_type = 0;          // 0 for APM trunk
 
+
     enum {
         // Layout version number, always key zero.
         //
         k_param_format_version = 0,
         k_param_software_type,
-        k_param_num_resets,
+        k_param_ins,				// libraries/AP_InertialSensor variables
+		k_param_num_resets,						// Plane
 
+        // simulation
+        k_param_sitl,
         // Misc
-        //
-        k_param_auto_trim      = 10,
-        k_param_log_bitmask_old,  // unused
-        k_param_pitch_trim_cd,
-        k_param_mix_mode,
-        k_param_reverse_elevons,
-        k_param_reverse_ch1_elevon,
-        k_param_reverse_ch2_elevon,
-        k_param_flap_1_percent,
-        k_param_flap_1_speed,
-        k_param_flap_2_percent,
-        k_param_flap_2_speed,
-        k_param_reset_switch_chan,
-        k_param_manual_level, // unused
-        k_param_land_pitch_cd,
-        k_param_ins_old,            // *** Deprecated, remove with next eeprom number change
-        k_param_stick_mixing,
-        k_param_reset_mission_chan,
-        k_param_land_flare_alt,
-        k_param_land_flare_sec,
-        k_param_crosstrack_min_distance, // unused
-        k_param_rudder_steer, // unused
-        k_param_throttle_nudge,
-        k_param_alt_offset,
-        k_param_ins,                // libraries/AP_InertialSensor variables
-        k_param_takeoff_throttle_min_speed,
-        k_param_takeoff_throttle_min_accel,
-        k_param_takeoff_heading_hold, // unused
-        k_param_level_roll_limit,
-        k_param_hil_servos,
-        k_param_vtail_output,
-        k_param_nav_controller,
-        k_param_elevon_output,
-        k_param_att_controller,
-        k_param_mixing_gain,
+		k_param_relay,
         k_param_scheduler,
-        k_param_relay,
-        k_param_takeoff_throttle_delay,
-        k_param_skip_gyro_cal,
-        k_param_auto_fbw_steer,
-        k_param_waypoint_max_radius,
-        k_param_ground_steer_alt,        
-        k_param_ground_steer_dps,
-        k_param_rally_limit_km,
-        k_param_hil_err_limit,
-        k_param_sonar,
-        k_param_log_bitmask,
+		k_param_log_bitmask,
         k_param_BoardConfig,
+        k_param_rssi_pin,
+		k_param_battery,
+		k_param_fs_batt_mah,
+        k_param_fs_batt_voltage,
+		k_param_rssi_range,
+
+        k_param_auto_trim,						// Plane
+        k_param_pitch_trim_cd,					// Plane
+        k_param_mix_mode,						// Plane
+        k_param_reverse_elevons,				// Plane
+        k_param_reverse_ch1_elevon,				// Plane
+        k_param_reverse_ch2_elevon,				// Plane
+        k_param_flap_1_percent,					// Plane
+        k_param_flap_1_speed,					// Plane
+        k_param_flap_2_percent,					// Plane
+        k_param_flap_2_speed,					// Plane
+        k_param_reset_switch_chan,				// Plane
+        k_param_land_pitch_cd,					// Plane
+        k_param_stick_mixing,					// Plane
+        k_param_reset_mission_chan,				// Plane
+        k_param_land_flare_alt,					// Plane
+        k_param_land_flare_sec,					// Plane
+        k_param_throttle_nudge,					// Plane
+        k_param_alt_offset,						// Plane
+        k_param_takeoff_throttle_min_speed,		// Plane
+        k_param_takeoff_throttle_min_accel,		// Plane
+        k_param_level_roll_limit,				// Plane
+        k_param_hil_servos,						// Plane
+        k_param_vtail_output,					// Plane
+        k_param_nav_controller,					// Plane
+        k_param_elevon_output,					// Plane
+        k_param_att_controller,					// Plane
+        k_param_mixing_gain,					// Plane
+        k_param_takeoff_throttle_delay,			// Plane
+        k_param_skip_gyro_cal,					// Plane
+        k_param_auto_fbw_steer,					// Plane
+        k_param_waypoint_max_radius,			// Plane
+        k_param_ground_steer_alt,        		// Plane
+        k_param_ground_steer_dps,				// Plane
+        k_param_rally_limit_km,					// Plane
+        k_param_hil_err_limit,					// Plane
+        k_param_sonar,							// Plane
+
+
+
+
+
+
+
+
+
+
+
 
         // 100: Arming parameters
-        k_param_arming = 100,
+        k_param_arming,							// Plane
 
         // 105: Extra parameters
-        k_param_fence_retalt = 105,
+        k_param_fence_retalt,					// Plane
 
+		
+		
+		
+		
+		
         // 110: Telemetry control
-        //
-        k_param_gcs0 = 110,         // stream rates for uartA
-        k_param_gcs1,               // stream rates for uartC
+        k_param_gcs0,
+        k_param_gcs1,
         k_param_sysid_this_mav,
         k_param_sysid_my_gcs,
         k_param_serial1_baud,
         k_param_telem_delay,
-        k_param_serial0_baud,
-        k_param_gcs2,               // stream rates for uartD
+        k_param_gcs2,
+        k_param_serial0_baud,					// Plane
         k_param_serial2_baud,
 
         // 120: Fly-by-wire control
-        //
-        k_param_airspeed_min = 120,
-        k_param_airspeed_max,
-        k_param_FBWB_min_altitude_cm,  // 0=disabled, minimum value for altitude in cm (for first time try 30 meters = 3000 cm)
-        k_param_flybywire_elev_reverse,
-        k_param_alt_control_algorithm,
-        k_param_flybywire_climb_rate,
-        k_param_acro_roll_ratep,
-        k_param_acro_pitch_ratep,
-        k_param_acro_locking,
+        k_param_airspeed_min,					// Plane
+        k_param_airspeed_max,					// Plane
+        k_param_FBWB_min_altitude_cm,			// Plane // 0=disabled, minimum value for altitude in cm (for first time try 30 meters = 3000 cm)
+        k_param_flybywire_elev_reverse,			// Plane
+        k_param_alt_control_algorithm,			// Plane
+        k_param_flybywire_climb_rate,			// Plane
+        k_param_acro_roll_ratep,				// Plane
+        k_param_acro_pitch_ratep,				// Plane
+        k_param_acro_locking,					// Plane
 
-        //
         // 130: Sensor parameters
-        //
-        k_param_imu = 130,  // unused
-        k_param_altitude_mix,
-
+        k_param_altitude_mix,					// Plane
         k_param_compass_enabled,
         k_param_compass,
-        k_param_battery_monitoring, // unused
-        k_param_volt_div_ratio,     // unused
-        k_param_curr_amp_per_volt,  // unused
-        k_param_input_voltage, // deprecated, can be deleted
-        k_param_pack_capacity,      // unused
         k_param_sonar_enabled,
-        k_param_ahrs,  // AHRS group
+        k_param_ahrs, // AHRS group
         k_param_barometer,   // barometer ground calibration
-        k_param_airspeed,  // AP_Airspeed parameters
-        k_param_curr_amp_offset,
+        k_param_airspeed,  						// Plane  // AP_Airspeed parameters
+        k_param_curr_amp_offset,				// Plane
 
-        //
         // 150: Navigation parameters
-        //
-        k_param_crosstrack_gain = 150, // unused
-        k_param_crosstrack_entry_angle, // unused
-        k_param_roll_limit_cd,
-        k_param_pitch_limit_max_cd,
-        k_param_pitch_limit_min_cd,
-        k_param_airspeed_cruise_cm,
-        k_param_RTL_altitude_cm,
-        k_param_inverted_flight_ch,
-        k_param_min_gndspeed_cm,
-        k_param_crosstrack_use_wind, // unused
+        k_param_roll_limit_cd,					// Plane
+        k_param_pitch_limit_max_cd,				// Plane
+        k_param_pitch_limit_min_cd,				// Plane
+        k_param_airspeed_cruise_cm,				// Plane
+        k_param_RTL_altitude_cm,				// Plane
+        k_param_inverted_flight_ch,				// Plane
+        k_param_min_gndspeed_cm,				// Plane
 
-
-        //
         // Camera and mount parameters
-        //
-        k_param_camera = 160,
+        k_param_camera,
         k_param_camera_mount,
         k_param_camera_mount2,
 
-        //
-        // Battery monitoring parameters
-        //
-        k_param_battery = 166,
-        k_param_rssi_pin,
-        k_param_battery_volt_pin,   // unused
-        k_param_battery_curr_pin,   // unused - 169
-        k_param_rssi_range,
-
-        //
         // 170: Radio settings
-        //
-        k_param_rc_1 = 170,
+        k_param_rc_1,
         k_param_rc_2,
         k_param_rc_3,
         k_param_rc_4,
@@ -196,38 +184,29 @@ public:
         k_param_rc_9,
         k_param_rc_10,
         k_param_rc_11,
-
+        k_param_rc_12,
         k_param_throttle_min,
         k_param_throttle_max,
-        k_param_throttle_fs_enabled,
-        k_param_throttle_fs_value,
+        k_param_throttle_fs_enabled,			// Plane
+        k_param_throttle_fs_value,				// Plane
         k_param_throttle_cruise,
+        k_param_short_fs_action,				// Plane
+        k_param_long_fs_action,					// Plane
+        k_param_gcs_heartbeat_fs_enabled,		// Plane
+        k_param_throttle_slewrate,				// Plane
+        k_param_throttle_suppress_manual,		// Plane
+        k_param_throttle_passthru_stabilize,	// Plane
+        k_param_short_fs_timeout,				// Plane
+        k_param_long_fs_timeout,				// Plane
+        k_param_rcmap,
 
-        k_param_short_fs_action,
-        k_param_long_fs_action,
-        k_param_gcs_heartbeat_fs_enabled,
-        k_param_throttle_slewrate,
-        k_param_throttle_suppress_manual,
-        k_param_throttle_passthru_stabilize,
-        k_param_rc_12,
-        k_param_fs_batt_voltage,
-        k_param_fs_batt_mah,
-        k_param_short_fs_timeout,
-        k_param_long_fs_timeout,
-
-        //
         // 200: Feed-forward gains
-        //
-        k_param_kff_pitch_compensation = 200, // unused
-        k_param_kff_rudder_mix,
-        k_param_kff_pitch_to_throttle, // unused
-        k_param_kff_throttle_to_pitch,
-        k_param_scaling_speed,
+        k_param_kff_rudder_mix,					// Plane
+        k_param_kff_throttle_to_pitch,			// Plane
+        k_param_scaling_speed,					// Plane
 
-        //
         // 210: flight modes
-        //
-        k_param_flight_mode_channel = 210,
+        k_param_flight_mode_channel,			// Plane
         k_param_flight_mode1,
         k_param_flight_mode2,
         k_param_flight_mode3,
@@ -235,59 +214,51 @@ public:
         k_param_flight_mode5,
         k_param_flight_mode6,
 
-        //
         // 220: Waypoint data
-        //
-        k_param_waypoint_mode = 220,
+        k_param_waypoint_mode,					// Plane
         k_param_command_total,
         k_param_command_index,
-        k_param_waypoint_radius,
-        k_param_loiter_radius,
-        k_param_fence_action,
-        k_param_fence_total,
-        k_param_fence_channel,
-        k_param_fence_minalt,
-        k_param_fence_maxalt,
+        k_param_waypoint_radius,				// Plane
+        k_param_loiter_radius,					// Plane
+        k_param_fence_action,					// Plane
+        k_param_fence_total,					// Plane
+        k_param_fence_channel,					// Plane
+        k_param_fence_minalt,					// Plane
+        k_param_fence_maxalt,					// Plane
 
         // other objects
-        k_param_sitl = 230,
-        k_param_obc,
-        k_param_rollController,
-        k_param_pitchController,
-        k_param_yawController,
-        k_param_L1_controller,
-        k_param_rcmap,
-        k_param_TECS_controller,
-        k_param_rally_total,
-        k_param_steerController,
-
-        //
-        // 240: PID Controllers
-        k_param_pidNavRoll = 240, // unused
-        k_param_pidServoRoll, // unused
-        k_param_pidServoPitch, // unused
-        k_param_pidNavPitchAirspeed, // unused
-        k_param_pidServoRudder, // unused
-        k_param_pidTeThrottle, // unused
-        k_param_pidNavPitchAltitude, // unused
-        k_param_pidWheelSteer, // unused
+        k_param_obc,							// Plane
+        k_param_rollController,					// Plane
+        k_param_pitchController,				// Plane
+        k_param_yawController,					// Plane
+        k_param_L1_controller,					// Plane
+        k_param_TECS_controller,				// Plane
+        k_param_rally_total,					// Plane
+        k_param_steerController,				// Plane
 
         // 254,255: reserved
     };
 
-    AP_Int16 format_version;
-    AP_Int8 software_type;
+    AP_Int16		format_version;
+    AP_Int8			software_type;
 
     // Telemetry control
-    //
-    AP_Int16 sysid_this_mav;
-    AP_Int16 sysid_my_gcs;
-    AP_Int8 serial0_baud;
-    AP_Int8 serial1_baud;
+    AP_Int16        sysid_this_mav;
+    AP_Int16        sysid_my_gcs;
+	AP_Int8			serial0_baud;
+	AP_Int8			serial1_baud;
 #if MAVLINK_COMM_NUM_BUFFERS > 2
-    AP_Int8 serial2_baud;
+	AP_Int8			serial2_baud;
 #endif
-    AP_Int8 telem_delay;
+	AP_Int8			telem_delay;
+
+
+
+
+
+
+
+
 
 #if HIL_MODE != HIL_MODE_DISABLED
     AP_Float hil_err_limit;
