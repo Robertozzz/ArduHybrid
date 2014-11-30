@@ -244,8 +244,8 @@ static void stabilize_training(float speed_scaler)
  */
 static void stabilize_acro(float speed_scaler)
 {
-    float roll_rate = (channel_roll->control_in/4500.0f) * g.acro_roll_rate;
-    float pitch_rate = (channel_pitch->control_in/4500.0f) * g.acro_pitch_rate;
+    float roll_rate = (channel_roll->control_in/4500.0f) * g.acro_roll_ratep;
+    float pitch_rate = (channel_pitch->control_in/4500.0f) * g.acro_pitch_ratep;
 
     /*
       check for special roll handling near the pitch poles

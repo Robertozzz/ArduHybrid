@@ -538,23 +538,23 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     ASCALAR(pitch_limit_min_cd,     "LIM_PITCH_MIN",  PITCH_MIN_CENTIDEGREE),
 
-    // @Param: ACRO_ROLL_RATE
+    // @Param: ACRO_ROLL_RATEP
     // @DisplayName: ACRO mode roll rate
     // @Description: The maximum roll rate at full stick deflection in ACRO mode
     // @Units: degrees/second
     // @Range: 10 500
     // @Increment: 1
     // @User: Standard
-    GSCALAR(acro_roll_rate,          "ACRO_ROLL_RATE",    180),
+    GSCALAR(acro_roll_ratep,          "ACRO_ROLL_RATEP",    180),
 
-    // @Param: ACRO_PITCH_RATE
+    // @Param: ACRO_PITCH_RATEP
     // @DisplayName: ACRO mode pitch rate
     // @Description: The maximum pitch rate at full stick deflection in ACRO mode
     // @Units: degrees/second
     // @Range: 10 500
     // @Increment: 1
     // @User: Standard
-    GSCALAR(acro_pitch_rate,          "ACRO_PITCH_RATE",  180),
+    GSCALAR(acro_pitch_ratep,          "ACRO_PITCH_RATEP",  180),
 
     // @Param: ACRO_LOCKING
     // @DisplayName: ACRO mode attitude locking

@@ -875,10 +875,10 @@ static uint8_t throttle_mode = STABILIZE_THR;
 // Navigation control variables
 ////////////////////////////////////////////////////////////////////////////////
 // The instantaneous desired bank angle.  Hundredths of a degree
-static int32_t nav_roll_cd;
+static int32_t nav_roll_cd;		// Plane
 
 // The instantaneous desired pitch angle.  Hundredths of a degree
-static int32_t nav_pitch_cd;
+static int32_t nav_pitch_cd;	// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
 // Navigation Roll/Pitch functions

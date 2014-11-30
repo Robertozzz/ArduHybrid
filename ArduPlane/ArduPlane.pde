@@ -599,7 +599,7 @@ AP_Airspeed airspeed(aparm);
 ////////////////////////////////////////////////////////////////////////////////
 // ACRO Mode
 ////////////////////////////////////////////////////////////////////////////////
-//// ACRO roll pitch and rates need changing!!!
+
 static struct {					// Plane
     bool locked_roll;
     bool locked_pitch;
@@ -678,11 +678,10 @@ static int32_t offset_altitude_cm;			// Plane
 // Navigation control variables
 ////////////////////////////////////////////////////////////////////////////////
 // The instantaneous desired bank angle.  Hundredths of a degree
-static int32_t nav_roll_cd;
+static int32_t nav_roll_cd;		// Plane
 
 // The instantaneous desired pitch angle.  Hundredths of a degree
-static int32_t nav_pitch_cd;
- 
+static int32_t nav_pitch_cd;	// Plane
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////
@@ -708,6 +707,7 @@ APM_OBC obc;
 // selected navigation controller
 static AP_Navigation *nav_controller = &L1_controller;
 
+/////  \\\\\\\\\\ OMEGA VECTOR ??????????????????
 // selected navigation controller
 static AP_SpdHgtControl *SpdHgt_Controller = &TECS_controller;
 
