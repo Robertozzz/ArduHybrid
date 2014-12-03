@@ -582,7 +582,7 @@ static float airspeed_error_cm;
 static int16_t airspeed_nudge_cm;
 
 // Similar to airspeed_nudge, but used when no airspeed sensor.
-// 0-(throttle_max - throttle_cruise) : throttle nudge in Auto mode using top 1/2 of throttle stick travel
+// 0-(plthr_max - plthr_cruise) : throttle nudge in Auto mode using top 1/2 of throttle stick travel
 static int16_t throttle_nudge = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -682,6 +682,7 @@ static int32_t nav_roll_cd;		// Plane
 
 // The instantaneous desired pitch angle.  Hundredths of a degree
 static int32_t nav_pitch_cd;	// Plane
+
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////
@@ -1136,7 +1137,7 @@ static void handle_auto_mode(void)
         }
         
         // max throttle for takeoff
-        channel_throttle->servo_out = aparm.throttle_max;
+        channel_throttle->servo_out = aparm.plthr_max;
         break;
 
     case MAV_CMD_NAV_LAND:

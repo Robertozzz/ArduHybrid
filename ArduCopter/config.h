@@ -33,7 +33,6 @@
  #include "APM_Config.h" // <== THIS INCLUDE, DO NOT EDIT IT. EVER.
 #endif
 
-
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 // HARDWARE CONFIGURATION AND CONNECTIONS
@@ -998,3 +997,193 @@
 #endif
 
 #endif // __ARDUCOPTER_CONFIG_H__
+
+///// PLANE
+
+//////////////////////////////////////////////////////////////////////////////
+// ENABLE ELEVON_MIXING
+//
+#ifndef ELEVON_MIXING
+ # define ELEVON_MIXING          DISABLED
+#endif
+#ifndef ELEVON_REVERSE
+ # define ELEVON_REVERSE     DISABLED
+#endif
+#ifndef ELEVON_CH1_REVERSE
+ # define ELEVON_CH1_REVERSE     DISABLED
+#endif
+#ifndef ELEVON_CH2_REVERSE
+ # define ELEVON_CH2_REVERSE     DISABLED
+#endif
+
+//////////////////
+
+#ifndef FLAP_1_PERCENT
+ # define FLAP_1_PERCENT 0
+#endif
+#ifndef FLAP_1_SPEED
+ # define FLAP_1_SPEED 0
+#endif
+#ifndef FLAP_2_PERCENT
+ # define FLAP_2_PERCENT 0
+#endif
+#ifndef FLAP_2_SPEED
+ # define FLAP_2_SPEED 0
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// FLIGHT_MODE
+// FLIGHT_MODE_CHANNEL
+//
+#ifndef FLIGHT_MODE_CHANNEL
+ # define FLIGHT_MODE_CHANNEL    8
+#endif
+#if (FLIGHT_MODE_CHANNEL != 5) && (FLIGHT_MODE_CHANNEL != 6) && (FLIGHT_MODE_CHANNEL != 7) && (FLIGHT_MODE_CHANNEL != 8)
+ # error XXX
+ # error XXX You must set FLIGHT_MODE_CHANNEL to 5, 6, 7 or 8
+ # error XXX
+#endif
+
+#if !defined(FLIGHT_MODE_1)
+ # define FLIGHT_MODE_1                  RTL
+#endif
+#if !defined(FLIGHT_MODE_2)
+ # define FLIGHT_MODE_2                  RTL
+#endif
+#if !defined(FLIGHT_MODE_3)
+ # define FLIGHT_MODE_3                  FLY_BY_WIRE_A
+#endif
+#if !defined(FLIGHT_MODE_4)
+ # define FLIGHT_MODE_4                  FLY_BY_WIRE_A
+#endif
+#if !defined(FLIGHT_MODE_5)
+ # define FLIGHT_MODE_5                  MANUAL
+#endif
+#if !defined(FLIGHT_MODE_6)
+ # define FLIGHT_MODE_6                  MANUAL
+#endif
+
+
+//////////////////////////////////////////////////////////////////////////////
+// THROTTLE_FAILSAFE
+// THROTTLE_FS_VALUE
+// SHORT_FAILSAFE_ACTION
+// LONG_FAILSAFE_ACTION
+#ifndef THROTTLE_FAILSAFE
+ # define THROTTLE_FAILSAFE              ENABLED
+#endif
+#ifndef THROTTLE_FS_VALUE
+ # define THROTTLE_FS_VALUE              950
+#endif
+#ifndef SHORT_FAILSAFE_ACTION
+ # define SHORT_FAILSAFE_ACTION          0
+#endif
+#ifndef LONG_FAILSAFE_ACTION
+ # define LONG_FAILSAFE_ACTION           0
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// AUTO_TRIM
+//
+#ifndef AUTO_TRIM
+ # define AUTO_TRIM                              DISABLED
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// Altitude measurement and control.
+//
+#ifndef ALTITUDE_MIX
+ # define ALTITUDE_MIX                   1
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// AIRSPEED_CRUISE
+//
+#ifndef AIRSPEED_CRUISE
+ # define AIRSPEED_CRUISE                12 // 12 m/s
+#endif
+#define AIRSPEED_CRUISE_CM AIRSPEED_CRUISE*100
+
+//////////////////////////////////////////////////////////////////////////////
+// MIN_GNDSPEED
+//
+#ifndef MIN_GNDSPEED
+ # define MIN_GNDSPEED                   0 // m/s (0 disables)
+#endif
+#define MIN_GNDSPEED_CM MIN_GNDSPEED*100
+
+//////////////////////////////////////////////////////////////////////////////
+// FLY_BY_WIRE_B airspeed control
+//
+#ifndef AIRSPEED_FBW_MIN
+ # define AIRSPEED_FBW_MIN               9
+#endif
+#ifndef AIRSPEED_FBW_MAX
+ # define AIRSPEED_FBW_MAX               22
+#endif
+
+#ifndef ALT_HOLD_FBW
+ # define ALT_HOLD_FBW 0
+#endif
+#define ALT_HOLD_FBW_CM ALT_HOLD_FBW*100
+
+//////////////////////////////////////////////////////////////////////////////
+// Servo Mapping
+//
+#ifndef PLTHR_MIN
+ # define PLTHR_MIN                   0 // percent
+#endif
+#ifndef PLTHR_CRUISE
+ # define PLTHR_CRUISE                45
+#endif
+#ifndef PLTHR_MAX
+ # define PLTHR_MAX                   75
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// Autopilot control limits
+//
+#ifndef HEAD_MAX
+ # define HEAD_MAX                               45
+#endif
+#ifndef PITCH_MAX
+ # define PITCH_MAX                              15
+#endif
+#ifndef PITCH_MIN
+ # define PITCH_MIN                              -25
+#endif
+#define HEAD_MAX_CENTIDEGREE HEAD_MAX * 100
+#define PITCH_MAX_CENTIDEGREE PITCH_MAX * 100
+#define PITCH_MIN_CENTIDEGREE PITCH_MIN * 100
+
+#ifndef RUDDER_MIX
+ # define RUDDER_MIX           0.5
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// Navigation defaults
+//
+#ifndef WP_RADIUS_DEFAULT
+ # define WP_RADIUS_DEFAULT              30
+#endif
+
+#ifndef LOITER_RADIUS_DEFAULT
+ # define LOITER_RADIUS_DEFAULT 60
+#endif
+
+#ifndef ALT_HOLD_HOME
+ # define ALT_HOLD_HOME 100
+#endif
+#define ALT_HOLD_HOME_CM ALT_HOLD_HOME*100
+
+#ifndef USE_CURRENT_ALT
+ # define USE_CURRENT_ALT FALSE
+#endif
+
+#ifndef INVERTED_FLIGHT_PWM
+ # define INVERTED_FLIGHT_PWM 1750
+#endif
+
+#ifndef SCALING_SPEED
+ # define SCALING_SPEED          15.0
+#endif

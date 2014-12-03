@@ -19,7 +19,6 @@
 //
 // - Try to keep this file organised in the same order as APM_Config.h.example
 //
-
 #include "defines.h"
 
 ///
@@ -27,22 +26,10 @@
 /// change in your local copy of APM_Config.h.
 ///
 #ifdef USE_CMAKE_APM_CONFIG
- #include "APM_Config_cmake.h" // <== Prefer cmake config if it exists
+ #include "APM_Config_cmake.h"  // <== Prefer cmake config if it exists
 #else
  #include "APM_Config.h" // <== THIS INCLUDE, DO NOT EDIT IT. EVER.
 #endif
-///
-/// DO NOT EDIT THIS INCLUDE - if you want to make a local change, make that
-/// change in your local copy of APM_Config.h.
-///
-
-// Just so that it's completely clear...
-#define ENABLED                 1
-#define DISABLED                0
-
-// this avoids a very common config error
-#define ENABLE ENABLED
-#define DISABLE DISABLED
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -51,7 +38,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #ifdef CONFIG_APM_HARDWARE
-#error CONFIG_APM_HARDWARE option is depreated! use CONFIG_HAL_BOARD instead.
+#error CONFIG_APM_HARDWARE option is deprecated! use CONFIG_HAL_BOARD instead
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -82,48 +69,43 @@
 //////////////////////////////////////////////////////////////////////////////
 // main board differences
 //
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM1
- # define CONFIG_IMU_TYPE CONFIG_IMU_OILPAN
- # define CONFIG_BARO     AP_BARO_BMP085
- # define CONFIG_COMPASS  AP_COMPASS_HMC5843
-#elif CONFIG_HAL_BOARD == HAL_BOARD_APM2
- # define CONFIG_IMU_TYPE CONFIG_IMU_MPU6000
+#if CONFIG_HAL_BOARD == HAL_BOARD_APM2
+ # define CONFIG_IMU_TYPE   CONFIG_IMU_MPU6000
+ # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
+ # define MAGNETOMETER ENABLED
  # ifdef APM2_BETA_HARDWARE
- #  define CONFIG_BARO     AP_BARO_BMP085
+  #  define CONFIG_BARO     AP_BARO_BMP085
  # else // APM2 Production Hardware (default)
- #  define CONFIG_BARO          AP_BARO_MS5611
- #  define CONFIG_MS5611_SERIAL AP_BARO_MS5611_SPI
+  #  define CONFIG_BARO          AP_BARO_MS5611
+  #  define CONFIG_MS5611_SERIAL AP_BARO_MS5611_SPI
  # endif
- # define CONFIG_COMPASS  AP_COMPASS_HMC5843
 #elif CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
- # define CONFIG_IMU_TYPE CONFIG_IMU_HIL
- # define CONFIG_BARO     AP_BARO_HIL
- # define CONFIG_COMPASS  AP_COMPASS_HIL
+ # define CONFIG_IMU_TYPE   CONFIG_IMU_SITL
+ # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
+ # define MAGNETOMETER ENABLED
+ # define OPTFLOW DISABLED
 #elif CONFIG_HAL_BOARD == HAL_BOARD_PX4
- # define CONFIG_IMU_TYPE CONFIG_IMU_PX4
- # define CONFIG_BARO AP_BARO_PX4
- # define CONFIG_COMPASS  AP_COMPASS_PX4
- # define SERIAL0_BAUD 115200
+ # define CONFIG_IMU_TYPE   CONFIG_IMU_PX4
+ # define CONFIG_BARO       AP_BARO_PX4
+ # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
+ # define MAGNETOMETER ENABLED
+ # define OPTFLOW DISABLED
 #elif CONFIG_HAL_BOARD == HAL_BOARD_FLYMAPLE
  # define CONFIG_IMU_TYPE CONFIG_IMU_FLYMAPLE
  # define CONFIG_BARO AP_BARO_BMP085
  # define CONFIG_COMPASS  AP_COMPASS_HMC5843
- # define SERIAL0_BAUD 115200
+ # define CONFIG_ADC        DISABLED
+ # define MAGNETOMETER ENABLED
+ # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
+ # define OPTFLOW DISABLED
 #elif CONFIG_HAL_BOARD == HAL_BOARD_LINUX
- # define BATTERY_VOLT_PIN      -1
- # define BATTERY_CURR_PIN      -1
  # define CONFIG_IMU_TYPE CONFIG_IMU_L3G4200D
- # define CONFIG_BARO     AP_BARO_BMP085
+ # define CONFIG_BARO AP_BARO_BMP085
  # define CONFIG_COMPASS  AP_COMPASS_HMC5843
-#endif
-
-
-#ifndef CONFIG_BARO
- # error "CONFIG_BARO not set"
-#endif
-
-#ifndef CONFIG_COMPASS
- # error "CONFIG_COMPASS not set"
+ # define CONFIG_ADC        DISABLED
+ # define MAGNETOMETER ENABLED
+ # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
+ # define OPTFLOW DISABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -171,6 +153,24 @@
  # define SERIAL2_BAUD                    57600
 #endif
 
+//////////////////////////////////////////////////////////////////////////////
+// Battery monitoring
+//
+#ifndef FS_BATT_VOLTAGE_DEFAULT
+ # define FS_BATT_VOLTAGE_DEFAULT       10.5f       // default battery voltage below which failsafe will be triggered
+#endif
+
+#ifndef FS_BATT_MAH_DEFAULT
+ # define FS_BATT_MAH_DEFAULT             0         // default battery capacity (in mah) below which failsafe will be triggered
+#endif
+
+#ifndef BOARD_VOLTAGE_MIN
+ # define BOARD_VOLTAGE_MIN             4300        // min board voltage in milli volts for pre-arm checks
+#endif
+
+#ifndef BOARD_VOLTAGE_MAX
+ # define BOARD_VOLTAGE_MAX             5800        // max board voltage in milli volts for pre-arm checks
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
@@ -392,14 +392,14 @@
 //////////////////////////////////////////////////////////////////////////////
 // Servo Mapping
 //
-#ifndef THROTTLE_MIN
- # define THROTTLE_MIN                   0 // percent
+#ifndef PLTHR_MIN
+ # define PLTHR_MIN                   0 // percent
 #endif
-#ifndef THROTTLE_CRUISE
- # define THROTTLE_CRUISE                45
+#ifndef PLTHR_CRUISE
+ # define PLTHR_CRUISE                45
 #endif
-#ifndef THROTTLE_MAX
- # define THROTTLE_MAX                   75
+#ifndef PLTHR_MAX
+ # define PLTHR_MAX                   75
 #endif
 
 //////////////////////////////////////////////////////////////////////////////

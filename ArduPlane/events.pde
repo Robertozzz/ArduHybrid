@@ -110,7 +110,7 @@ void low_battery_event(void)
     gcs_send_text_fmt(PSTR("Low Battery %.2fV Used %.0f mAh"),
                       battery.voltage(), battery.current_total_mah());
     plane_set_mode(RTL);
-    aparm.throttle_cruise.load();
+    aparm.plthr_cruise.load();
     failsafe.low_battery = true;
     AP_Notify::flags.failsafe_battery = true;
 }

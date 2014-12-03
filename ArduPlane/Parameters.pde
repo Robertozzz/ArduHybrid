@@ -1,12 +1,11 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
-
 /*
  *  ArduPlane parameter definitions
  *
  */
 
 #define GSCALAR(v, name, def) { g.v.vtype, name, Parameters::k_param_ ## v, &g.v, {def_value : def} }
-#define ASCALAR(v, name, def) { aparm.v.vtype, name, Parameters::k_param_ ## v, &aparm.v, {def_value : def} }
+#define ASCALAR(v, name, def) { aparm.v.vtype, name, Parameters::k_param_ ## v, &aparm.v, {def_value : def} }	// Plane
 #define GGROUP(v, name, class) { AP_PARAM_GROUP, name, Parameters::k_param_ ## v, &g.v, {group_info : class::var_info} }
 #define GOBJECT(v, name, class) { AP_PARAM_GROUP, name, Parameters::k_param_ ## v, &v, {group_info : class::var_info} }
 #define GOBJECTN(v, pname, name, class) { AP_PARAM_GROUP, name, Parameters::k_param_ ## pname, &v, {group_info : class::var_info} }
@@ -16,27 +15,27 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @DisplayName: Eeprom format version number
     // @Description: This value is incremented when changes are made to the eeprom format
     // @User: Advanced
-    GSCALAR(format_version,         "FORMAT_VERSION", 0),
+    GSCALAR(format_version, "FORMAT_VERSION",   0),
 
     // @Param: SYSID_SW_TYPE
     // @DisplayName: Software Type
     // @Description: This is used by the ground station to recognise the software type (eg ArduPlane vs ArduCopter)
     // @User: Advanced
-    GSCALAR(software_type,          "SYSID_SW_TYPE",  Parameters::k_software_type),
+    GSCALAR(software_type,  "SYSID_SW_TYPE",   Parameters::k_software_type),
 
     // @Param: SYSID_THISMAV
-    // @DisplayName: MAVLink system ID
-    // @Description: The identifier of this device in the MAVLink protocol
+    // @DisplayName: Mavlink version
+    // @Description: Allows reconising the mavlink version
     // @Range: 1 255
     // @User: Advanced
-    GSCALAR(sysid_this_mav,         "SYSID_THISMAV",  MAV_SYSTEM_ID),
+    GSCALAR(sysid_this_mav, "SYSID_THISMAV",   MAV_SYSTEM_ID),
 
     // @Param: SYSID_MYGCS
-    // @DisplayName: Ground station MAVLink system ID
+    // @DisplayName: My ground station number
     // @Description: The identifier of the ground station in the MAVLink protocol. Don't change this unless you also modify the ground station to match.
     // @Range: 1 255
     // @User: Advanced
-    GSCALAR(sysid_my_gcs,           "SYSID_MYGCS",    255),
+    GSCALAR(sysid_my_gcs,   "SYSID_MYGCS",     255),
 
     // @Param: SERIAL0_BAUD
     // @DisplayName: USB Console Baud Rate
@@ -50,21 +49,21 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Description: The baud rate used on the first telemetry port
     // @Values: 1:1200,2:2400,4:4800,9:9600,19:19200,38:38400,57:57600,111:111100,115:115200
     // @User: Standard
-    GSCALAR(serial1_baud,           "SERIAL1_BAUD",   SERIAL1_BAUD/1000),
+    GSCALAR(serial1_baud,   "SERIAL1_BAUD",     SERIAL1_BAUD/1000),
 
 #if MAVLINK_COMM_NUM_BUFFERS > 2
     // @Param: SERIAL2_BAUD
     // @DisplayName: Telemetry Baud Rate
-    // @Description: The baud rate used on the second telemetry port
+    // @Description: The baud rate used on the seconds telemetry port
     // @Values: 1:1200,2:2400,4:4800,9:9600,19:19200,38:38400,57:57600,111:111100,115:115200
     // @User: Standard
-    GSCALAR(serial2_baud,           "SERIAL2_BAUD",   SERIAL2_BAUD/1000),
+    GSCALAR(serial2_baud,   "SERIAL2_BAUD",     SERIAL2_BAUD/1000),
 #endif
 
     // @Param: TELEM_DELAY
-    // @DisplayName: Telemetry startup delay 
+    // @DisplayName: Telemetry startup delay
     // @Description: The amount of time (in seconds) to delay radio telemetry to prevent an Xbee bricking on power up
-    // @User: Standard
+    // @User: Advanced
     // @Units: seconds
     // @Range: 0 10
     // @Increment: 1
@@ -198,20 +197,6 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Advanced
     GSCALAR(alt_offset, "ALT_OFFSET",                 0),
 
-    // @Param: CMD_TOTAL
-    // @DisplayName: Number of loaded mission items
-    // @Description: The number of mission mission items that has been loaded by the ground station. Do not change this manually.
-    // @Range: 1 255
-    // @User: Advanced
-    GSCALAR(command_total,          "CMD_TOTAL",      0),
-
-    // @Param: CMD_INDEX
-    // @DisplayName: Current mission command index
-    // @Description: The index of the currently running mission item. Do not change this manually.
-    // @Range: 1 255
-    // @User: Advanced
-    GSCALAR(command_index,          "CMD_INDEX",      0),
-
     // @Param: WP_RADIUS
     // @DisplayName: Waypoint Radius
     // @Description: Defines the distance from a waypoint that when crossed indicates the waypoint has been completed. To avoid the aircraft looping around the waypoint in case it misses by more than the WP_RADIUS an additional check is made to see if the aircraft has crossed a "finish line" passing through the waypoint and perpendicular to the flight path from the previous waypoint. If that finish line is crossed then the waypoint is considered complete.
@@ -334,23 +319,23 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(flybywire_climb_rate, "FBWB_CLIMB_RATE",  2.0f),
 
-    // @Param: THR_MIN
+    // @Param: PLTHR_MIN
     // @DisplayName: Minimum Throttle
     // @Description: The minimum throttle setting to which the autopilot will apply.
     // @Units: Percent
     // @Range: 0 100
     // @Increment: 1
     // @User: Standard
-    ASCALAR(throttle_min,           "THR_MIN",        THROTTLE_MIN),
+    ASCALAR(plthr_min,           "PLTHR_MIN",        PLTHR_MIN),
 
-    // @Param: THR_MAX
+    // @Param: PLTHR_MAX
     // @DisplayName: Maximum Throttle
     // @Description: The maximum throttle setting to which the autopilot will apply.
     // @Units: Percent
     // @Range: 0 100
     // @Increment: 1
     // @User: Standard
-    ASCALAR(throttle_max,           "THR_MAX",        THROTTLE_MAX),
+    ASCALAR(plthr_max,           "PLTHR_MAX",        PLTHR_MAX),
 
     // @Param: THR_SLEWRATE
     // @DisplayName: Throttle slew rate
@@ -370,7 +355,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: THR_PASS_STAB
     // @DisplayName: Throttle passthru in stabilize
-    // @Description: If this is set then when in STABILIZE, FBWA or ACRO modes the throttle is a direct passthru from the transmitter. This means the THR_MIN and THR_MAX settings are not used in these modes. This is useful for petrol engines where you setup a throttle cut switch that suppresses the throttle below the normal minimum.
+    // @Description: If this is set then when in STABILIZE, FBWA or ACRO modes the throttle is a direct passthru from the transmitter. This means the PL_THR_MIN and PL_THR_MAX settings are not used in these modes. This is useful for petrol engines where you setup a throttle cut switch that suppresses the throttle below the normal minimum.
 	// @Values: 0:Disabled,1:Enabled
     // @User: Advanced
     GSCALAR(throttle_passthru_stabilize,"THR_PASS_STAB",   0),
@@ -391,14 +376,14 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(throttle_fs_value,      "THR_FS_VALUE",   THROTTLE_FS_VALUE),
 
-    // @Param: TRIM_THROTTLE
+    // @Param: PLTRIM_THROTTLE
     // @DisplayName: Throttle cruise percentage
     // @Description: The target percentage of throttle to apply for normal flight
     // @Units: Percent
     // @Range: 0 100
     // @Increment: 1
     // @User: Standard
-    ASCALAR(throttle_cruise,        "TRIM_THROTTLE",  THROTTLE_CRUISE),
+    ASCALAR(plthr_cruise,        "PLTRIM_THROTTLE",  PLTHR_CRUISE),
 
     // @Param: THROTTLE_NUDGE
     // @DisplayName: Throttle nudge enable
@@ -440,21 +425,24 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(long_fs_timeout,        "FS_LONG_TIMEOUT", 20),
 
+
+
+
     // @Param: FS_BATT_VOLTAGE
     // @DisplayName: Failsafe battery voltage
-    // @Description: Battery voltage to trigger failsafe. Set to 0 to disable battery voltage failsafe. If the battery voltage drops below this voltage continuously for 10 seconds then the plane will switch to RTL mode
+    // @Description: Battery voltage to trigger failsafe. Set to 0 to disable battery voltage failsafe. If the battery voltage drops below this voltage then the copter will RTL
     // @Units: Volts
     // @Increment: 0.1
     // @User: Standard
-    GSCALAR(fs_batt_voltage,        "FS_BATT_VOLTAGE", 0),
+    GSCALAR(fs_batt_voltage,        "FS_BATT_VOLTAGE", FS_BATT_VOLTAGE_DEFAULT),
 
     // @Param: FS_BATT_MAH
     // @DisplayName: Failsafe battery milliAmpHours
-    // @Description: Battery capacity remaining to trigger failsafe. Set to 0 to disable battery remaining failsafe. If the battery remaining drops below this level then the plane will switch to RTL mode immediately
+    // @Description: Battery capacity remaining to trigger failsafe. Set to 0 to disable battery remaining failsafe. If the battery remaining drops below this level then the copter will RTL
     // @Units: mAh
     // @Increment: 50
     // @User: Standard
-    GSCALAR(fs_batt_mah,            "FS_BATT_MAH", 0),
+    GSCALAR(fs_batt_mah,            "FS_BATT_MAH", FS_BATT_MAH_DEFAULT),
 
     // @Param: FS_GCS_ENABL
     // @DisplayName: GCS failsafe enable
@@ -463,6 +451,67 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(gcs_heartbeat_fs_enabled, "FS_GCS_ENABL", GCS_FAILSAFE_OFF),
 
+    // @Param: MAG_ENABLE
+    // @DisplayName: Compass enable/disable
+    // @Description: Setting this to Enabled(1) will enable the compass. Setting this to Disabled(0) will disable the compass
+    // @Values: 0:Disabled,1:Enabled
+    // @User: Standard
+    GSCALAR(compass_enabled,        "MAG_ENABLE",   MAGNETOMETER),
+
+    // @Param: RSSI_PIN
+    // @DisplayName: Receiver RSSI sensing pin
+    // @Description: This selects an analog pin for the receiver RSSI voltage. It assumes the voltage is 5V for max rssi, 0V for minimum
+    // @Values: -1:Disabled, 0:A0, 1:A1, 13:A13, 103:Pixhawk
+    // @User: Standard
+    GSCALAR(rssi_pin,            "RSSI_PIN",         -1),
+
+    // @Param: RSSI_RANGE
+    // @DisplayName: Receiver RSSI voltage range
+    // @Description: Receiver RSSI voltage range
+    // @Units: Volt
+    // @Values: 3.3:3.3V, 5.0:5V
+    // @User: Standard
+    GSCALAR(rssi_range,          "RSSI_RANGE",         5.0),
+
+    // @Param: WP_TOTAL
+    // @DisplayName: Number of loaded mission items
+    // @Description: The number of mission mission items that has been loaded by the ground station. Do not change this manually.
+    // @Range: 1 255
+    // @User: Advanced
+    GSCALAR(command_total,          "WP_TOTAL",      0),
+
+    // @Param: WP_INDEX
+    // @DisplayName: Current mission command index
+    // @Description: The index of the currently running mission item. Do not change this manually.
+    // @Range: 1 255
+    // @User: Advanced
+    GSCALAR(command_index,          "WP_INDEX",      0),
+	
+    // @Param: INVERTEDFLT_CH
+    // @DisplayName: Inverted flight channel
+    // @Description: A RC input channel number to enable inverted flight. If this is non-zero then the APM will monitor the correcponding RC input channel and will enable inverted flight when the channel goes above 1750.
+    // @Values: 0:Disabled,1:Channel1,2:Channel2,3:Channel3,4:Channel4,5:Channel5,6:Channel6,7:Channel7,8:Channel8
+    // @User: Standard
+    GSCALAR(inverted_flight_ch,     "INVERTEDFLT_CH", 0),
+
+#if HIL_MODE != HIL_MODE_DISABLED
+    // @Param: HIL_SERVOS
+    // @DisplayName: HIL Servos enable
+    // @Description: This controls whether real servo controls are used in HIL mode. If you enable this then the APM will control the real servos in HIL mode. If disabled it will report servo values, but will not output to the real servos. Be careful that your motor and propeller are not connected if you enable this option.
+    // @Values: 0:Disabled,1:Enabled
+    // @User: Advanced
+    GSCALAR(hil_servos,            "HIL_SERVOS",      0),
+
+    // @Param: HIL_ERR_LIMIT
+    // @DisplayName: Limit of error in HIL attitude before reset
+    // @Description: This controls the maximum error in degrees on any axis before HIL will reset the DCM attitude to match the HIL_STATE attitude. This limit will prevent poor timing on HIL from causing a major attitude error. If the value is zero then no limit applies.
+    // @Units: degrees
+    // @Range: 0 90
+    // @Increment: 0.1
+    // @User: Advanced
+    GSCALAR(hil_err_limit,         "HIL_ERR_LIMIT",   5),
+#endif
+
     // @Param: FLTMODE_CH
     // @DisplayName: Flightmode channel
     // @Description: RC Channel to use for flight mode control
@@ -470,46 +519,46 @@ const AP_Param::Info var_info[] PROGMEM = {
     GSCALAR(flight_mode_channel,    "FLTMODE_CH",     FLIGHT_MODE_CHANNEL),
 
     // @Param: FLTMODE1
-    // @DisplayName: FlightMode1
-    // @Values: 0:Manual,1:CIRCLE,2:STABILIZE,3:TRAINING,4:ACRO,5:FBWA,6:FBWB,7:CRUISE,10:Auto,11:RTL,12:Loiter,15:Guided
+    // @DisplayName: Flight Mode 1
+    // @Description: Flight mode when Channel 5 pwm is <= 1230
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
     // @User: Standard
-    // @Description: Flight mode for switch position 1 (910 to 1230 and above 2049)
-    GSCALAR(flight_mode1,           "FLTMODE1",       FLIGHT_MODE_1),
+    GSCALAR(flight_mode1, "FLTMODE1",               FLIGHT_MODE_1),
 
     // @Param: FLTMODE2
-    // @DisplayName: FlightMode2
-    // @Description: Flight mode for switch position 2 (1231 to 1360)
-    // @Values: 0:Manual,1:CIRCLE,2:STABILIZE,3:TRAINING,4:ACRO,5:FBWA,6:FBWB,7:CRUISE,10:Auto,11:RTL,12:Loiter,15:Guided
+    // @DisplayName: Flight Mode 2
+    // @Description: Flight mode when Channel 5 pwm is >1230, <= 1360
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
     // @User: Standard
-    GSCALAR(flight_mode2,           "FLTMODE2",       FLIGHT_MODE_2),
+    GSCALAR(flight_mode2, "FLTMODE2",               FLIGHT_MODE_2),
 
     // @Param: FLTMODE3
-    // @DisplayName: FlightMode3
-    // @Description: Flight mode for switch position 3 (1361 to 1490)
-    // @Values: 0:Manual,1:CIRCLE,2:STABILIZE,3:TRAINING,4:ACRO,5:FBWA,6:FBWB,7:CRUISE,10:Auto,11:RTL,12:Loiter,15:Guided
+    // @DisplayName: Flight Mode 3
+    // @Description: Flight mode when Channel 5 pwm is >1360, <= 1490
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
     // @User: Standard
-    GSCALAR(flight_mode3,           "FLTMODE3",       FLIGHT_MODE_3),
+    GSCALAR(flight_mode3, "FLTMODE3",               FLIGHT_MODE_3),
 
     // @Param: FLTMODE4
-    // @DisplayName: FlightMode4
-    // @Description: Flight mode for switch position 4 (1491 to 1620)
-    // @Values: 0:Manual,1:CIRCLE,2:STABILIZE,3:TRAINING,4:ACRO,5:FBWA,6:FBWB,7:CRUISE,10:Auto,11:RTL,12:Loiter,15:Guided
+    // @DisplayName: Flight Mode 4
+    // @Description: Flight mode when Channel 5 pwm is >1490, <= 1620
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
     // @User: Standard
-    GSCALAR(flight_mode4,           "FLTMODE4",       FLIGHT_MODE_4),
+    GSCALAR(flight_mode4, "FLTMODE4",               FLIGHT_MODE_4),
 
     // @Param: FLTMODE5
-    // @DisplayName: FlightMode5
-    // @Description: Flight mode for switch position 5 (1621 to 1749)
-    // @Values: 0:Manual,1:CIRCLE,2:STABILIZE,3:TRAINING,4:ACRO,5:FBWA,6:FBWB,7:CRUISE,10:Auto,11:RTL,12:Loiter,15:Guided
+    // @DisplayName: Flight Mode 5
+    // @Description: Flight mode when Channel 5 pwm is >1620, <= 1749
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
     // @User: Standard
-    GSCALAR(flight_mode5,           "FLTMODE5",       FLIGHT_MODE_5),
+    GSCALAR(flight_mode5, "FLTMODE5",               FLIGHT_MODE_5),
 
     // @Param: FLTMODE6
-    // @DisplayName: FlightMode6
-    // @Description: Flight mode for switch position 6 (1750 to 2049)
-    // @Values: 0:Manual,1:CIRCLE,2:STABILIZE,3:TRAINING,4:ACRO,5:FBWA,6:FBWB,7:CRUISE,10:Auto,11:RTL,12:Loiter,15:Guided
+    // @DisplayName: Flight Mode 6
+    // @Description: Flight mode when Channel 5 pwm is >=1750
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
     // @User: Standard
-    GSCALAR(flight_mode6,           "FLTMODE6",       FLIGHT_MODE_6),
+    GSCALAR(flight_mode6, "FLTMODE6",               FLIGHT_MODE_6),
 
     // @Param: LIM_ROLL_CD
     // @DisplayName: Maximum Bank Angle
@@ -646,10 +695,10 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: LOG_BITMASK
     // @DisplayName: Log bitmask
-    // @Description: Bitmap of what log types to enable in dataflash. This values is made up of the sum of each of the log types you want to be saved on dataflash. On a PX4 or Pixhawk the large storage size of a microSD card means it is usually best just to enable all log types by setting this to 65535. On APM2 the smaller 4 MByte dataflash means you need to be more selective in your logging or you may run out of log space while flying (in which case it will wrap and overwrite the start of the log). The individual bits are ATTITUDE_FAST=1, ATTITUDE_MEDIUM=2, GPS=4, PerformanceMonitoring=8, ControlTuning=16, NavigationTuning=32, Mode=64, IMU=128, Commands=256, Battery=512, Compass=1024, TECS=2048, Camera=4096, RCandServo=8192, Sonar=16384, Arming=32768, LogWhenDisarmed=1073741824
-    // @Values: 0:Disabled,5190:APM2-Default,65535:PX4/Pixhawk-Default
-    // @User: Advanced
-    GSCALAR(log_bitmask,            "LOG_BITMASK",    DEFAULT_LOG_BITMASK),
+    // @Description: 2 byte bitmap of log types to enable
+    // @Values: 0:Disabled,830:Default,894:Default+RCIN,958:Default+IMU,1854:Default+Motors,-6146:NearlyAll
+    // @User: Standard
+    GSCALAR(log_bitmask,    "LOG_BITMASK",          DEFAULT_LOG_BITMASK),
 
     // @Param: RST_SWITCH_CH
     // @DisplayName: Reset Switch Channel
@@ -705,13 +754,6 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: User
     GSCALAR(FBWB_min_altitude_cm,   "ALT_HOLD_FBWCM", ALT_HOLD_FBW_CM),
 
-    // @Param: MAG_ENABLE
-    // @DisplayName: Enable Compass
-    // @Description: Setting this to Enabled(1) will enable the compass. Setting this to Disabled(0) will disable the compass. Note that this is separate from COMPASS_USE. This will enable the low level senor, and will enable logging of magnetometer data. To use the compass for navigation you must also set COMPASS_USE to 1.
-    // @Values: 0:Disabled,1:Enabled
-    // @User: Standard
-    GSCALAR(compass_enabled,        "MAG_ENABLE",     1),
-
     // @Param: FLAP_1_PERCNT
     // @DisplayName: Flap 1 percentage
     // @Description: The percentage change in flap position when FLAP_1_SPEED is reached. Use zero to disable flaps
@@ -746,103 +788,32 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Advanced
     GSCALAR(flap_2_speed,           "FLAP_2_SPEED",   FLAP_2_SPEED),
 
-    // @Param: RSSI_PIN
-    // @DisplayName: Receiver RSSI sensing pin
-    // @Description: This selects an analog pin for the receiver RSSI voltage. It assumes the voltage is 5V for max rssi, 0V for minimum
-    // @Values: -1:Disabled, 0:A0, 1:A1, 13:A13, 103:Pixhawk
-    // @User: Standard
-    GSCALAR(rssi_pin,            "RSSI_PIN",         -1),
-
-    // @Param: RSSI_RANGE
-    // @DisplayName: Receiver RSSI voltage range
-    // @Description: Receiver RSSI voltage range
-    // @Units: Volt
-    // @Values: 3.3:3.3V, 5.0:5V
-    // @User: Standard
-    GSCALAR(rssi_range,          "RSSI_RANGE",         5.0),
-
-    // @Param: INVERTEDFLT_CH
-    // @DisplayName: Inverted flight channel
-    // @Description: A RC input channel number to enable inverted flight. If this is non-zero then the APM will monitor the correcponding RC input channel and will enable inverted flight when the channel goes above 1750.
-    // @Values: 0:Disabled,1:Channel1,2:Channel2,3:Channel3,4:Channel4,5:Channel5,6:Channel6,7:Channel7,8:Channel8
-    // @User: Standard
-    GSCALAR(inverted_flight_ch,     "INVERTEDFLT_CH", 0),
-
-#if HIL_MODE != HIL_MODE_DISABLED
-    // @Param: HIL_SERVOS
-    // @DisplayName: HIL Servos enable
-    // @Description: This controls whether real servo controls are used in HIL mode. If you enable this then the APM will control the real servos in HIL mode. If disabled it will report servo values, but will not output to the real servos. Be careful that your motor and propeller are not connected if you enable this option.
-    // @Values: 0:Disabled,1:Enabled
-    // @User: Advanced
-    GSCALAR(hil_servos,            "HIL_SERVOS",      0),
-
-    // @Param: HIL_ERR_LIMIT
-    // @DisplayName: Limit of error in HIL attitude before reset
-    // @Description: This controls the maximum error in degrees on any axis before HIL will reset the DCM attitude to match the HIL_STATE attitude. This limit will prevent poor timing on HIL from causing a major attitude error. If the value is zero then no limit applies.
-    // @Units: degrees
-    // @Range: 0 90
-    // @Increment: 0.1
-    // @User: Advanced
-    GSCALAR(hil_err_limit,         "HIL_ERR_LIMIT",   5),
-#endif
-
-    // barometer ground calibration. The GND_ prefix is chosen for
-    // compatibility with previous releases of ArduPlane
-    // @Group: GND_
-    // @Path: ../libraries/AP_Baro/AP_Baro.cpp
-    GOBJECT(barometer, "GND_", AP_Baro),
-
-#if CAMERA == ENABLED
-    // @Group: CAM_
-    // @Path: ../libraries/AP_Camera/AP_Camera.cpp
-    GOBJECT(camera,                  "CAM_", AP_Camera),
-#endif
-
-    // @Group: ARMING_
-    // @Path: ../libraries/AP_Arming/AP_Arming.cpp
-    GOBJECT(arming,                 "ARMING_", AP_Arming),
-
-    // @Group: RELAY_
-    // @Path: ../libraries/AP_Relay/AP_Relay.cpp
-    GOBJECT(relay,                  "RELAY_", AP_Relay),
-
-    // @Group: SONAR_
-    // @Path: ../libraries/AP_RangeFinder/AP_RangeFinder_analog.cpp
-    GOBJECT(sonar,                  "SONAR_", AP_RangeFinder_analog),
-
     // RC channel
     //-----------
     // @Group: RC1_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp
-    GGROUP(rc_1,                    "RC1_", RC_Channel),
-
+    GGROUP(rc_1,    "RC1_", RC_Channel),
     // @Group: RC2_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp
-    GGROUP(rc_2,                    "RC2_", RC_Channel),
-
+    GGROUP(rc_2,    "RC2_", RC_Channel),
     // @Group: RC3_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp
-    GGROUP(rc_3,                    "RC3_", RC_Channel),
-
+    GGROUP(rc_3,    "RC3_", RC_Channel),
     // @Group: RC4_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp
-    GGROUP(rc_4,                    "RC4_", RC_Channel),
-
+    GGROUP(rc_4,    "RC4_", RC_Channel),
     // @Group: RC5_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
-    GGROUP(rc_5,                    "RC5_", RC_Channel_aux),
-
+    GGROUP(rc_5,    "RC5_", RC_Channel_aux),
     // @Group: RC6_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
-    GGROUP(rc_6,                    "RC6_", RC_Channel_aux),
-
+    GGROUP(rc_6,    "RC6_", RC_Channel_aux),
     // @Group: RC7_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
-    GGROUP(rc_7,                    "RC7_", RC_Channel_aux),
-
+    GGROUP(rc_7,    "RC7_", RC_Channel_aux),
     // @Group: RC8_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
-    GGROUP(rc_8,                    "RC8_", RC_Channel_aux),
+    GGROUP(rc_8,    "RC8_", RC_Channel_aux),
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
     // @Group: RC9_
@@ -850,20 +821,17 @@ const AP_Param::Info var_info[] PROGMEM = {
     GGROUP(rc_9,                    "RC9_", RC_Channel_aux),
 #endif
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM2 || CONFIG_HAL_BOARD == HAL_BOARD_PX4
     // @Group: RC10_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_10,                    "RC10_", RC_Channel_aux),
-
     // @Group: RC11_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
     GGROUP(rc_11,                    "RC11_", RC_Channel_aux),
-#endif
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
     // @Group: RC12_
     // @Path: ../libraries/RC_Channel/RC_Channel.cpp,../libraries/RC_Channel/RC_Channel_aux.cpp
-    GGROUP(rc_12,                    "RC12_", RC_Channel_aux),
+    GGROUP(rc_12,                   "RC12_", RC_Channel_aux),
 #endif
 
     // @Group: RLL2SRV_
@@ -882,23 +850,37 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Path: ../libraries/APM_Control/AP_SteerController.cpp
 	GOBJECT(steerController,        "STEER2SRV_",   AP_SteerController),
 
-	// variables not in the g class which contain EEPROM saved variables
+#if CAMERA == ENABLED
+    // @Group: CAM_
+    // @Path: ../libraries/AP_Camera/AP_Camera.cpp
+    GOBJECT(camera,           "CAM_", AP_Camera),
+#endif
+
+    // @Group: ARMING_
+    // @Path: ../libraries/AP_Arming/AP_Arming.cpp
+    GOBJECT(arming,                 "ARMING_", AP_Arming),
+
+    // @Group: RELAY_
+    // @Path: ../libraries/AP_Relay/AP_Relay.cpp
+    GOBJECT(relay,                  "RELAY_", AP_Relay),
+
+//    // @Group: SONAR_
+//    // @Path: ../libraries/AP_RangeFinder/AP_RangeFinder_analog.cpp
+//    GOBJECT(sonar,                  "SONAR_", AP_RangeFinder_analog),
+
 
     // @Group: COMPASS_
     // @Path: ../libraries/AP_Compass/Compass.cpp
-    GOBJECT(compass,                "COMPASS_",     Compass),
+    GOBJECT(compass,        "COMPASS_", Compass),
 
-    // @Group: SCHED_
-    // @Path: ../libraries/AP_Scheduler/AP_Scheduler.cpp
-    GOBJECT(scheduler, "SCHED_", AP_Scheduler),
+    // @Group: INS_
+    // @Path: ../libraries/AP_InertialSensor/AP_InertialSensor.cpp
+    GOBJECT(ins,            "INS_", AP_InertialSensor),
 
-    // @Group: RCMAP_
-    // @Path: ../libraries/AP_RCMapper/AP_RCMapper.cpp
-    GOBJECT(rcmap,                "RCMAP_",         RCMapper),
 
     // @Group: SR0_
     // @Path: GCS_Mavlink.pde
-    GOBJECTN(gcs[0], gcs0,        "SR0_",     GCS_MAVLINK),
+    GOBJECTN(gcs[0],  gcs0,       "SR0_",     GCS_MAVLINK),
 
     // @Group: SR1_
     // @Path: GCS_Mavlink.pde
@@ -909,10 +891,6 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Path: GCS_Mavlink.pde
     GOBJECTN(gcs[2],  gcs2,       "SR2_",     GCS_MAVLINK),
 #endif
-
-    // @Group: INS_
-    // @Path: ../libraries/AP_InertialSensor/AP_InertialSensor.cpp
-    GOBJECT(ins,                    "INS_", AP_InertialSensor),
 
     // @Group: AHRS_
     // @Path: ../libraries/AP_AHRS/AP_AHRS.cpp
@@ -948,17 +926,27 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Group: BRD_
     // @Path: ../libraries/AP_BoardConfig/AP_BoardConfig.cpp
-    GOBJECT(BoardConfig,            "BRD_",       AP_BoardConfig),
+    GOBJECT(BoardConfig,            "BRD_",       AP_BoardConfig),    
 
 #if CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
-    // @Group: SIM_
-    // @Path: ../libraries/SITL/SITL.cpp
     GOBJECT(sitl, "SIM_", SITL),
 #endif
 
 #if OBC_FAILSAFE == ENABLED
     GOBJECT(obc,  "FS_", APM_OBC),
 #endif
+
+    // @Group: GND_
+    // @Path: ../libraries/AP_Baro/AP_Baro.cpp
+    GOBJECT(barometer, "GND_", AP_Baro),
+
+    // @Group: SCHED_
+    // @Path: ../libraries/AP_Scheduler/AP_Scheduler.cpp
+    GOBJECT(scheduler, "SCHED_", AP_Scheduler),
+
+    // @Group: RCMAP_
+    // @Path: ../libraries/AP_RCMapper/AP_RCMapper.cpp
+    GOBJECT(rcmap, "RCMAP_",        RCMapper),
 
     AP_VAREND
 };

@@ -366,7 +366,7 @@ void AP_TECS::_update_throttle(void)
 
         // Calculate feed-forward throttle
         float ff_throttle = 0;
-		float nomThr = aparm.throttle_cruise * 0.01f;
+		float nomThr = aparm.plthr_cruise * 0.01f;
 		const Matrix3f &rotMat = _ahrs.get_dcm_matrix();
 		// Use the demanded rate of change of total energy as the feed-forward demand, but add
 		// additional component which scales with (1/cos(bank angle) - 1) to compensate for induced
@@ -423,7 +423,7 @@ void AP_TECS::_update_throttle(void)
 void AP_TECS::_update_throttle_option(int16_t throttle_nudge)
 {
 	// Calculate throttle demand by interpolating between pitch and throttle limits
-    float nomThr = (aparm.throttle_cruise + throttle_nudge)* 0.01f;	
+    float nomThr = (aparm.plthr_cruise + throttle_nudge)* 0.01f;	
 	if (_flight_stage == AP_TECS::FLIGHT_TAKEOFF)
 	{
 		_throttle_dem = _THRmaxf;
@@ -554,7 +554,7 @@ void AP_TECS::_initialise_states(int32_t ptchMinCO_cd, float hgt_afe)
 	{
 		_integ6_state      = 0.0f;
 		_integ7_state      = 0.0f;
-		_last_throttle_dem = aparm.throttle_cruise * 0.01f;
+		_last_throttle_dem = aparm.plthr_cruise * 0.01f;
 		_last_pitch_dem    = _ahrs.pitch;
 		_hgt_dem_adj_last  = hgt_afe;
 		_hgt_dem_adj       = _hgt_dem_adj_last;
@@ -607,8 +607,8 @@ void AP_TECS::update_pitch_throttle(int32_t hgt_dem_cm,
 	// Convert inputs
     _hgt_dem = hgt_dem_cm * 0.01f;
 	_EAS_dem = EAS_dem_cm * 0.01f;
-    _THRmaxf  = aparm.throttle_max * 0.01f;
-    _THRminf  = aparm.throttle_min * 0.01f;
+    _THRmaxf  = aparm.plthr_max * 0.01f;
+    _THRminf  = aparm.plthr_min * 0.01f;
 	_PITCHmaxf = 0.000174533f * aparm.pitch_limit_max_cd;
 	_PITCHminf = 0.000174533f * aparm.pitch_limit_min_cd;
 	_flight_stage = flight_stage;

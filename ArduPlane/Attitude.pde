@@ -22,7 +22,7 @@ static float get_speed_scaler(void)
         speed_scaler = constrain_float(speed_scaler, 0.5, 2.0);
     } else {
         if (channel_throttle->servo_out > 0) {
-            speed_scaler = 0.5 + ((float)THROTTLE_CRUISE / channel_throttle->servo_out / 2.0);                 // First order taylor expansion of square root
+            speed_scaler = 0.5 + ((float)PLTHR_CRUISE / channel_throttle->servo_out / 2.0);                 // First order taylor expansion of square root
             // Should maybe be to the 2/7 power, but we aren't goint to implement that...
         }else{
             speed_scaler = 1.67;
@@ -352,7 +352,7 @@ static void stabilize()
 
 static void calc_throttle()
 {
-    if (aparm.throttle_cruise <= 1) {
+    if (aparm.plthr_cruise <= 1) {
         // user has asked for zero throttle - this may be done by a
         // mission which wants to turn off the engine for a parachute
         // landing
@@ -790,8 +790,8 @@ static void set_servos(void)
 #else
         // convert 0 to 100% into PWM
         channel_throttle->servo_out = constrain_int16(channel_throttle->servo_out, 
-                                                       aparm.throttle_min.get(), 
-                                                       aparm.throttle_max.get());
+                                                       aparm.plthr_min.get(), 
+                                                       aparm.plthr_max.get());
 
         if (suppress_throttle()) {
             // throttle is suppressed in auto mode
@@ -833,7 +833,7 @@ static void set_servos(void)
         } else if (airspeed.use()) {
             flapSpeedSource = g.airspeed_cruise_cm * 0.01;
         } else {
-            flapSpeedSource = aparm.throttle_cruise;
+            flapSpeedSource = aparm.plthr_cruise;
         }
         if ( g.flap_1_speed != 0 && flapSpeedSource > g.flap_1_speed) {
             RC_Channel_aux::set_servo_out(RC_Channel_aux::k_flap_auto, 0);

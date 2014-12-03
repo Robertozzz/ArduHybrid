@@ -306,7 +306,7 @@
 // then the flap position shall be 0%.  If the speed setpoint is between flap_1_speed and flap_2_speed
 // then the flap position shall be flap_1_percent.  If the speed setpoint is below flap_2_speed
 // then the flap position shall be flap_2_percent.  Speed setpoint is the current value of 
-// airspeed_cruise (if airspeed sensor enabled) or throttle_cruise (if no airspeed sensor)
+// airspeed_cruise (if airspeed sensor enabled) or plthr_cruise (if no airspeed sensor)
 
 // FLAP_1_PERCENT							OPTIONAL
 // FLAP_1_SPEED								OPTIONAL
@@ -543,7 +543,7 @@
 //////////////////////////////////////////////////////////////////////////////
 // Servo mapping
 //
-// THROTTLE_MIN                             OPTIONAL
+// PLTHR_MIN                             OPTIONAL
 //
 // The minimum throttle setting to which the autopilot will reduce the
 // throttle while descending.  The default is zero, which is
@@ -551,20 +551,20 @@
 // value if your aircraft needs throttle to maintain a stable descent in
 // level flight.
 //
-// THROTTLE_CRUISE                          OPTIONAL
+// PLTHR_CRUISE                          OPTIONAL
 //
 // The approximate throttle setting to achieve AIRSPEED_CRUISE in level flight.
 // The default is 45%, which is reasonable for a modestly powered aircraft.
 //
-// THROTTLE_MAX                             OPTIONAL
+// PLTHR_MAX                             OPTIONAL
 //
 // The maximum throttle setting the autopilot will apply.  The default is 75%.
 // Reduce this value if your aicraft is overpowered, or has complex flight
 // characteristics at high throttle settings.
 //
-//#define THROTTLE_MIN			0 // percent
-//#define THROTTLE_CRUISE		45
-//#define THROTTLE_MAX			75
+//#define PLTHR_MIN			0 // percent
+//#define PLTHR_CRUISE		45
+//#define PLTHR_MAX			75
 
 //////////////////////////////////////////////////////////////////////////////
 // Autopilot control limits

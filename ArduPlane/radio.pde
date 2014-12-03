@@ -177,7 +177,7 @@ static void read_radio()
         if (airspeed.use()) {
             airspeed_nudge_cm = (aparm.airspeed_max * 100 - g.airspeed_cruise_cm) * nudge;
         } else {
-            throttle_nudge = (aparm.throttle_max - aparm.throttle_cruise) * nudge;
+            throttle_nudge = (aparm.plthr_max - aparm.plthr_cruise) * nudge;
         }
     } else {
         airspeed_nudge_cm = 0;

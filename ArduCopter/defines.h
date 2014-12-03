@@ -13,6 +13,45 @@
 #define ENABLE ENABLED
 #define DISABLE DISABLED
 
+// PLANE items
+
+// type of stick mixing enabled
+enum StickMixing {
+    STICK_MIXING_DISABLED = 0,
+    STICK_MIXING_FBW      = 1,
+    STICK_MIXING_DIRECT   = 2
+};
+
+// altitude control algorithms
+enum {
+    ALT_CONTROL_DEFAULT      = 0,
+    ALT_CONTROL_NON_AIRSPEED = 1,
+    ALT_CONTROL_TECS         = 2,
+    ALT_CONTROL_AIRSPEED     = 3
+};
+
+// failsafe
+// ----------------------
+enum failsafe_state {
+    FAILSAFE_NONE=0,
+    FAILSAFE_SHORT=1,
+    FAILSAFE_LONG=2,
+    FAILSAFE_GCS=3
+};
+
+
+// GCS failsafe types for FS_GCS_ENABL parameter
+enum gcs_failsafe {
+    GCS_FAILSAFE_OFF        = 0, // no GCS failsafe
+    GCS_FAILSAFE_HEARTBEAT  = 1, // failsafe if we stop receiving heartbeat
+    GCS_FAILSAFE_HB_RSSI    = 2  // failsafe if we stop receiving
+                                 // heartbeat or if RADIO.remrssi
+                                 // drops to 0
+};
+
+//// END PLANE
+
+
 // Flight modes
 // ------------
 #define YAW_HOLD                        0       // heading hold at heading in control_yaw but allow input from pilot

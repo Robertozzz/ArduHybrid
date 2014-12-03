@@ -369,7 +369,7 @@ static bool verify_land()
             // target speeds too early.
             g.airspeed_cruise_cm.load();
             g.min_gndspeed_cm.load();
-            aparm.throttle_cruise.load();
+            aparm.plthr_cruise.load();
         }
     }
 
@@ -599,7 +599,7 @@ static void do_change_speed()
 
     if (next_nonnav_command.lat > 0) {
         gcs_send_text_fmt(PSTR("Set throttle %u"), (unsigned)next_nonnav_command.lat);
-        aparm.throttle_cruise.set(next_nonnav_command.lat);
+        aparm.plthr_cruise.set(next_nonnav_command.lat);
     }
 }
 
