@@ -686,7 +686,7 @@ static float airspeed_error_cm;
 static int16_t airspeed_nudge_cm;
 
 // Similar to airspeed_nudge, but used when no airspeed sensor.
-// 0-(throttle_max - throttle_cruise) : throttle nudge in Auto mode using top 1/2 of throttle stick travel
+// 0-(plthr_max - plthr_cruise) : throttle nudge in Auto mode using top 1/2 of throttle stick travel
 static int16_t throttle_nudge = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -938,6 +938,19 @@ static uint8_t gps_fix_count = 0;
 static AP_Arming arming(ahrs, barometer, ap.home_is_set, gcs_send_text_P);
 
 ////////////////////////////////////////////////////////////////////////////////
+// Outback Challenge Failsafe Support
+////////////////////////////////////////////////////////////////////////////////
+#if OBC_FAILSAFE == ENABLED
+APM_OBC obc;
+#endif
+
+// selected navigation controller
+static AP_Navigation *nav_controller = &L1_controller;
+
+// selected navigation controller
+static AP_SpdHgtControl *SpdHgt_Controller = &TECS_controller;
+
+////////////////////////////////////////////////////////////////////////////////
 // AC_Fence library to reduce fly-aways
 ////////////////////////////////////////////////////////////////////////////////
 #if AC_FENCE == ENABLED
@@ -1082,6 +1095,53 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
 #endif
 };
 
+/*
+  PLANE scheduler table - all regular tasks are listed here, along with how
+  often they should be called (in 20ms units) and the maximum time
+  they are expected to take (in microseconds)
+ */
+ ///TEMP!
+#if FRAME_CONFIG == ARDUHYBRID
+static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
+    { read_radio,             1,    700 }, // 0
+    { check_short_failsafe,   1,   1000 },
+    { ahrs_update,            1,   6400 },
+    { update_speed_height,    1,   1600 },
+    { update_flight_mode,     1,   1400 },
+    { stabilize,              1,   3500 },
+    { set_servos,             1,   1600 },
+    { read_control_switch,    7,   1000 },
+    { gcs_retry_deferred,     1,   1000 },
+    { update_GPS_50Hz,        1,   2500 },
+    { update_GPS_10Hz,        5,   2500 }, // 10
+    { navigate,               5,   3000 },
+    { update_compass,         5,   1200 },
+    { read_airspeed,          5,   1200 },
+    { update_alt,             5,   3400 },
+    { calc_altitude_error,    5,   1000 },
+    { update_commands,        5,   5000 },
+    { obc_fs_check,           5,   1000 },
+    { gcs_update,             1,   1700 },
+    { gcs_data_stream_send,   1,   3000 },
+    { update_events,		  1,   1500 }, // 20
+    { check_usb_mux,          5,    300 },
+    { read_battery,           5,   1000 },
+    { compass_accumulate,     1,   1500 },
+    { barometer_accumulate,   1,    900 },
+    { update_notify,          1,    300 },
+    { read_sonars,            1,    500 },
+    { one_second_loop,       50,   1000 },
+    { check_long_failsafe,   15,   1000 },
+    { read_receiver_rssi,     5,   1000 },
+    { airspeed_ratio_update, 50,   1000 }, // 30
+    { update_mount,           1,   1500 },
+    { log_perf_info,        500,   1000 },
+    { compass_save,        3000,   2500 },
+    { update_logging1,        5,   1700 },
+    { update_logging2,        5,   1700 },
+};
+#endif  // TEMPO!!
+
 
 void setup() {
     cliSerial = hal.console;
@@ -1161,7 +1221,6 @@ void loop()
     uint32_t time_available = (timer + 10000) - micros();
     scheduler.run(time_available - 300);
 }
-
 
 // Main loop - 100hz
 static void fast_loop()
@@ -1246,20 +1305,15 @@ static void throttle_loop()
 #endif
 }
 
-// update_mount - update camera mount position
-// should be run at 50hz
+//  update camera mount
 static void update_mount()
 {
 #if MOUNT == ENABLED
-    // update camera mount's position
     camera_mount.update_mount_position();
 #endif
-
 #if MOUNT2 == ENABLED
-    // update camera mount's position
     camera_mount2.update_mount_position();
 #endif
-
 #if CAMERA == ENABLED
     camera.trigger_pic_cleanup();
 #endif

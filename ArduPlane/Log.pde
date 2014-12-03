@@ -388,7 +388,7 @@ struct PACKED log_Sonar {
     uint32_t timestamp;
     float distance;
     float voltage;
-    float baro_alt;
+    float baro_alti;
     float groundspeed;
     uint8_t throttle;
 };
@@ -401,7 +401,7 @@ static void Log_Write_Sonar()
         timestamp   : hal.scheduler->millis(),
         distance    : sonar.distance_cm(),
         voltage     : sonar.voltage(),
-        baro_alt    : barometer.get_altitude(),
+        baro_alti    : barometer.get_altitude(),
         groundspeed : (0.01f * g_gps->ground_speed_cm),
         throttle    : (uint8_t)(100 * channel_throttle->norm_output())
     };

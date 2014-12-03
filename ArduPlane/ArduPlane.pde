@@ -431,7 +431,7 @@ static struct {
     enum FlightMode saved_mode;		// saved flight mode
     int16_t state;					// A tracking variable for type of failsafe active, Used for failsafe based on loss of RC signal or GCS signal
     uint8_t ch3_counter;			// number of low ch3 values
-    uint32_t last_heartbeat_ms;		// the time when the last HEARTBEAT message arrived from a GCS
+    uint32_t last_heartbeat_ms;             // the time when the last HEARTBEAT message arrived from a GCS - used for triggering gcs failsafe
     uint32_t ch3_timer_ms;			// A timer used to track how long we have been in a "short failsafe" condition due to loss of RC signal
     uint32_t last_valid_rc_ms;
     uint32_t last_radio_status_remrssi_ms;// last RADIO status packet
@@ -665,8 +665,6 @@ static struct {			// Plane
 ////////////////////////////////////////////////////////////////////////////////
 // Altitude
 ////////////////////////////////////////////////////////////////////////////////
-// Baro alt ???????? duplicate
-// Altitude error can be combined????
 // Difference between current altitude and desired altitude.  Centimeters
 static int32_t altitude_error_cm;			// Plane
 // The current desired altitude.  Altitude is linearly ramped between waypoints.  Centimeters
@@ -708,10 +706,10 @@ APM_OBC obc;
 // selected navigation controller
 static AP_Navigation *nav_controller = &L1_controller;
 
-/////  \\\\\\\\\\ OMEGA VECTOR ??????????????????
 // selected navigation controller
 static AP_SpdHgtControl *SpdHgt_Controller = &TECS_controller;
 
+/////  \\\\\\\\\\ OMEGA VECTOR ??????????????????
 ////////////////////////////////////////////////////////////////////////////////
 // Top-level logic
 ////////////////////////////////////////////////////////////////////////////////
@@ -723,7 +721,7 @@ AP_Param param_loader(var_info, WP_START_BYTE);
   often they should be called (in 20ms units) and the maximum time
   they are expected to take (in microseconds)
  */
-static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
+static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { read_radio,             1,    700 }, // 0
     { check_short_failsafe,   1,   1000 },
     { ahrs_update,            1,   6400 },
@@ -762,8 +760,6 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
     { update_logging2,        5,   1700 },
 };
 
-
-
 void setup() {
     cliSerial = hal.console;
 
@@ -775,7 +771,7 @@ void setup() {
     init_ardupilot();
 
     // initialise the main loop scheduler
-    scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
+    scheduler.init(&plane_scheduler_tasks[0], sizeof(plane_scheduler_tasks)/sizeof(plane_scheduler_tasks[0]));
 }
 
 /*
@@ -804,9 +800,9 @@ void loop()
     }
     uint32_t timer = micros();
 
-	// check loop time
+    // check loop time
     perf_info_check_loop_time(timer - fast_loopTimer);
-		
+
     // used by PI Loops
 	delta_us_fast_loop  	= timer - fast_loopTimer;
     G_Dt                    = (float)(timer - fast_loopTimer) / 1000000.f;
@@ -828,19 +824,15 @@ void loop()
     scheduler.run(time_available);
 }
 
-/*
-  update camera mount
- */
-static void update_mount(void)
+//  update camera mount
+static void update_mount()
 {
 #if MOUNT == ENABLED
     camera_mount.update_mount_position();
 #endif
-
 #if MOUNT2 == ENABLED
     camera_mount2.update_mount_position();
 #endif
-
 #if CAMERA == ENABLED
     camera.trigger_pic_cleanup();
 #endif
@@ -880,8 +872,6 @@ static void update_speed_height(void)
     }
 }
 
-
-
 /*
   read and update compass
  */
@@ -897,7 +887,6 @@ static void update_compass(void)
         ahrs.set_compass(NULL);
     }
 }
-
 
 /*
   do 10Hz logging
@@ -926,7 +915,6 @@ static void update_logging2(void)
         Log_Write_RC();
 }
 
-
 /*
   check for OBC failsafe check
  */
@@ -939,7 +927,6 @@ static void obc_fs_check(void)
               g_gps ? g_gps->last_fix_time : 0);
 #endif
 }
-
 
 /*
   update aux servo mappings
@@ -1034,7 +1021,6 @@ static void airspeed_ratio_update(void)
     airspeed.update_calibration(vg);
     gcs_send_airspeed_calibration(vg);
 }
-
 
 /*
   read the GPS and update position
@@ -1372,7 +1358,6 @@ static void update_navigation()
         break;
     }
 }
-
 
 static void update_alt()
 {
