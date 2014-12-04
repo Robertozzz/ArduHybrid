@@ -720,7 +720,7 @@ static Vector3f omega;
 // setup the var_info table
 AP_Param param_loader(var_info, WP_START_BYTE);
 /*
-  scheduler table - all regular tasks are listed here, along with how
+  PLANE scheduler table - all regular tasks are listed here, along with how
   often they should be called (in 20ms units) and the maximum time
   they are expected to take (in microseconds)
  */
@@ -747,7 +747,7 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { gcs_data_stream_send,   1,   3000 },
     { update_events,		  1,   1500 }, // 20
     { check_usb_mux,          5,    300 },
-    { read_battery,           5,   1000 },
+    { plane_read_battery,           5,   1000 },
     { compass_accumulate,     1,   1500 },
     { barometer_accumulate,   1,    900 },
     { update_notify,          1,    300 },
@@ -826,6 +826,8 @@ void loop()
     if (time_available > 19500) { time_available = 19500; }
     scheduler.run(time_available);
 }
+
+// END OF MAIN LOOP
 
 //  update camera mount
 static void update_mount()
@@ -1370,7 +1372,7 @@ static void update_alt()
     if (barometer.healthy) {
         // alt_MSL centimeters (centimeters)
         current_loc.alt = (1 - g.altitude_mix) * g_gps->altitude_cm;
-        current_loc.alt += g.altitude_mix * (read_barometer() + home.alt);
+        current_loc.alt += g.altitude_mix * (plane_read_barometer() + home.alt);
     } else if (g_gps->status() >= GPS::GPS_OK_FIX_3D) {
         // alt_MSL centimeters (centimeters)
         current_loc.alt = g_gps->altitude_cm;

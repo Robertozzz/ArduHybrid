@@ -1,5 +1,8 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
+ // filter altitude from the barometer with a low pass filter
+static LowPassFilterInt32 altitude_filter;
+
 // Sensors are not available in HIL_MODE_ATTITUDE
 #if HIL_MODE != HIL_MODE_ATTITUDE
 
@@ -22,6 +25,9 @@ static void init_barometer(bool full_calibration)
     }else{
         barometer.update_calibration();
     }
+	    // filter at 100ms sampling, with 0.7Hz cutoff frequency
+    altitude_filter.set_cutoff_frequency(0.1, 0.7);
+	
     gcs_send_text_P(SEVERITY_LOW, PSTR("barometer calibration complete"));
 }
 
@@ -68,15 +74,18 @@ static int16_t read_sonar(void)
 
 #endif // HIL_MODE != HIL_MODE_ATTITUDE
 
+
 static void init_compass()
 {
-    if (!compass.init() || !compass.read()) {
-        // make sure we don't pass a broken compass to DCM
-        cliSerial->println_P(PSTR("COMPASS INIT ERROR"));
-        Log_Write_Error(ERROR_SUBSYSTEM_COMPASS,ERROR_CODE_FAILED_TO_INITIALISE);
-        return;
-    }
-    ahrs.set_compass(&compass);
+    if (g.compass_enabled==true) {
+		if (!compass.init() || !compass.read()) {
+			// make sure we don't pass a broken compass to DCM
+			cliSerial->println_P(PSTR("COMPASS INIT ERROR"));
+			Log_Write_Error(ERROR_SUBSYSTEM_COMPASS,ERROR_CODE_FAILED_TO_INITIALISE);
+			return;
+		}
+		ahrs.set_compass(&compass);
+	}
 }
 
 static void init_optflow()

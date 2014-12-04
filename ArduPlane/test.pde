@@ -586,11 +586,11 @@ test_pressure(uint8_t argc, const Menu::arg *argv)
 
     home.alt        = 0;
     plane_wp_distance = 0;
-    plane_init_barometer();
+    init_barometer(true);
 
     while(1) {
         delay(100);
-        current_loc.alt = read_barometer() + home.alt;
+        current_loc.alt = plane_read_barometer() + home.alt;
 
         if (!barometer.healthy) {
             cliSerial->println_P(PSTR("not healthy"));

@@ -1142,7 +1142,7 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { update_logging1,        5,   1700 },
     { update_logging2,        5,   1700 },
 };
-#endif  // TEMPO!!
+#endif  // TEMP!!
 
 
 void setup() {
@@ -1223,6 +1223,8 @@ void loop()
     uint32_t time_available = (timer + 10000) - micros();
     scheduler.run(time_available - 300);
 }
+
+// END OF MAIN LOOP
 
 // Main loop - 100hz
 static void fast_loop()

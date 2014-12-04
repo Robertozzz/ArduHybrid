@@ -125,8 +125,8 @@ static void init_ardupilot()
 
     BoardConfig.init();
 
-    // FIX: this needs to be the inverse motors mask
-    ServoRelayEvents.set_channel_mask(0xFFF0);
+    // allow servo set on all channels except first 4
+	ServoRelayEvents.set_channel_mask(0xFFF0);
 
     relay.init();
 
@@ -207,8 +207,8 @@ static void init_ardupilot()
     }
 #endif
 
-    init_rc_in();
-    init_rc_out();
+    init_rc_in();               // sets up rc channels from radio
+    init_rc_out();              // sets up motors and output to escs
 
     /*
      *  setup the 'main loop is dead' check. Note that this relies on
@@ -467,55 +467,6 @@ static bool set_mode(uint8_t mode)
     return success;
 }
 
-static void
-print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
-{
-    switch (mode) {
-    case STABILIZE:
-        port->print_P(PSTR("STABILIZE"));
-        break;
-    case ACRO:
-        port->print_P(PSTR("ACRO"));
-        break;
-    case ALT_HOLD:
-        port->print_P(PSTR("ALT_HOLD"));
-        break;
-    case AUTO:
-        port->print_P(PSTR("AUTO"));
-        break;
-    case GUIDED:
-        port->print_P(PSTR("GUIDED"));
-        break;
-    case LOITER:
-        port->print_P(PSTR("LOITER"));
-        break;
-    case RTL:
-        port->print_P(PSTR("RTL"));
-        break;
-    case CIRCLE:
-        port->print_P(PSTR("CIRCLE"));
-        break;
-    case POSITION:
-        port->print_P(PSTR("POSITION"));
-        break;
-    case LAND:
-        port->print_P(PSTR("LAND"));
-        break;
-    case OF_LOITER:
-        port->print_P(PSTR("OF_LOITER"));
-        break;
-    case DRIFT:
-        port->print_P(PSTR("DRIFT"));
-        break;
-    case SPORT:
-        port->print_P(PSTR("SPORT"));
-        break;
-    default:
-        port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
-        break;
-    }
-}
-
 // returns true if the GPS is ok and home position is set
 static bool GPS_ok()
 {
@@ -639,4 +590,56 @@ static void check_usb_mux(void)
 uint16_t board_voltage(void)
 {
     return board_vcc_analog_source->voltage_latest() * 1000;
+}
+
+//
+// print_flight_mode - prints flight mode to serial port.
+//
+static void
+print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
+{
+    switch (mode) {
+    case STABILIZE:
+        port->print_P(PSTR("STABILIZE"));
+        break;
+    case ACRO:
+        port->print_P(PSTR("ACRO"));
+        break;
+    case ALT_HOLD:
+        port->print_P(PSTR("ALT_HOLD"));
+        break;
+    case AUTO:
+        port->print_P(PSTR("AUTO"));
+        break;
+    case GUIDED:
+        port->print_P(PSTR("GUIDED"));
+        break;
+    case LOITER:
+        port->print_P(PSTR("LOITER"));
+        break;
+    case RTL:
+        port->print_P(PSTR("RTL"));
+        break;
+    case CIRCLE:
+        port->print_P(PSTR("CIRCLE"));
+        break;
+    case POSITION:
+        port->print_P(PSTR("POSITION"));
+        break;
+    case LAND:
+        port->print_P(PSTR("LAND"));
+        break;
+    case OF_LOITER:
+        port->print_P(PSTR("OF_LOITER"));
+        break;
+    case DRIFT:
+        port->print_P(PSTR("DRIFT"));
+        break;
+    case SPORT:
+        port->print_P(PSTR("SPORT"));
+        break;
+    default:
+        port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
+        break;
+    }
 }

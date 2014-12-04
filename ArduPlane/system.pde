@@ -57,8 +57,6 @@ static void run_cli(AP_HAL::UARTDriver *port)
     // disable the mavlink delay callback
     hal.scheduler->register_delay_callback(NULL, 5);
 
-
-
     while (1) {
         main_menu.run();
     }
@@ -121,10 +119,10 @@ static void init_ardupilot()
     BoardConfig.init();
 
     // allow servo set on all channels except first 4
-    ServoRelayEvents.set_channel_mask(0xFFF0);
+	ServoRelayEvents.set_channel_mask(0xFFF0);
 	
     set_control_channels();
-	
+
     relay.init();
 
     // init EPM cargo gripper
@@ -267,7 +265,7 @@ static void init_ardupilot()
 #if HIL_MODE != HIL_MODE_ATTITUDE
     // read Baro pressure at ground
     //-----------------------------
-    plane_init_barometer();
+    init_barometer(true);
 #endif
 
     // initialise sonar

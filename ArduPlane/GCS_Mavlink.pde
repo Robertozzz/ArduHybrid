@@ -1227,7 +1227,7 @@ void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
                 ins.init_accel();
                 ahrs.set_trim(Vector3f(0,0,0));             // clear out saved trim
             } else if (packet.param3 == 1) {
-                plane_init_barometer();
+                init_barometer(true);
                 if (airspeed.enabled()) {
                     zero_airspeed();
                 }
