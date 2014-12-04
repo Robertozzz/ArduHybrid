@@ -435,7 +435,7 @@ static struct {
     uint32_t ch3_timer_ms;			// A timer used to track how long we have been in a "short failsafe" condition due to loss of RC signal
     uint32_t last_valid_rc_ms;
     uint32_t last_radio_status_remrssi_ms;// last RADIO status packet
-} failsafe;
+} plane_failsafe;
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPS variables
@@ -926,7 +926,7 @@ static void obc_fs_check(void)
 #if OBC_FAILSAFE == ENABLED
     // perform OBC failsafe checks
     obc.check(OBC_MODE(control_mode),
-              failsafe.last_heartbeat_ms,
+              plane_failsafe.last_heartbeat_ms,
               g_gps ? g_gps->last_fix_time : 0);
 #endif
 }
@@ -1257,7 +1257,7 @@ static void update_flight_mode(void)
         if (inverted_flight) {
             nav_pitch_cd = -nav_pitch_cd;
         }
-        if (failsafe.ch3_failsafe && g.short_fs_action == 2) {
+        if (plane_failsafe.ch3_failsafe && g.short_fs_action == 2) {
             // FBWA failsafe glide
             nav_roll_cd = 0;
             nav_pitch_cd = 0;

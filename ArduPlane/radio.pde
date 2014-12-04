@@ -135,7 +135,7 @@ static void read_radio()
         return;
     }
 
-    failsafe.last_valid_rc_ms = hal.scheduler->millis();
+    plane_failsafe.last_valid_rc_ms = hal.scheduler->millis();
 
     elevon.ch1_temp = channel_roll->read();
     elevon.ch2_temp = channel_pitch->read();
@@ -193,12 +193,12 @@ static void control_failsafe(uint16_t pwm)
         return;
 
     // Check for failsafe condition based on loss of GCS control
-    if (failsafe.rc_override_active) {
-        if (millis() - failsafe.last_heartbeat_ms > g.short_fs_timeout*1000) {
-            failsafe.ch3_failsafe = true;
+    if (plane_failsafe.rc_override_active) {
+        if (millis() - plane_failsafe.last_heartbeat_ms > g.short_fs_timeout*1000) {
+            plane_failsafe.ch3_failsafe = true;
             AP_Notify::flags.failsafe_radio = true;
         } else {
-            failsafe.ch3_failsafe = false;
+            plane_failsafe.ch3_failsafe = false;
             AP_Notify::flags.failsafe_radio = false;
         }
 
@@ -207,27 +207,27 @@ static void control_failsafe(uint16_t pwm)
         if (throttle_failsafe_level()) {
             // we detect a failsafe from radio
             // throttle has dropped below the mark
-            failsafe.ch3_counter++;
-            if (failsafe.ch3_counter == 10) {
+            plane_failsafe.ch3_counter++;
+            if (plane_failsafe.ch3_counter == 10) {
                 gcs_send_text_fmt(PSTR("MSG FS ON %u"), (unsigned)pwm);
-                failsafe.ch3_failsafe = true;
+                plane_failsafe.ch3_failsafe = true;
                 AP_Notify::flags.failsafe_radio = true;
             }
-            if (failsafe.ch3_counter > 10) {
-                failsafe.ch3_counter = 10;
+            if (plane_failsafe.ch3_counter > 10) {
+                plane_failsafe.ch3_counter = 10;
             }
 
-        }else if(failsafe.ch3_counter > 0) {
+        }else if(plane_failsafe.ch3_counter > 0) {
             // we are no longer in failsafe condition
             // but we need to recover quickly
-            failsafe.ch3_counter--;
-            if (failsafe.ch3_counter > 3) {
-                failsafe.ch3_counter = 3;
+            plane_failsafe.ch3_counter--;
+            if (plane_failsafe.ch3_counter > 3) {
+                plane_failsafe.ch3_counter = 3;
             }
-            if (failsafe.ch3_counter == 1) {
+            if (plane_failsafe.ch3_counter == 1) {
                 gcs_send_text_fmt(PSTR("MSG FS OFF %u"), (unsigned)pwm);
-            } else if(failsafe.ch3_counter == 0) {
-                failsafe.ch3_failsafe = false;
+            } else if(plane_failsafe.ch3_counter == 0) {
+                plane_failsafe.ch3_failsafe = false;
                 AP_Notify::flags.failsafe_radio = false;
             }
         }
@@ -305,7 +305,7 @@ static bool throttle_failsafe_level(void)
     if (!g.throttle_fs_enabled) {
         return false;
     }
-    if (hal.scheduler->millis() - failsafe.last_valid_rc_ms > 2000) {
+    if (hal.scheduler->millis() - plane_failsafe.last_valid_rc_ms > 2000) {
         // we haven't had a valid RC frame for 2 seconds
         return true;
     }

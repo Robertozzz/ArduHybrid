@@ -42,7 +42,7 @@ static bool stick_mixing_enabled(void)
         // we're in an auto mode. Check the stick mixing flag
         if (g.stick_mixing != STICK_MIXING_DISABLED &&
             geofence_stickmixing() &&
-            failsafe.state == FAILSAFE_NONE &&
+            plane_failsafe.state == FAILSAFE_NONE &&
             !throttle_failsafe_level()) {
             // we're in an auto mode, and haven't triggered failsafe
             return true;
@@ -51,7 +51,7 @@ static bool stick_mixing_enabled(void)
         }
     }
 
-    if (failsafe.ch3_failsafe && g.short_fs_action == 2) {
+    if (plane_failsafe.ch3_failsafe && g.short_fs_action == 2) {
         // don't do stick mixing in FBWA glide mode
         return false;
     }

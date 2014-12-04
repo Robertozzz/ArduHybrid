@@ -295,7 +295,7 @@ static void init_ardupilot()
     trim_radio();
 
 	    // reset last heartbeat time, so we don't trigger failsafe on slow startup
-    failsafe.last_heartbeat_ms = millis();
+    plane_failsafe.last_heartbeat_ms = millis();
 	
     plane_set_mode(MANUAL);
 
@@ -449,35 +449,35 @@ static void check_long_failsafe()
     uint32_t tnow = millis();
     // only act on changes
     // -------------------
-    if(failsafe.state != FAILSAFE_LONG && failsafe.state != FAILSAFE_GCS) {
-        if (failsafe.rc_override_active && (tnow - failsafe.last_heartbeat_ms) > g.long_fs_timeout*1000) {
+    if(plane_failsafe.state != FAILSAFE_LONG && plane_failsafe.state != FAILSAFE_GCS) {
+        if (plane_failsafe.rc_override_active && (tnow - plane_failsafe.last_heartbeat_ms) > g.long_fs_timeout*1000) {
             failsafe_long_on_event(FAILSAFE_LONG);
-        } else if (!failsafe.rc_override_active && 
-                   failsafe.state == FAILSAFE_SHORT && 
-                   (tnow - failsafe.ch3_timer_ms) > g.long_fs_timeout*1000) {
+        } else if (!plane_failsafe.rc_override_active && 
+                   plane_failsafe.state == FAILSAFE_SHORT && 
+                   (tnow - plane_failsafe.ch3_timer_ms) > g.long_fs_timeout*1000) {
             failsafe_long_on_event(FAILSAFE_LONG);
         } else if (g.gcs_heartbeat_fs_enabled != GCS_FAILSAFE_OFF && 
-                   failsafe.last_heartbeat_ms != 0 &&
-                   (tnow - failsafe.last_heartbeat_ms) > g.long_fs_timeout*1000) {
+                   plane_failsafe.last_heartbeat_ms != 0 &&
+                   (tnow - plane_failsafe.last_heartbeat_ms) > g.long_fs_timeout*1000) {
             failsafe_long_on_event(FAILSAFE_GCS);
         } else if (g.gcs_heartbeat_fs_enabled == GCS_FAILSAFE_HB_RSSI && 
-                   failsafe.last_radio_status_remrssi_ms != 0 &&
-                   (tnow - failsafe.last_radio_status_remrssi_ms) > g.long_fs_timeout*1000) {
+                   plane_failsafe.last_radio_status_remrssi_ms != 0 &&
+                   (tnow - plane_failsafe.last_radio_status_remrssi_ms) > g.long_fs_timeout*1000) {
             failsafe_long_on_event(FAILSAFE_GCS);
         }
     } else {
         // We do not change state but allow for user to change mode
-        if (failsafe.state == FAILSAFE_GCS && 
-            (tnow - failsafe.last_heartbeat_ms) < g.short_fs_timeout*1000) {
-            failsafe.state = FAILSAFE_NONE;
-        } else if (failsafe.state == FAILSAFE_LONG && 
-                   failsafe.rc_override_active && 
-                   (tnow - failsafe.last_heartbeat_ms) < g.short_fs_timeout*1000) {
-            failsafe.state = FAILSAFE_NONE;
-        } else if (failsafe.state == FAILSAFE_LONG && 
-                   !failsafe.rc_override_active && 
-                   !failsafe.ch3_failsafe) {
-            failsafe.state = FAILSAFE_NONE;
+        if (plane_failsafe.state == FAILSAFE_GCS && 
+            (tnow - plane_failsafe.last_heartbeat_ms) < g.short_fs_timeout*1000) {
+            plane_failsafe.state = FAILSAFE_NONE;
+        } else if (plane_failsafe.state == FAILSAFE_LONG && 
+                   plane_failsafe.rc_override_active && 
+                   (tnow - plane_failsafe.last_heartbeat_ms) < g.short_fs_timeout*1000) {
+            plane_failsafe.state = FAILSAFE_NONE;
+        } else if (plane_failsafe.state == FAILSAFE_LONG && 
+                   !plane_failsafe.rc_override_active && 
+                   !plane_failsafe.ch3_failsafe) {
+            plane_failsafe.state = FAILSAFE_NONE;
         }
     }
 }
@@ -486,14 +486,14 @@ static void check_short_failsafe()
 {
     // only act on changes
     // -------------------
-    if(failsafe.state == FAILSAFE_NONE) {
-        if(failsafe.ch3_failsafe) {                                              // The condition is checked and the flag ch3_failsafe is set in radio.pde
+    if(plane_failsafe.state == FAILSAFE_NONE) {
+        if(plane_failsafe.ch3_failsafe) {                                              // The condition is checked and the flag ch3_failsafe is set in radio.pde
             failsafe_short_on_event(FAILSAFE_SHORT);
         }
     }
 
-    if(failsafe.state == FAILSAFE_SHORT) {
-        if(!failsafe.ch3_failsafe) {
+    if(plane_failsafe.state == FAILSAFE_SHORT) {
+        if(!plane_failsafe.ch3_failsafe) {
             failsafe_short_off_event();
         }
     }

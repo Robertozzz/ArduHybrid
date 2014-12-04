@@ -3,9 +3,9 @@
 
 static void failsafe_short_on_event(enum failsafe_state fstype)
 {
-    // This is how to handle a short loss of control signal failsafe.
-    failsafe.state = fstype;
-    failsafe.ch3_timer_ms = millis();
+    // This is how to handle a short loss of control signal plane_failsafe.
+    plane_failsafe.state = fstype;
+    plane_failsafe.ch3_timer_ms = millis();
     gcs_send_text_P(SEVERITY_LOW, PSTR("Failsafe - Short event on, "));
     switch(control_mode)
     {
@@ -16,8 +16,8 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
     case FLY_BY_WIRE_B:
     case CRUISE:
     case TRAINING:
-        failsafe.saved_mode = control_mode;
-        failsafe.saved_mode_set = 1;
+        plane_failsafe.saved_mode = control_mode;
+        plane_failsafe.saved_mode_set = 1;
         if(g.short_fs_action == 2) {
             plane_set_mode(FLY_BY_WIRE_A);
         } else {
@@ -29,8 +29,8 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
     case GUIDED:
     case LOITER:
         if(g.short_fs_action != 0) {
-            failsafe.saved_mode = control_mode;
-            failsafe.saved_mode_set = 1;
+            plane_failsafe.saved_mode = control_mode;
+            plane_failsafe.saved_mode_set = 1;
             if(g.short_fs_action == 2) {
                 plane_set_mode(FLY_BY_WIRE_A);
             } else {
@@ -49,11 +49,11 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
 
 static void failsafe_long_on_event(enum failsafe_state fstype)
 {
-    // This is how to handle a long loss of control signal failsafe.
+    // This is how to handle a long loss of control signal plane_failsafe.
     gcs_send_text_P(SEVERITY_LOW, PSTR("Failsafe - Long event on, "));
     //  If the GCS is locked up we allow control to revert to RC
     hal.rcin->clear_overrides();
-    failsafe.state = fstype;
+    plane_failsafe.state = fstype;
     switch(control_mode)
     {
     case MANUAL:
@@ -92,26 +92,26 @@ static void failsafe_short_off_event()
 {
     // We're back in radio contact
     gcs_send_text_P(SEVERITY_LOW, PSTR("Failsafe - Short event off"));
-    failsafe.state = FAILSAFE_NONE;
+    plane_failsafe.state = FAILSAFE_NONE;
 
     // re-read the switch so we can return to our preferred mode
     // --------------------------------------------------------
-    if (control_mode == CIRCLE && failsafe.saved_mode_set) {
-        failsafe.saved_mode_set = 0;
-        plane_set_mode(failsafe.saved_mode);
+    if (control_mode == CIRCLE && plane_failsafe.saved_mode_set) {
+        plane_failsafe.saved_mode_set = 0;
+        plane_set_mode(plane_failsafe.saved_mode);
     }
 }
 
 void low_battery_event(void)
 {
-    if (failsafe.low_battery) {
+    if (plane_failsafe.low_battery) {
         return;
     }
     gcs_send_text_fmt(PSTR("Low Battery %.2fV Used %.0f mAh"),
                       battery.voltage(), battery.current_total_mah());
     plane_set_mode(RTL);
     aparm.plthr_cruise.load();
-    failsafe.low_battery = true;
+    plane_failsafe.low_battery = true;
     AP_Notify::flags.failsafe_battery = true;
 }
 
