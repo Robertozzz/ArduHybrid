@@ -709,7 +709,10 @@ static AP_Navigation *nav_controller = &L1_controller;
 // selected navigation controller
 static AP_SpdHgtControl *SpdHgt_Controller = &TECS_controller;
 
-/////  \\\\\\\\\\ OMEGA VECTOR ??????????????????
+// This is a convienience accessor for the IMU roll rates. It's currently the raw IMU rates
+// and not the adjusted omega rates, but the name is stuck
+static Vector3f omega;
+
 ////////////////////////////////////////////////////////////////////////////////
 // Top-level logic
 ////////////////////////////////////////////////////////////////////////////////

@@ -111,7 +111,7 @@ static NOINLINE void send_heartbeat(mavlink_channel_t chan)
 
 static NOINLINE void send_attitude(mavlink_channel_t chan)
 {
-    Vector3f omega = ahrs.get_gyro();
+    omega = ahrs.get_gyro();
     mavlink_msg_attitude_send(
         chan,
         millis(),
