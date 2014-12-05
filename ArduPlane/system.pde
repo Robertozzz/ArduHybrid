@@ -405,7 +405,7 @@ static void plane_set_mode(enum FlightMode mode)
 
     case RTL:
         prev_WP = current_loc;
-        do_RTL();
+        plane_do_RTL();
         break;
 
     case LOITER:
@@ -419,7 +419,7 @@ static void plane_set_mode(enum FlightMode mode)
 
     default:
         prev_WP = current_loc;
-        do_RTL();
+        plane_do_RTL();
         break;
     }
 

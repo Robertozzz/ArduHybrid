@@ -309,7 +309,7 @@ static void stabilize_acro(float speed_scaler)
 /*
   main stabilization function for all 3 axes
  */
-static void stabilize()
+static void plane_stabilize()
 {
     if (control_mode == MANUAL) {
         // nothing to do
@@ -682,7 +682,7 @@ static void channel_output_mixer(uint8_t mixing_type, int16_t &chan1_out, int16_
 /*****************************************
 * Set the flight control servos based on the current calculated values
 *****************************************/
-static void set_servos(void)
+static void plane_set_servos(void)
 {
     int16_t last_throttle = channel_throttle->radio_out;
 

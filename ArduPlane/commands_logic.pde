@@ -17,19 +17,19 @@ handle_process_nav_cmd()
     switch(next_nav_command.id) {
 
     case MAV_CMD_NAV_TAKEOFF:
-        do_takeoff();
+        plane_do_takeoff();
         break;
 
     case MAV_CMD_NAV_WAYPOINT:                  // Navigate to Waypoint
-        do_nav_wp();
+        plane_do_nav_wp();
         break;
 
     case MAV_CMD_NAV_LAND:              // LAND to Waypoint
-        do_land();
+        plane_do_land();
         break;
 
     case MAV_CMD_NAV_LOITER_UNLIM:              // Loiter indefinitely
-        do_loiter_unlimited();
+        plane_do_loiter_unlimited();
         break;
 
     case MAV_CMD_NAV_LOITER_TURNS:              // Loiter N Times
@@ -37,11 +37,11 @@ handle_process_nav_cmd()
         break;
 
     case MAV_CMD_NAV_LOITER_TIME:
-        do_loiter_time();
+        plane_do_loiter_time();
         break;
 
     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-        do_RTL();
+        plane_do_RTL();
         break;
 
     default:
@@ -56,15 +56,15 @@ handle_process_condition_command()
     switch(next_nonnav_command.id) {
 
     case MAV_CMD_CONDITION_DELAY:
-        do_wait_delay();
+        plane_do_wait_delay();
         break;
 
     case MAV_CMD_CONDITION_DISTANCE:
-        do_within_distance();
+        plane_do_within_distance();
         break;
 
     case MAV_CMD_CONDITION_CHANGE_ALT:
-        do_change_alt();
+        plane_do_change_alt();
         break;
 
     default:
@@ -78,15 +78,15 @@ static void handle_process_do_command()
     switch(next_nonnav_command.id) {
 
     case MAV_CMD_DO_JUMP:
-        do_jump();
+        plane_do_jump();
         break;
 
     case MAV_CMD_DO_CHANGE_SPEED:
-        do_change_speed();
+        plane_do_change_speed();
         break;
 
     case MAV_CMD_DO_SET_HOME:
-        do_set_home();
+        plane_do_set_home();
         break;
 
     case MAV_CMD_DO_SET_SERVO:
@@ -115,7 +115,7 @@ static void handle_process_do_command()
         break;
 
     case MAV_CMD_DO_DIGICAM_CONTROL:                    // Mission command to control an on-board camera controller system. |Session control e.g. show/hide lens| Zoom's absolute position| Zooming step value to offset zoom from the current position| Focus Locking, Unlocking or Re-locking| Shooting Command| Command Identity| Empty|
-        do_take_picture();
+        plane_do_take_picture();
         break;
 
     case MAV_CMD_DO_SET_CAM_TRIGG_DIST:
@@ -167,30 +167,30 @@ operation returns true when the mission element has completed and we
 should move onto the next mission element.
 *******************************************************************************/
 
-static bool verify_nav_command()        // Returns true if command complete
+static bool plane_verify_nav_command()        // Returns true if command complete
 {
     switch(nav_command_ID) {
 
     case MAV_CMD_NAV_TAKEOFF:
-        return verify_takeoff();
+        return plane_verify_takeoff();
 
     case MAV_CMD_NAV_LAND:
-        return verify_land();
+        return plane_verify_land();
 
     case MAV_CMD_NAV_WAYPOINT:
-        return verify_nav_wp();
+        return plane_verify_nav_wp();
 
     case MAV_CMD_NAV_LOITER_UNLIM:
-        return verify_loiter_unlim();
+        return plane_verify_loiter_unlim();
 
     case MAV_CMD_NAV_LOITER_TURNS:
         return verify_loiter_turns();
 
     case MAV_CMD_NAV_LOITER_TIME:
-        return verify_loiter_time();
+        return plane_verify_loiter_time();
 
     case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-        return verify_RTL();
+        return plane_verify_RTL();
 
     default:
         gcs_send_text_P(SEVERITY_HIGH,PSTR("verify_nav: Invalid or no current Nav cmd"));
@@ -205,15 +205,15 @@ static bool verify_condition_command()          // Returns true if command compl
         break;
 
     case MAV_CMD_CONDITION_DELAY:
-        return verify_wait_delay();
+        return plane_verify_wait_delay();
         break;
 
     case MAV_CMD_CONDITION_DISTANCE:
-        return verify_within_distance();
+        return plane_verify_within_distance();
         break;
 
     case MAV_CMD_CONDITION_CHANGE_ALT:
-        return verify_change_alt();
+        return plane_verify_change_alt();
         break;
 
     case WAIT_COMMAND:
@@ -232,7 +232,7 @@ static bool verify_condition_command()          // Returns true if command compl
 //  Nav (Must) commands
 /********************************************************************************/
 
-static void do_RTL(void)
+static void plane_do_RTL(void)
 {
     control_mode    = RTL;
     prev_WP = current_loc;
@@ -250,7 +250,7 @@ static void do_RTL(void)
         Log_Write_Mode(control_mode);
 }
 
-static void do_takeoff()
+static void plane_do_takeoff()
 {
     set_next_WP(&next_nav_command);
     // pitch in deg, airspeed  m/s, throttle %, track WP 1 or 0
@@ -262,12 +262,12 @@ static void do_takeoff()
     // Flag also used to override "on the ground" throttle disable
 }
 
-static void do_nav_wp()
+static void plane_do_nav_wp()
 {
     set_next_WP(&next_nav_command);
 }
 
-static void do_land()
+static void plane_do_land()
 {
     set_next_WP(&next_nav_command);
 }
@@ -281,7 +281,7 @@ static void loiter_set_direction_wp(const struct Location *nav_command)
     }
 }
 
-static void do_loiter_unlimited()
+static void plane_do_loiter_unlimited()
 {
     set_next_WP(&next_nav_command);
     loiter_set_direction_wp(&next_nav_command);
@@ -294,7 +294,7 @@ static void do_loiter_turns()
     loiter_set_direction_wp(&next_nav_command);
 }
 
-static void do_loiter_time()
+static void plane_do_loiter_time()
 {
     set_next_WP(&next_nav_command);
     // we set start_time_ms when we reach the waypoint
@@ -306,7 +306,7 @@ static void do_loiter_time()
 /********************************************************************************/
 //  Verify Nav (Must) commands
 /********************************************************************************/
-static bool verify_takeoff()
+static bool plane_verify_takeoff()
 {
     if (ahrs.yaw_initialised()) {
         if (steer_state.hold_course_cd == -1) {
@@ -335,7 +335,7 @@ static bool verify_takeoff()
 }
 
 // we are executing a landing
-static bool verify_land()
+static bool plane_verify_land()
 {
     // we don't 'verify' landing in the sense that it never completes,
     // so we don't verify command completion. Instead we use this to
@@ -382,7 +382,7 @@ static bool verify_land()
     return false;
 }
 
-static bool verify_nav_wp()
+static bool plane_verify_nav_wp()
 {
     steer_state.hold_course_cd = -1;
 
@@ -415,13 +415,13 @@ static bool verify_nav_wp()
     return false;
 }
 
-static bool verify_loiter_unlim()
+static bool plane_verify_loiter_unlim()
 {
     update_loiter();
     return false;
 }
 
-static bool verify_loiter_time()
+static bool plane_verify_loiter_time()
 {
     update_loiter();
     if (loiter.start_time_ms == 0) {
@@ -448,7 +448,7 @@ static bool verify_loiter_turns()
     return false;
 }
 
-static bool verify_RTL()
+static bool plane_verify_RTL()
 {
     update_loiter();
 	if (plane_wp_distance <= (uint32_t)max(g.waypoint_radius,0) || 
@@ -464,13 +464,13 @@ static bool verify_RTL()
 //  Condition (May) commands
 /********************************************************************************/
 
-static void do_wait_delay()
+static void plane_do_wait_delay()
 {
     condition_start = millis();
     condition_value  = next_nonnav_command.lat * 1000;          // convert to milliseconds
 }
 
-static void do_change_alt()
+static void plane_do_change_alt()
 {
     condition_rate          = labs((int)next_nonnav_command.lat);
     condition_value         = next_nonnav_command.alt;
@@ -482,7 +482,7 @@ static void do_change_alt()
     offset_altitude_cm      = 0;                                                                                        // For future nav calculations
 }
 
-static void do_within_distance()
+static void plane_do_within_distance()
 {
     condition_value  = next_nonnav_command.lat;
 }
@@ -491,7 +491,7 @@ static void do_within_distance()
 // Verify Condition (May) commands
 /********************************************************************************/
 
-static bool verify_wait_delay()
+static bool plane_verify_wait_delay()
 {
     if ((unsigned)(millis() - condition_start) > (unsigned)condition_value) {
         condition_value         = 0;
@@ -500,7 +500,7 @@ static bool verify_wait_delay()
     return false;
 }
 
-static bool verify_change_alt()
+static bool plane_verify_change_alt()
 {
     if( (condition_rate>=0 && adjusted_altitude_cm() >= condition_value) || 
         (condition_rate<=0 && adjusted_altitude_cm() <= condition_value)) {
@@ -511,7 +511,7 @@ static bool verify_change_alt()
     return false;
 }
 
-static bool verify_within_distance()
+static bool plane_verify_within_distance()
 {
     if (plane_wp_distance < max(condition_value,0)) {
         condition_value = 0;
@@ -534,7 +534,7 @@ static void do_loiter_at_location()
     next_WP = current_loc;
 }
 
-static void do_jump()
+static void plane_do_jump()
 {
     if (next_nonnav_command.lat == 0) {
         // the jump counter has reached zero - ignore
@@ -581,7 +581,7 @@ static void do_jump()
     handle_process_nav_cmd();
 }
 
-static void do_change_speed()
+static void plane_do_change_speed()
 {
     switch (next_nonnav_command.p1)
     {
@@ -603,7 +603,7 @@ static void do_change_speed()
     }
 }
 
-static void do_set_home()
+static void plane_do_set_home()
 {
     if (next_nonnav_command.p1 == 1 && g_gps->status() == GPS::GPS_OK_FIX_3D) {
         init_home();
@@ -616,8 +616,8 @@ static void do_set_home()
     }
 }
 
-// do_take_picture - take a picture with the camera library
-static void do_take_picture()
+// plane_do_take_picture - take a picture with the camera library
+static void plane_do_take_picture()
 {
 #if CAMERA == ENABLED
     camera.trigger_pic();

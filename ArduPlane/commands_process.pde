@@ -53,7 +53,7 @@ static void update_commands(void)
 
 static void verify_commands(void)
 {
-    if(verify_nav_command()) {
+    if(plane_verify_nav_command()) {
         nav_command_ID = NO_COMMAND;
     }
 
