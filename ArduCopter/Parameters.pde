@@ -743,6 +743,48 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(flight_mode6, "FLTMODE6",               FLIGHT_MODE_6),
 
+    // @Param: PLFLTMODE1
+    // @DisplayName: Flight Mode 1
+    // @Description: Flight mode when Channel 5 pwm is <= 1230
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @User: Standard
+    GSCALAR(plane_flight_mode1, "PLFLTMODE1",               PLANE_FLIGHT_MODE_1),
+
+    // @Param: PLFLTMODE2
+    // @DisplayName: Flight Mode 2
+    // @Description: Flight mode when Channel 5 pwm is >1230, <= 1360
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @User: Standard
+    GSCALAR(plane_flight_mode2, "PLFLTMODE2",               PLANE_FLIGHT_MODE_2),
+
+    // @Param: PLFLTMODE3
+    // @DisplayName: Flight Mode 3
+    // @Description: Flight mode when Channel 5 pwm is >1360, <= 1490
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @User: Standard
+    GSCALAR(plane_flight_mode3, "PLFLTMODE3",               PLANE_FLIGHT_MODE_3),
+
+    // @Param: PLFLTMODE4
+    // @DisplayName: Flight Mode 4
+    // @Description: Flight mode when Channel 5 pwm is >1490, <= 1620
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @User: Standard
+    GSCALAR(plane_flight_mode4, "PLFLTMODE4",               PLANE_FLIGHT_MODE_4),
+
+    // @Param: PLFLTMODE5
+    // @DisplayName: Flight Mode 5
+    // @Description: Flight mode when Channel 5 pwm is >1620, <= 1749
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @User: Standard
+    GSCALAR(plane_flight_mode5, "PLFLTMODE5",               PLANE_FLIGHT_MODE_5),
+
+    // @Param: PLFLTMODE6
+    // @DisplayName: Flight Mode 6
+    // @Description: Flight mode when Channel 5 pwm is >=1750
+    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @User: Standard
+    GSCALAR(plane_flight_mode6, "PLFLTMODE6",               PLANE_FLIGHT_MODE_6),
+
     // @Param: LIM_ROLL_CD
     // @DisplayName: Maximum Bank Angle
     // @Description: The maximum commanded bank angle in either direction

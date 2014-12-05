@@ -287,18 +287,18 @@
 //                  |
 //
 //
-// If you are using channel 8 for mode switching then FLIGHT_MODE_5 and
-// FLIGHT_MODE_6 should be MANUAL.
+// If you are using channel 8 for mode switching then PLANE_FLIGHT_MODE_5 and
+// PLANE_FLIGHT_MODE_6 should be MANUAL.
 //
 //
 //#define FLIGHT_MODE_CHANNEL	8
 //
-//#define FLIGHT_MODE_1         RTL
-//#define FLIGHT_MODE_2         RTL
-//#define FLIGHT_MODE_3         STABILIZE
-//#define FLIGHT_MODE_4         STABILIZE
-//#define FLIGHT_MODE_5         MANUAL
-//#define FLIGHT_MODE_6         MANUAL
+//#define PLANE_FLIGHT_MODE_1         RTL
+//#define PLANE_FLIGHT_MODE_2         RTL
+//#define PLANE_FLIGHT_MODE_3         STABILIZE
+//#define PLANE_FLIGHT_MODE_4         STABILIZE
+//#define PLANE_FLIGHT_MODE_5         MANUAL
+//#define PLANE_FLIGHT_MODE_6         MANUAL
 //
 
 //////////////////////////////////////////////////////////////////////////////

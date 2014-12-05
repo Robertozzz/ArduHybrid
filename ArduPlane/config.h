@@ -41,31 +41,10 @@
 #error CONFIG_APM_HARDWARE option is deprecated! use CONFIG_HAL_BOARD instead
 #endif
 
-//////////////////////////////////////////////////////////////////////////////
-// APM HARDWARE
-//
 
-#if defined( __AVR_ATmega1280__ )
- // default choices for a 1280. We can't fit everything in, so we 
- // make some popular choices by default
- #define LOGGING_ENABLED DISABLED
- #ifndef GEOFENCE_ENABLED
- # define GEOFENCE_ENABLED DISABLED
- #endif
- #ifndef CLI_ENABLED
- # define CLI_ENABLED DISABLED
- #endif
- #ifndef MOUNT2
- # define MOUNT2 DISABLED
- #endif
- #ifndef MOUNT
- # define MOUNT DISABLED
- #endif
- #ifndef CAMERA
- # define CAMERA DISABLED
- #endif
+#ifdef __AVR_ATmega1280__
+#error ATmega1280 is not supported
 #endif
-
 //////////////////////////////////////////////////////////////////////////////
 // main board differences
 //
@@ -116,24 +95,15 @@
 #endif
 
 #if HIL_MODE != HIL_MODE_DISABLED       // we are in HIL mode
- #undef GPS_PROTOCOL
- #define GPS_PROTOCOL GPS_PROTOCOL_HIL
- #undef CONFIG_BARO
- #define CONFIG_BARO AP_BARO_HIL
- #undef CONFIG_IMU_TYPE
- #define CONFIG_IMU_TYPE CONFIG_IMU_HIL
- #undef  CONFIG_COMPASS
- #define CONFIG_COMPASS  AP_COMPASS_HIL
+ # undef GPS_PROTOCOL
+ # define GPS_PROTOCOL GPS_PROTOCOL_NONE
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 // GPS_PROTOCOL
 //
-// Note that this test must follow the HIL_PROTOCOL block as the HIL
-// setup may override the GPS configuration.
-//
 #ifndef GPS_PROTOCOL
- # define GPS_PROTOCOL GPS_PROTOCOL_AUTO
+ # define GPS_PROTOCOL           GPS_PROTOCOL_AUTO
 #endif
 
 #ifndef MAV_SYSTEM_ID
@@ -173,266 +143,30 @@
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
 // RADIO CONFIGURATION
 //////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////////
-// Radio channel limits
-//
-// Note that these are not called out in APM_Config.h.reference.
-//
-#ifndef CH5_MIN
- # define CH5_MIN        1000
-#endif
-#ifndef CH5_MAX
- # define CH5_MAX        2000
-#endif
-#ifndef CH6_MIN
- # define CH6_MIN        1000
-#endif
-#ifndef CH6_MAX
- # define CH6_MAX        2000
-#endif
-#ifndef CH7_MIN
- # define CH7_MIN        1000
-#endif
-#ifndef CH7_MAX
- # define CH7_MAX        2000
-#endif
-#ifndef CH8_MIN
- # define CH8_MIN        1000
-#endif
-#ifndef CH8_MAX
- # define CH8_MAX        2000
-#endif
-
-
-#ifndef FLAP_1_PERCENT
- # define FLAP_1_PERCENT 0
-#endif
-#ifndef FLAP_1_SPEED
- # define FLAP_1_SPEED 0
-#endif
-#ifndef FLAP_2_PERCENT
- # define FLAP_2_PERCENT 0
-#endif
-#ifndef FLAP_2_SPEED
- # define FLAP_2_SPEED 0
-#endif
-//////////////////////////////////////////////////////////////////////////////
-// FLIGHT_MODE
-// FLIGHT_MODE_CHANNEL
-//
-#ifndef FLIGHT_MODE_CHANNEL
- # define FLIGHT_MODE_CHANNEL    8
-#endif
-#if (FLIGHT_MODE_CHANNEL != 5) && (FLIGHT_MODE_CHANNEL != 6) && (FLIGHT_MODE_CHANNEL != 7) && (FLIGHT_MODE_CHANNEL != 8)
- # error XXX
- # error XXX You must set FLIGHT_MODE_CHANNEL to 5, 6, 7 or 8
- # error XXX
-#endif
-
-#if !defined(FLIGHT_MODE_1)
- # define FLIGHT_MODE_1                  RTL
-#endif
-#if !defined(FLIGHT_MODE_2)
- # define FLIGHT_MODE_2                  RTL
-#endif
-#if !defined(FLIGHT_MODE_3)
- # define FLIGHT_MODE_3                  FLY_BY_WIRE_A
-#endif
-#if !defined(FLIGHT_MODE_4)
- # define FLIGHT_MODE_4                  FLY_BY_WIRE_A
-#endif
-#if !defined(FLIGHT_MODE_5)
- # define FLIGHT_MODE_5                  MANUAL
-#endif
-#if !defined(FLIGHT_MODE_6)
- # define FLIGHT_MODE_6                  MANUAL
-#endif
-
-
-//////////////////////////////////////////////////////////////////////////////
-// THROTTLE_FAILSAFE
-// THROTTLE_FS_VALUE
-// SHORT_FAILSAFE_ACTION
-// LONG_FAILSAFE_ACTION
-#ifndef THROTTLE_FAILSAFE
- # define THROTTLE_FAILSAFE              ENABLED
-#endif
-#ifndef THROTTLE_FS_VALUE
- # define THROTTLE_FS_VALUE              950
-#endif
-#ifndef SHORT_FAILSAFE_ACTION
- # define SHORT_FAILSAFE_ACTION          0
-#endif
-#ifndef LONG_FAILSAFE_ACTION
- # define LONG_FAILSAFE_ACTION           0
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-// AUTO_TRIM
-//
-#ifndef AUTO_TRIM
- # define AUTO_TRIM                              DISABLED
-#endif
-
-
-//////////////////////////////////////////////////////////////////////////////
-// THROTTLE_OUT
-//
-#ifndef THROTTE_OUT
- # define THROTTLE_OUT                   ENABLED
-#endif
-
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-// STARTUP BEHAVIOUR
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////////
-// GROUND_START_DELAY
-//
-#ifndef GROUND_START_DELAY
- # define GROUND_START_DELAY             0
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-// ENABLE ELEVON_MIXING
-//
-#ifndef ELEVON_MIXING
- # define ELEVON_MIXING          DISABLED
-#endif
-#ifndef ELEVON_REVERSE
- # define ELEVON_REVERSE     DISABLED
-#endif
-#ifndef ELEVON_CH1_REVERSE
- # define ELEVON_CH1_REVERSE     DISABLED
-#endif
-#ifndef ELEVON_CH2_REVERSE
- # define ELEVON_CH2_REVERSE     DISABLED
-#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // CAMERA TRIGGER AND CONTROL
 //
-// uses 1182 bytes of memory
 #ifndef CAMERA
- # define CAMERA         ENABLED
+ # define CAMERA        ENABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
 // MOUNT (ANTENNA OR CAMERA)
 //
-// uses 4174 bytes of memory on 1280 chips (MNT_JSTICK_SPD_OPTION, MNT_RETRACT_OPTION, MNT_STABILIZE_OPTION and MNT_MOUNT2_OPTION disabled)
-// uses 7726 bytes of memory on 2560 chips (all options are enabled)
 #ifndef MOUNT
- # define MOUNT          ENABLED
+ # define MOUNT         ENABLED
 #endif
 
-// second mount, can for example be used to keep an antenna pointed at the home position
 #ifndef MOUNT2
  # define MOUNT2         DISABLED
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-// FLIGHT AND NAVIGATION CONTROL
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////////////
-// Altitude measurement and control.
-//
-#ifndef ALTITUDE_MIX
- # define ALTITUDE_MIX                   1
-#endif
-
-
-//////////////////////////////////////////////////////////////////////////////
-// AIRSPEED_CRUISE
-//
-#ifndef AIRSPEED_CRUISE
- # define AIRSPEED_CRUISE                12 // 12 m/s
-#endif
-#define AIRSPEED_CRUISE_CM AIRSPEED_CRUISE*100
-
-
-//////////////////////////////////////////////////////////////////////////////
-// MIN_GNDSPEED
-//
-#ifndef MIN_GNDSPEED
- # define MIN_GNDSPEED                   0 // m/s (0 disables)
-#endif
-#define MIN_GNDSPEED_CM MIN_GNDSPEED*100
-
-
-//////////////////////////////////////////////////////////////////////////////
-// FLY_BY_WIRE_B airspeed control
-//
-#ifndef AIRSPEED_FBW_MIN
- # define AIRSPEED_FBW_MIN               9
-#endif
-#ifndef AIRSPEED_FBW_MAX
- # define AIRSPEED_FBW_MAX               22
-#endif
-
-#ifndef ALT_HOLD_FBW
- # define ALT_HOLD_FBW 0
-#endif
-#define ALT_HOLD_FBW_CM ALT_HOLD_FBW*100
-
-
-//////////////////////////////////////////////////////////////////////////////
-// Servo Mapping
-//
-#ifndef PLTHR_MIN
- # define PLTHR_MIN                   0 // percent
-#endif
-#ifndef PLTHR_CRUISE
- # define PLTHR_CRUISE                45
-#endif
-#ifndef PLTHR_MAX
- # define PLTHR_MAX                   75
-#endif
-
-//////////////////////////////////////////////////////////////////////////////
-// Autopilot control limits
-//
-#ifndef HEAD_MAX
- # define HEAD_MAX                               45
-#endif
-#ifndef PITCH_MAX
- # define PITCH_MAX                              15
-#endif
-#ifndef PITCH_MIN
- # define PITCH_MIN                              -25
-#endif
-#define HEAD_MAX_CENTIDEGREE HEAD_MAX * 100
-#define PITCH_MAX_CENTIDEGREE PITCH_MAX * 100
-#define PITCH_MIN_CENTIDEGREE PITCH_MIN * 100
-
-#ifndef RUDDER_MIX
- # define RUDDER_MIX           0.5
-#endif
-
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-// DEBUGGING
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-//////////////////////////////////////////////////////////////////////////////
 // Dataflash logging control
 //
-
 #ifndef LOGGING_ENABLED
  # define LOGGING_ENABLED                ENABLED
 #endif
@@ -456,32 +190,6 @@
 #define DEFAULT_LOG_BITMASK   0xffff
 #endif
 
-
-
-//////////////////////////////////////////////////////////////////////////////
-// Navigation defaults
-//
-#ifndef WP_RADIUS_DEFAULT
- # define WP_RADIUS_DEFAULT              30
-#endif
-
-#ifndef LOITER_RADIUS_DEFAULT
- # define LOITER_RADIUS_DEFAULT 60
-#endif
-
-#ifndef ALT_HOLD_HOME
- # define ALT_HOLD_HOME 100
-#endif
-#define ALT_HOLD_HOME_CM ALT_HOLD_HOME*100
-
-#ifndef USE_CURRENT_ALT
- # define USE_CURRENT_ALT FALSE
-#endif
-
-#ifndef INVERTED_FLIGHT_PWM
- # define INVERTED_FLIGHT_PWM 1750
-#endif
-
 //////////////////////////////////////////////////////////////////////////////
 // Developer Items
 //
@@ -492,7 +200,7 @@
 
 // use this to completely disable the CLI
 #ifndef CLI_ENABLED
- # define CLI_ENABLED ENABLED
+  #  define CLI_ENABLED           ENABLED
 #endif
 
 // use this to disable geo-fencing
@@ -544,4 +252,249 @@
 #define FIRMWARE_STRING THISFIRMWARE
 #else
 #define FIRMWARE_STRING THISFIRMWARE " (" GIT_VERSION ")"
+#endif
+
+
+//////////////////////////////////////////////////////////////////////////////
+// Radio channel limits
+//
+// Note that these are not called out in APM_Config.h.reference.
+//
+#ifndef CH5_MIN
+ # define CH5_MIN        1000
+#endif
+#ifndef CH5_MAX
+ # define CH5_MAX        2000
+#endif
+#ifndef CH6_MIN
+ # define CH6_MIN        1000
+#endif
+#ifndef CH6_MAX
+ # define CH6_MAX        2000
+#endif
+#ifndef CH7_MIN
+ # define CH7_MIN        1000
+#endif
+#ifndef CH7_MAX
+ # define CH7_MAX        2000
+#endif
+#ifndef CH8_MIN
+ # define CH8_MIN        1000
+#endif
+#ifndef CH8_MAX
+ # define CH8_MAX        2000
+#endif
+
+#ifndef FLAP_1_PERCENT
+ # define FLAP_1_PERCENT 0
+#endif
+#ifndef FLAP_1_SPEED
+ # define FLAP_1_SPEED 0
+#endif
+#ifndef FLAP_2_PERCENT
+ # define FLAP_2_PERCENT 0
+#endif
+#ifndef FLAP_2_SPEED
+ # define FLAP_2_SPEED 0
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// FLIGHT_MODE
+// FLIGHT_MODE_CHANNEL
+//
+#ifndef FLIGHT_MODE_CHANNEL
+ # define FLIGHT_MODE_CHANNEL    8
+#endif
+#if (FLIGHT_MODE_CHANNEL != 5) && (FLIGHT_MODE_CHANNEL != 6) && (FLIGHT_MODE_CHANNEL != 7) && (FLIGHT_MODE_CHANNEL != 8)
+ # error XXX
+ # error XXX You must set FLIGHT_MODE_CHANNEL to 5, 6, 7 or 8
+ # error XXX
+#endif
+
+#if !defined(PLANE_FLIGHT_MODE_1)
+ # define PLANE_FLIGHT_MODE_1                  RTL
+#endif
+#if !defined(PLANE_FLIGHT_MODE_2)
+ # define PLANE_FLIGHT_MODE_2                  RTL
+#endif
+#if !defined(PLANE_FLIGHT_MODE_3)
+ # define PLANE_FLIGHT_MODE_3                  FLY_BY_WIRE_A
+#endif
+#if !defined(PLANE_FLIGHT_MODE_4)
+ # define PLANE_FLIGHT_MODE_4                  FLY_BY_WIRE_A
+#endif
+#if !defined(PLANE_FLIGHT_MODE_5)
+ # define PLANE_FLIGHT_MODE_5                  MANUAL
+#endif
+#if !defined(PLANE_FLIGHT_MODE_6)
+ # define PLANE_FLIGHT_MODE_6                  MANUAL
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// THROTTLE_FAILSAFE
+// THROTTLE_FS_VALUE
+// SHORT_FAILSAFE_ACTION
+// LONG_FAILSAFE_ACTION
+#ifndef THROTTLE_FAILSAFE
+ # define THROTTLE_FAILSAFE              ENABLED
+#endif
+#ifndef THROTTLE_FS_VALUE
+ # define THROTTLE_FS_VALUE              950
+#endif
+#ifndef SHORT_FAILSAFE_ACTION
+ # define SHORT_FAILSAFE_ACTION          0
+#endif
+#ifndef LONG_FAILSAFE_ACTION
+ # define LONG_FAILSAFE_ACTION           0
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// AUTO_TRIM
+//
+#ifndef AUTO_TRIM
+ # define AUTO_TRIM                              DISABLED
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// THROTTLE_OUT
+//
+#ifndef THROTTE_OUT
+ # define THROTTLE_OUT                   ENABLED
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+// STARTUP BEHAVIOUR
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+// GROUND_START_DELAY
+//
+#ifndef GROUND_START_DELAY
+ # define GROUND_START_DELAY             0
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// ENABLE ELEVON_MIXING
+//
+#ifndef ELEVON_MIXING
+ # define ELEVON_MIXING          DISABLED
+#endif
+#ifndef ELEVON_REVERSE
+ # define ELEVON_REVERSE     DISABLED
+#endif
+#ifndef ELEVON_CH1_REVERSE
+ # define ELEVON_CH1_REVERSE     DISABLED
+#endif
+#ifndef ELEVON_CH2_REVERSE
+ # define ELEVON_CH2_REVERSE     DISABLED
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// FLIGHT AND NAVIGATION CONTROL
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+// Altitude measurement and control.
+//
+#ifndef ALTITUDE_MIX
+ # define ALTITUDE_MIX                   1
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// AIRSPEED_CRUISE
+//
+#ifndef AIRSPEED_CRUISE
+ # define AIRSPEED_CRUISE                12 // 12 m/s
+#endif
+#define AIRSPEED_CRUISE_CM AIRSPEED_CRUISE*100
+
+//////////////////////////////////////////////////////////////////////////////
+// MIN_GNDSPEED
+//
+#ifndef MIN_GNDSPEED
+ # define MIN_GNDSPEED                   0 // m/s (0 disables)
+#endif
+#define MIN_GNDSPEED_CM MIN_GNDSPEED*100
+
+//////////////////////////////////////////////////////////////////////////////
+// FLY_BY_WIRE_B airspeed control
+//
+#ifndef AIRSPEED_FBW_MIN
+ # define AIRSPEED_FBW_MIN               9
+#endif
+#ifndef AIRSPEED_FBW_MAX
+ # define AIRSPEED_FBW_MAX               22
+#endif
+
+#ifndef ALT_HOLD_FBW
+ # define ALT_HOLD_FBW 0
+#endif
+#define ALT_HOLD_FBW_CM ALT_HOLD_FBW*100
+
+//////////////////////////////////////////////////////////////////////////////
+// Servo Mapping
+//
+#ifndef PLTHR_MIN
+ # define PLTHR_MIN                   0 // percent
+#endif
+#ifndef PLTHR_CRUISE
+ # define PLTHR_CRUISE                45
+#endif
+#ifndef PLTHR_MAX
+ # define PLTHR_MAX                   75
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// Autopilot control limits
+//
+#ifndef HEAD_MAX
+ # define HEAD_MAX                               45
+#endif
+#ifndef PITCH_MAX
+ # define PITCH_MAX                              15
+#endif
+#ifndef PITCH_MIN
+ # define PITCH_MIN                              -25
+#endif
+#define HEAD_MAX_CENTIDEGREE HEAD_MAX * 100
+#define PITCH_MAX_CENTIDEGREE PITCH_MAX * 100
+#define PITCH_MIN_CENTIDEGREE PITCH_MIN * 100
+
+#ifndef RUDDER_MIX
+ # define RUDDER_MIX           0.5
+#endif
+
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+// DEBUGGING
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+// Navigation defaults
+//
+#ifndef WP_RADIUS_DEFAULT
+ # define WP_RADIUS_DEFAULT              30
+#endif
+
+#ifndef LOITER_RADIUS_DEFAULT
+ # define LOITER_RADIUS_DEFAULT 60
+#endif
+
+#ifndef ALT_HOLD_HOME
+ # define ALT_HOLD_HOME 100
+#endif
+#define ALT_HOLD_HOME_CM ALT_HOLD_HOME*100
+
+#ifndef USE_CURRENT_ALT
+ # define USE_CURRENT_ALT FALSE
+#endif
+
+#ifndef INVERTED_FLIGHT_PWM
+ # define INVERTED_FLIGHT_PWM 1750
 #endif

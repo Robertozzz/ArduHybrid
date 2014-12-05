@@ -184,15 +184,17 @@ public:
         k_param_heli_yaw_ff,
         k_param_heli_stab_col_min,
         k_param_heli_stab_col_max,
-        // 87: Motors
-        k_param_motors = 87,
+        // 88: Motors
+        k_param_motors = 88,
         // 90: Inertial Nav
         k_param_inertial_nav = 90,
         k_param_wp_nav,
         // 93: Arming parameters
         k_param_arming = 93,							// Plane
+
         // 95: Extra parameters
         k_param_fence_retalt = 95,					// Plane
+
         // 97: Telemetry control
         k_param_gcs0 = 97,
         k_param_gcs1,
@@ -203,6 +205,7 @@ public:
         k_param_gcs2,
         k_param_serial0_baud,					// Plane
         k_param_serial2_baud,
+
         // 107: Fly-by-wire control
         k_param_airspeed_min = 107,				// Plane
         k_param_airspeed_max,					// Plane
@@ -285,25 +288,28 @@ public:
         k_param_failsafe_battery_enabled,
         k_param_throttle_mid,
         k_param_failsafe_gps_enabled,
-        k_param_failsafe_gcs, ////////duplicates with plane???!!!!!!!!!!!!!!!!!!!!!!!!!
+        k_param_failsafe_gcs, ////////duplicates with plane???!!!!
         k_param_rcmap,
 
-		
-		
-		
-        // 195: Feed-forward gains
-        k_param_kff_rudder_mix = 195,			// Plane
+        // 191: Feed-forward gains
+        k_param_kff_rudder_mix = 191,			// Plane
         k_param_kff_throttle_to_pitch,			// Plane
         k_param_scaling_speed,					// Plane
 
-        // 200: flight modes
-        k_param_flight_mode_channel = 200,		// Plane
+        // 195: flight modes
+        k_param_flight_mode_channel = 195,		// Plane
         k_param_flight_mode1,
         k_param_flight_mode2,
         k_param_flight_mode3,
         k_param_flight_mode4,
         k_param_flight_mode5,
         k_param_flight_mode6,
+        k_param_plane_flight_mode1,
+        k_param_plane_flight_mode2,
+        k_param_plane_flight_mode3,
+        k_param_plane_flight_mode4,
+        k_param_plane_flight_mode5,
+        k_param_plane_flight_mode6,
         k_param_simple_modes,
 
         // 210: Waypoint data
@@ -341,6 +347,7 @@ public:
         k_param_acro_balance_roll,
         k_param_acro_balance_pitch,
         k_param_acro_yaw_p,
+
         // 245: other objects
         k_param_obc = 245,						// Plane
         k_param_rollController,					// Plane
@@ -350,6 +357,7 @@ public:
         k_param_TECS_controller,				// Plane
         k_param_rally_total,					// Plane
         k_param_steerController,				// Plane
+
         // 254,255: reserved
     };
 
@@ -475,6 +483,12 @@ public:
     AP_Int8         flight_mode4;
     AP_Int8         flight_mode5;
     AP_Int8         flight_mode6;
+    AP_Int8         plane_flight_mode1;
+    AP_Int8         plane_flight_mode2;
+    AP_Int8         plane_flight_mode3;
+    AP_Int8         plane_flight_mode4;
+    AP_Int8         plane_flight_mode5;
+    AP_Int8         plane_flight_mode6;
     AP_Int8         simple_modes;
 
     // Misc
@@ -588,6 +602,7 @@ public:
     APM_PI                  pi_stabilize_pitch;
     APM_PI                  pi_stabilize_yaw;
     APM_PI                  pi_alt_hold;
+
 
     // Note: keep initializers here in the same order as they are declared above.
     Parameters() :

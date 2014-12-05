@@ -239,12 +239,12 @@ public:
 
         // 200: flight modes
         k_param_flight_mode_channel,			// Plane
-        k_param_flight_mode1,
-        k_param_flight_mode2,
-        k_param_flight_mode3,
-        k_param_flight_mode4,
-        k_param_flight_mode5,
-        k_param_flight_mode6,
+        k_param_plane_flight_mode1,
+        k_param_plane_flight_mode2,
+        k_param_plane_flight_mode3,
+        k_param_plane_flight_mode4,
+        k_param_plane_flight_mode5,
+        k_param_plane_flight_mode6,
 
         // 210: Waypoint data
         k_param_waypoint_mode,					// Plane
@@ -357,12 +357,12 @@ public:
 
     // Flight modes
     AP_Int8 		flight_mode_channel;	// Plane
-    AP_Int8         flight_mode1;
-    AP_Int8         flight_mode2;
-    AP_Int8         flight_mode3;
-    AP_Int8         flight_mode4;
-    AP_Int8         flight_mode5;
-    AP_Int8         flight_mode6;
+    AP_Int8         plane_flight_mode1;
+    AP_Int8         plane_flight_mode2;
+    AP_Int8         plane_flight_mode3;
+    AP_Int8         plane_flight_mode4;
+    AP_Int8         plane_flight_mode5;
+    AP_Int8         plane_flight_mode6;
 
     // Misc
     AP_Int16		log_bitmask;

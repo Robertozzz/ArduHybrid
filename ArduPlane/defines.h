@@ -13,16 +13,32 @@
 
 // Internal defines, don't edit and expect things to work
 // -------------------------------------------------------
-
 #define TRUE 1
 #define FALSE 0
 #define ToRad(x) radians(x)	// *pi/180
 #define ToDeg(x) degrees(x)	// *180/pi
-
 #define DEBUG 0
 #define LOITER_RANGE 60 // for calculating power outside of loiter radius
 #define SERVO_MAX 4500  // This value represents 45 degrees and is just an
                         // arbitrary representation of servo max travel.
+
+
+// PLANE items
+
+// type of stick mixing enabled
+enum StickMixing {
+    STICK_MIXING_DISABLED = 0,
+    STICK_MIXING_FBW      = 1,
+    STICK_MIXING_DIRECT   = 2
+};
+
+// altitude control algorithms
+enum {
+    ALT_CONTROL_DEFAULT      = 0,
+    ALT_CONTROL_NON_AIRSPEED = 1,
+    ALT_CONTROL_TECS         = 2,
+    ALT_CONTROL_AIRSPEED     = 3
+};
 
 // failsafe
 // ----------------------
@@ -43,7 +59,6 @@ enum gcs_failsafe {
                                  // drops to 0
 };
 
-
 // active altitude sensor
 // ----------------------
 #define SONAR 0
@@ -54,24 +69,6 @@ enum gcs_failsafe {
 
 #define T6 1000000
 #define T7 10000000
-
-// GPS type codes - use the names, not the numbers
-#define GPS_PROTOCOL_NONE       -1
-#define GPS_PROTOCOL_NMEA       0
-#define GPS_PROTOCOL_SIRF       1
-#define GPS_PROTOCOL_UBLOX      2
-#define GPS_PROTOCOL_IMU        3
-#define GPS_PROTOCOL_MTK        4
-#define GPS_PROTOCOL_HIL        5
-#define GPS_PROTOCOL_MTK19      6
-#define GPS_PROTOCOL_AUTO       7
-
-// HIL enumerations. Note that HIL_MODE_ATTITUDE and HIL_MODE_SENSORS
-// are now the same thing, and are sensors based. The old define is
-// kept to allow old APM_Config.h headers to keep working
-#define HIL_MODE_DISABLED                       0
-#define HIL_MODE_ATTITUDE                       1
-#define HIL_MODE_SENSORS                        2
 
 enum FlightMode {
     MANUAL        = 0,
@@ -89,13 +86,6 @@ enum FlightMode {
     INITIALISING  = 16
 };
 
-// type of stick mixing enabled
-enum StickMixing {
-    STICK_MIXING_DISABLED = 0,
-    STICK_MIXING_FBW      = 1,
-    STICK_MIXING_DIRECT   = 2
-};
-
 enum ChannelMixing {
     MIXING_DISABLED = 0,
     MIXING_UPUP     = 1,
@@ -104,11 +94,6 @@ enum ChannelMixing {
     MIXING_DNDN     = 4
 };
 
-// Commands - Note that APM now uses a subset of the MAVLink protocol
-// commands.  See enum MAV_CMD in the GCS_Mavlink library
-#define CMD_BLANK 0 // there is no command stored in the mem location
-                    // requested
-#define NO_COMMAND 0
 #define WAIT_COMMAND 255
 
 // Command/Waypoint/Location Options Bitmask
@@ -118,7 +103,6 @@ enum ChannelMixing {
 #define MASK_OPTIONS_LOITER_DIRECTION   (1<<2)          // 0 = CW
                                                         // 1 = CCW
 
-
 //repeating events
 #define NO_REPEAT 0
 #define CH_5_TOGGLE 1
@@ -127,7 +111,6 @@ enum ChannelMixing {
 #define CH_8_TOGGLE 4
 #define RELAY_TOGGLE 5
 #define STOP_REPEAT 10
-
 
 // Logging message types. NOTE: If you change the value of one
 // of these then existing logs will break! Only add at the end, and 
@@ -154,24 +137,6 @@ enum log_messages {
     LOG_AIRSPEED_MSG,
     MAX_NUM_LOGS // always at the end
 };
-
-#define MASK_LOG_ATTITUDE_FAST          (1<<0)
-#define MASK_LOG_ATTITUDE_MED           (1<<1)
-#define MASK_LOG_GPS                    (1<<2)
-#define MASK_LOG_PM                     (1<<3)
-#define MASK_LOG_CTUN                   (1<<4)
-#define MASK_LOG_NTUN                   (1<<5)
-#define MASK_LOG_MODE                   (1<<6)
-#define MASK_LOG_IMU                    (1<<7)
-#define MASK_LOG_CMD                    (1<<8)
-#define MASK_LOG_CURRENT                (1<<9)
-#define MASK_LOG_COMPASS                (1<<10)
-#define MASK_LOG_TECS                   (1<<11)
-#define MASK_LOG_CAMERA                 (1<<12)
-#define MASK_LOG_RC                     (1<<13)
-#define MASK_LOG_SONAR                  (1<<14)
-#define MASK_LOG_ARM_DISARM             (1<<15)
-#define MASK_LOG_WHEN_DISARMED          (1UL<<30)
 
 // Waypoint Modes
 // ----------------
@@ -202,23 +167,80 @@ enum log_messages {
                                         // which a groundstart will be
                                         // triggered
 
-
-// EEPROM addresses
-#define EEPROM_MAX_ADDR         4096
-// parameters get the first 1280 bytes of EEPROM, remainder is for waypoints
-#define WP_START_BYTE 0x500 // where in memory home WP is stored + all other
-                            // WP
-#define WP_SIZE 15
-
-// fence points are stored at the end of the EEPROM
-#define MAX_FENCEPOINTS 20
-#define FENCE_WP_SIZE sizeof(Vector2l)
-#define FENCE_START_BYTE (EEPROM_MAX_ADDR-(MAX_FENCEPOINTS*FENCE_WP_SIZE))
-
 // rally points shoehorned between fence points and waypoints
 #define MAX_RALLYPOINTS 10
 #define RALLY_WP_SIZE 15
 #define RALLY_START_BYTE (FENCE_START_BYTE-(MAX_RALLYPOINTS*RALLY_WP_SIZE))
+
+// convert a boolean (0 or 1) to a sign for multiplying (0 maps to 1, 1 maps
+// to -1)
+#define BOOL_TO_SIGN(bvalue) ((bvalue) ? -1 : 1)
+
+// compass driver types
+#define AP_COMPASS_HMC5843   1
+#define AP_COMPASS_PX4       2
+#define AP_COMPASS_HIL       3
+
+// attitude controller choice
+enum {
+    ATT_CONTROL_PID = 0,
+    ATT_CONTROL_APMCONTROL = 1
+};
+
+// GPS type codes - use the names, not the numbers
+#define GPS_PROTOCOL_NONE       -1
+#define GPS_PROTOCOL_NMEA       0
+#define GPS_PROTOCOL_SIRF       1
+#define GPS_PROTOCOL_UBLOX      2
+#define GPS_PROTOCOL_IMU        3
+#define GPS_PROTOCOL_MTK        4
+#define GPS_PROTOCOL_HIL        5
+#define GPS_PROTOCOL_MTK19      6
+#define GPS_PROTOCOL_AUTO       7
+
+// HIL enumerations. Note that HIL_MODE_ATTITUDE and HIL_MODE_SENSORS
+// are now the same thing, and are sensors based. The old define is
+// kept to allow old APM_Config.h headers to keep working
+#define HIL_MODE_DISABLED               0
+#define HIL_MODE_ATTITUDE               1
+#define HIL_MODE_SENSORS                2
+
+// Commands - Note that APM now uses a subset of the MAVLink protocol
+// commands.  See enum MAV_CMD in the GCS_Mavlink library
+#define CMD_BLANK 0 // there is no command stored in the mem location
+                    // requested
+#define NO_COMMAND 0
+
+#define MASK_LOG_ATTITUDE_FAST          (1<<0)
+#define MASK_LOG_ATTITUDE_MED           (1<<1)
+#define MASK_LOG_GPS                    (1<<2)
+#define MASK_LOG_PM                     (1<<3)
+#define MASK_LOG_CTUN                   (1<<4)
+#define MASK_LOG_NTUN                   (1<<5)
+#define MASK_LOG_MODE                   (1<<6)	// Plane
+#define MASK_LOG_IMU                    (1<<7)
+#define MASK_LOG_CMD                    (1<<8)
+#define MASK_LOG_CURRENT                (1<<9)
+#define MASK_LOG_COMPASS                (1<<10)	// Plane
+#define MASK_LOG_TECS                   (1<<11)	// Plane
+#define MASK_LOG_CAMERA                 (1<<12)	// Plane
+#define MASK_LOG_RC                     (1<<13)	// Plane
+#define MASK_LOG_SONAR                  (1<<14)	// Plane
+#define MASK_LOG_ARM_DISARM             (1<<15)	// Plane
+#define MASK_LOG_WHEN_DISARMED          (1UL<<30)
+
+
+// EEPROM addresses
+#define EEPROM_MAX_ADDR         4096
+// parameters get the first 1536 + 1280 bytes of EEPROM, remainder is for waypoints
+#define WP_START_BYTE 0x1100 // where in memory home WP is stored + all other
+                            // WP
+#define WP_SIZE 15
+
+// fence points are stored at the end of the EEPROM
+#define MAX_FENCEPOINTS 6
+#define FENCE_WP_SIZE sizeof(Vector2l)
+#define FENCE_START_BYTE (EEPROM_MAX_ADDR-(MAX_FENCEPOINTS*FENCE_WP_SIZE))
 
 #define MAX_WAYPOINTS  ((RALLY_START_BYTE - WP_START_BYTE) / WP_SIZE) - 1 // -
                                                                           // 1
@@ -226,44 +248,21 @@ enum log_messages {
                                                                           // be
                                                                           // safe
 
-// convert a boolean (0 or 1) to a sign for multiplying (0 maps to 1, 1 maps
-// to -1)
-#define BOOL_TO_SIGN(bvalue) ((bvalue) ? -1 : 1)
-
 // mark a function as not to be inlined
 #define NOINLINE __attribute__((noinline))
 
-// InertialSensor driver types
+// IMU selection
 #define CONFIG_IMU_OILPAN  1
 #define CONFIG_IMU_MPU6000 2
-#define CONFIG_IMU_HIL     3
-#define CONFIG_IMU_PX4     4
-#define CONFIG_IMU_FLYMAPLE 5
-#define CONFIG_IMU_L3G4200D 6
+#define CONFIG_IMU_HIL     4
+#define CONFIG_IMU_PX4     5
+#define CONFIG_IMU_FLYMAPLE 6
 
 // barometer driver types
 #define AP_BARO_BMP085   1
 #define AP_BARO_MS5611   2
 #define AP_BARO_PX4      3
 #define AP_BARO_HIL      4
-
-// compass driver types
-#define AP_COMPASS_HMC5843   1
-#define AP_COMPASS_PX4       2
-#define AP_COMPASS_HIL       3
-
-// altitude control algorithms
-enum {
-    ALT_CONTROL_DEFAULT      = 0,
-    ALT_CONTROL_NON_AIRSPEED = 1,
-    ALT_CONTROL_TECS         = 2,
-    ALT_CONTROL_AIRSPEED     = 3
-};
-
-// attitude controller choice
-enum {
-    ATT_CONTROL_PID = 0,
-    ATT_CONTROL_APMCONTROL = 1
-};
+#define CONFIG_IMU_L3G4200D 6
 
 #endif // _DEFINES_H

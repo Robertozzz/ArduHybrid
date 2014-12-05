@@ -51,9 +51,8 @@
 #error ATmega1280 is not supported
 #endif
 //////////////////////////////////////////////////////////////////////////////
-// APM2 HARDWARE DEFAULTS
+// main board differences
 //
-
 #if CONFIG_HAL_BOARD == HAL_BOARD_APM2
  # define CONFIG_IMU_TYPE   CONFIG_IMU_MPU6000
  # define CONFIG_SONAR_SOURCE SONAR_SOURCE_ANALOG_PIN
@@ -260,14 +259,11 @@
 #endif
 
 #if HIL_MODE != HIL_MODE_DISABLED       // we are in HIL mode
-
  # undef GPS_PROTOCOL
  # define GPS_PROTOCOL GPS_PROTOCOL_NONE
-
  #undef CONFIG_SONAR
  #define CONFIG_SONAR DISABLED
 #endif
-
 
 //////////////////////////////////////////////////////////////////////////////
 // GPS_PROTOCOL
@@ -276,11 +272,9 @@
  # define GPS_PROTOCOL           GPS_PROTOCOL_AUTO
 #endif
 
-
 #ifndef MAV_SYSTEM_ID
  # define MAV_SYSTEM_ID          1
 #endif
-
 
 //////////////////////////////////////////////////////////////////////////////
 // Serial port speeds.
@@ -294,7 +288,6 @@
 #ifndef SERIAL2_BAUD
  # define SERIAL2_BAUD                    57600
 #endif
-
 
 //////////////////////////////////////////////////////////////////////////////
 // Battery monitoring
@@ -976,14 +969,58 @@
  #define AC_FENCE ENABLED
 #endif
 
-
 //////////////////////////////////////////////////////////////////////////////
 // Developer Items
 //
 
+#ifndef SCALING_SPEED
+ # define SCALING_SPEED          15.0
+#endif
+
 // use this to completely disable the CLI
 #ifndef CLI_ENABLED
   #  define CLI_ENABLED           ENABLED
+#endif
+
+// use this to disable geo-fencing
+#ifndef GEOFENCE_ENABLED
+ # define GEOFENCE_ENABLED ENABLED
+#endif
+
+// pwm value on FENCE_CHANNEL to use to enable fenced mode
+#ifndef FENCE_ENABLE_PWM
+ # define FENCE_ENABLE_PWM 1750
+#endif
+
+// a digital pin to set high when the geo-fence triggers. Defaults
+// to -1, which means don't activate a pin
+#ifndef FENCE_TRIGGERED_PIN
+ # define FENCE_TRIGGERED_PIN -1
+#endif
+
+// if RESET_SWITCH_CH is not zero, then this is the PWM value on
+// that channel where we reset the control mode to the current switch
+// position (to for example return to switched mode after failsafe or
+// fence breach)
+#ifndef RESET_SWITCH_CHAN_PWM
+ # define RESET_SWITCH_CHAN_PWM 1750
+#endif
+
+// OBC Failsafe enable
+#ifndef OBC_FAILSAFE
+ # define OBC_FAILSAFE DISABLED
+#endif
+
+#ifndef SERIAL_BUFSIZE
+ # define SERIAL_BUFSIZE 512
+#endif
+
+#ifndef SERIAL1_BUFSIZE
+ # define SERIAL1_BUFSIZE 256
+#endif
+
+#ifndef SERIAL2_BUFSIZE
+ # define SERIAL2_BUFSIZE 256
 #endif
 
 /*
@@ -996,27 +1033,36 @@
 #define FIRMWARE_STRING THISFIRMWARE " (" GIT_VERSION ")"
 #endif
 
-#endif // __ARDUCOPTER_CONFIG_H__
-
-///// PLANE
 
 //////////////////////////////////////////////////////////////////////////////
-// ENABLE ELEVON_MIXING
+// Radio channel limits
 //
-#ifndef ELEVON_MIXING
- # define ELEVON_MIXING          DISABLED
+// Note that these are not called out in APM_Config.h.reference.
+//
+#ifndef CH5_MIN
+ # define CH5_MIN        1000
 #endif
-#ifndef ELEVON_REVERSE
- # define ELEVON_REVERSE     DISABLED
+#ifndef CH5_MAX
+ # define CH5_MAX        2000
 #endif
-#ifndef ELEVON_CH1_REVERSE
- # define ELEVON_CH1_REVERSE     DISABLED
+#ifndef CH6_MIN
+ # define CH6_MIN        1000
 #endif
-#ifndef ELEVON_CH2_REVERSE
- # define ELEVON_CH2_REVERSE     DISABLED
+#ifndef CH6_MAX
+ # define CH6_MAX        2000
 #endif
-
-//////////////////
+#ifndef CH7_MIN
+ # define CH7_MIN        1000
+#endif
+#ifndef CH7_MAX
+ # define CH7_MAX        2000
+#endif
+#ifndef CH8_MIN
+ # define CH8_MIN        1000
+#endif
+#ifndef CH8_MAX
+ # define CH8_MAX        2000
+#endif
 
 #ifndef FLAP_1_PERCENT
  # define FLAP_1_PERCENT 0
@@ -1044,25 +1090,24 @@
  # error XXX
 #endif
 
-#if !defined(FLIGHT_MODE_1)
- # define FLIGHT_MODE_1                  RTL
+#if !defined(PLANE_FLIGHT_MODE_1)
+ # define PLANE_FLIGHT_MODE_1                  RTL
 #endif
-#if !defined(FLIGHT_MODE_2)
- # define FLIGHT_MODE_2                  RTL
+#if !defined(PLANE_FLIGHT_MODE_2)
+ # define PLANE_FLIGHT_MODE_2                  RTL
 #endif
-#if !defined(FLIGHT_MODE_3)
- # define FLIGHT_MODE_3                  FLY_BY_WIRE_A
+#if !defined(PLANE_FLIGHT_MODE_3)
+ # define PLANE_FLIGHT_MODE_3                  FLY_BY_WIRE_A
 #endif
-#if !defined(FLIGHT_MODE_4)
- # define FLIGHT_MODE_4                  FLY_BY_WIRE_A
+#if !defined(PLANE_FLIGHT_MODE_4)
+ # define PLANE_FLIGHT_MODE_4                  FLY_BY_WIRE_A
 #endif
-#if !defined(FLIGHT_MODE_5)
- # define FLIGHT_MODE_5                  MANUAL
+#if !defined(PLANE_FLIGHT_MODE_5)
+ # define PLANE_FLIGHT_MODE_5                  MANUAL
 #endif
-#if !defined(FLIGHT_MODE_6)
- # define FLIGHT_MODE_6                  MANUAL
+#if !defined(PLANE_FLIGHT_MODE_6)
+ # define PLANE_FLIGHT_MODE_6                  MANUAL
 #endif
-
 
 //////////////////////////////////////////////////////////////////////////////
 // THROTTLE_FAILSAFE
@@ -1088,6 +1133,48 @@
 #ifndef AUTO_TRIM
  # define AUTO_TRIM                              DISABLED
 #endif
+
+//////////////////////////////////////////////////////////////////////////////
+// THROTTLE_OUT
+//
+#ifndef THROTTE_OUT
+ # define THROTTLE_OUT                   ENABLED
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+// STARTUP BEHAVIOUR
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////////
+// GROUND_START_DELAY
+//
+#ifndef GROUND_START_DELAY
+ # define GROUND_START_DELAY             0
+#endif
+
+//////////////////////////////////////////////////////////////////////////////
+// ENABLE ELEVON_MIXING
+//
+#ifndef ELEVON_MIXING
+ # define ELEVON_MIXING          DISABLED
+#endif
+#ifndef ELEVON_REVERSE
+ # define ELEVON_REVERSE     DISABLED
+#endif
+#ifndef ELEVON_CH1_REVERSE
+ # define ELEVON_CH1_REVERSE     DISABLED
+#endif
+#ifndef ELEVON_CH2_REVERSE
+ # define ELEVON_CH2_REVERSE     DISABLED
+#endif
+
+/////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////
+// FLIGHT AND NAVIGATION CONTROL
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 
 //////////////////////////////////////////////////////////////////////////////
 // Altitude measurement and control.
@@ -1160,6 +1247,13 @@
  # define RUDDER_MIX           0.5
 #endif
 
+
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+// DEBUGGING
+//////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
 //////////////////////////////////////////////////////////////////////////////
 // Navigation defaults
 //
@@ -1184,6 +1278,4 @@
  # define INVERTED_FLIGHT_PWM 1750
 #endif
 
-#ifndef SCALING_SPEED
- # define SCALING_SPEED          15.0
-#endif
+#endif // __ARDUCOPTER_CONFIG_H__
