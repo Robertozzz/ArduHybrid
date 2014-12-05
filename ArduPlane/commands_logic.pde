@@ -13,7 +13,7 @@ handle_process_nav_cmd()
     // except in a takeoff 
     ap.takeoff_complete = true;
 
-    gcs_send_text_fmt(PSTR("Executing nav command ID #%i"),next_nav_command.id);
+    plane_gcs_send_text_fmt(PSTR("Executing nav command ID #%i"),next_nav_command.id);
     switch(next_nav_command.id) {
 
     case MAV_CMD_NAV_TAKEOFF:
@@ -52,7 +52,7 @@ handle_process_nav_cmd()
 static void
 handle_process_condition_command()
 {
-    gcs_send_text_fmt(PSTR("Executing command ID #%i"),next_nonnav_command.id);
+    plane_gcs_send_text_fmt(PSTR("Executing command ID #%i"),next_nonnav_command.id);
     switch(next_nonnav_command.id) {
 
     case MAV_CMD_CONDITION_DELAY:
@@ -74,7 +74,7 @@ handle_process_condition_command()
 
 static void handle_process_do_command()
 {
-    gcs_send_text_fmt(PSTR("Executing command ID #%i"),next_nonnav_command.id);
+    plane_gcs_send_text_fmt(PSTR("Executing command ID #%i"),next_nonnav_command.id);
     switch(next_nonnav_command.id) {
 
     case MAV_CMD_DO_JUMP:
@@ -151,7 +151,7 @@ static void handle_process_do_command()
 
 static void handle_no_commands()
 {
-    gcs_send_text_fmt(PSTR("Returning to Home"));
+    plane_gcs_send_text_fmt(PSTR("Returning to Home"));
     next_nav_command = rally_find_best_location(current_loc, home);
     next_nav_command.id = MAV_CMD_NAV_LOITER_UNLIM;
     nav_command_ID = MAV_CMD_NAV_LOITER_UNLIM;
@@ -312,7 +312,7 @@ static bool verify_takeoff()
         if (steer_state.hold_course_cd == -1) {
             // save our current course to take off
             steer_state.hold_course_cd = ahrs.yaw_sensor;
-            gcs_send_text_fmt(PSTR("Holding course %ld"), steer_state.hold_course_cd);
+            plane_gcs_send_text_fmt(PSTR("Holding course %ld"), steer_state.hold_course_cd);
         }
     }
 
@@ -359,7 +359,7 @@ static bool verify_land()
             // sudden large roll correction which is very nasty at
             // this point in the landing.
             steer_state.hold_course_cd = ahrs.yaw_sensor;
-            gcs_send_text_fmt(PSTR("Land Complete - Hold course %ld"), steer_state.hold_course_cd);
+            plane_gcs_send_text_fmt(PSTR("Land Complete - Hold course %ld"), steer_state.hold_course_cd);
         }
 
         if (g_gps->ground_speed_cm*0.01f < 3.0) {
@@ -398,7 +398,7 @@ static bool verify_nav_wp()
     }
     
     if (plane_wp_distance <= nav_controller->turn_distance(g.waypoint_radius)) {
-        gcs_send_text_fmt(PSTR("Reached Waypoint #%i dist %um"),
+        plane_gcs_send_text_fmt(PSTR("Reached Waypoint #%i dist %um"),
                           (unsigned)nav_command_index,
                           (unsigned)get_distance(current_loc, next_WP));
         return true;
@@ -406,7 +406,7 @@ static bool verify_nav_wp()
 
     // have we flown past the waypoint?
     if (location_passed_point(current_loc, prev_WP, next_WP)) {
-        gcs_send_text_fmt(PSTR("Passed Waypoint #%i dist %um"),
+        plane_gcs_send_text_fmt(PSTR("Passed Waypoint #%i dist %um"),
                           (unsigned)nav_command_index,
                           (unsigned)get_distance(current_loc, next_WP));
         return true;
@@ -538,18 +538,18 @@ static void do_jump()
 {
     if (next_nonnav_command.lat == 0) {
         // the jump counter has reached zero - ignore
-        gcs_send_text_fmt(PSTR("Jumps left: 0 - skipping"));
+        plane_gcs_send_text_fmt(PSTR("Jumps left: 0 - skipping"));
         return;
     }
     if (next_nonnav_command.p1 >= g.command_total) {
-        gcs_send_text_fmt(PSTR("Skipping invalid jump to %i"), next_nonnav_command.p1);
+        plane_gcs_send_text_fmt(PSTR("Skipping invalid jump to %i"), next_nonnav_command.p1);
         return;        
     }
 
     struct Location temp;
     temp = get_cmd_with_index(g.command_index);
 
-    gcs_send_text_fmt(PSTR("Jump to WP %u. Jumps left: %d"),
+    plane_gcs_send_text_fmt(PSTR("Jump to WP %u. Jumps left: %d"),
                       (unsigned)next_nonnav_command.p1,
                       (int)next_nonnav_command.lat);
     if (next_nonnav_command.lat > 0) {
@@ -562,7 +562,7 @@ static void do_jump()
     next_nav_command.id     = NO_COMMAND;
     non_nav_command_ID      = NO_COMMAND;
 
-    gcs_send_text_fmt(PSTR("setting command index: %i"), next_nonnav_command.p1);
+    plane_gcs_send_text_fmt(PSTR("setting command index: %i"), next_nonnav_command.p1);
     g.command_index.set_and_save(next_nonnav_command.p1);
     nav_command_index       = next_nonnav_command.p1;
     // Need to back "next_WP" up as it was set to the next waypoint following the jump
@@ -588,17 +588,17 @@ static void do_change_speed()
     case 0:             // Airspeed
         if (next_nonnav_command.alt > 0) {
             g.airspeed_cruise_cm.set(next_nonnav_command.alt * 100);
-            gcs_send_text_fmt(PSTR("Set airspeed %u m/s"), (unsigned)next_nonnav_command.alt);
+            plane_gcs_send_text_fmt(PSTR("Set airspeed %u m/s"), (unsigned)next_nonnav_command.alt);
         }
         break;
     case 1:             // Ground speed
-        gcs_send_text_fmt(PSTR("Set groundspeed %u"), (unsigned)next_nonnav_command.alt);
+        plane_gcs_send_text_fmt(PSTR("Set groundspeed %u"), (unsigned)next_nonnav_command.alt);
         g.min_gndspeed_cm.set(next_nonnav_command.alt * 100);
         break;
     }
 
     if (next_nonnav_command.lat > 0) {
-        gcs_send_text_fmt(PSTR("Set throttle %u"), (unsigned)next_nonnav_command.lat);
+        plane_gcs_send_text_fmt(PSTR("Set throttle %u"), (unsigned)next_nonnav_command.lat);
         aparm.plthr_cruise.set(next_nonnav_command.lat);
     }
 }

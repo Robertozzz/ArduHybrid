@@ -225,7 +225,7 @@ static void init_home()
     home.alt        = max(g_gps->altitude_cm, 0);
     ap.home_is_set = true;
 
-    gcs_send_text_fmt(PSTR("gps alt: %lu"), (unsigned long)home.alt);
+    plane_gcs_send_text_fmt(PSTR("gps alt: %lu"), (unsigned long)home.alt);
 
     // Save Home to EEPROM - Command 0
     // -------------------

@@ -8,16 +8,16 @@ void change_command(uint8_t cmd_index)
 
     if (cmd_index == 0) {
         init_commands();
-        gcs_send_text_fmt(PSTR("Received Request - reset mission"));
+        plane_gcs_send_text_fmt(PSTR("Received Request - reset mission"));
         return;
     }
 
     temp = get_cmd_with_index(cmd_index);
 
     if (temp.id > MAV_CMD_NAV_LAST ) {
-        gcs_send_text_fmt(PSTR("Cannot change to non-Nav cmd %u"), (unsigned)cmd_index);
+        plane_gcs_send_text_fmt(PSTR("Cannot change to non-Nav cmd %u"), (unsigned)cmd_index);
     } else {
-        gcs_send_text_fmt(PSTR("Received Request - jump to command #%i"),cmd_index);
+        plane_gcs_send_text_fmt(PSTR("Received Request - jump to command #%i"),cmd_index);
 
         nav_command_ID          = NO_COMMAND;
         next_nav_command.id = NO_COMMAND;
@@ -80,7 +80,7 @@ static void process_next_command()
             temp = get_cmd_with_index(nav_command_index);
         }
 
-        gcs_send_text_fmt(PSTR("Nav command index updated to #%i"),nav_command_index);
+        plane_gcs_send_text_fmt(PSTR("Nav command index updated to #%i"),nav_command_index);
 
         if(nav_command_index > g.command_total) {
             // we are out of commands!
@@ -103,14 +103,14 @@ static void process_next_command()
     // -------------------------------------------
     if (non_nav_command_index == NO_COMMAND) {                  // If the index is NO_COMMAND then we have just loaded a nav command
         non_nav_command_index = old_index + 1;
-        //gcs_send_text_fmt(PSTR("Non-Nav command index #%i"),non_nav_command_index);
+        //plane_gcs_send_text_fmt(PSTR("Non-Nav command index #%i"),non_nav_command_index);
     } else if (non_nav_command_ID == NO_COMMAND) {      // If the ID is NO_COMMAND then we have just completed a non-nav command
         non_nav_command_index++;
     }
 
-    //gcs_send_text_fmt(PSTR("Nav command index #%i"),nav_command_index);
-    //gcs_send_text_fmt(PSTR("Non-Nav command index #%i"),non_nav_command_index);
-    //gcs_send_text_fmt(PSTR("Non-Nav command ID #%i"),non_nav_command_ID);
+    //plane_gcs_send_text_fmt(PSTR("Nav command index #%i"),nav_command_index);
+    //plane_gcs_send_text_fmt(PSTR("Non-Nav command index #%i"),non_nav_command_index);
+    //plane_gcs_send_text_fmt(PSTR("Non-Nav command ID #%i"),non_nav_command_ID);
     if (nav_command_index <= (int)g.command_total && non_nav_command_ID == NO_COMMAND) {
         temp = get_cmd_with_index(non_nav_command_index);
         if (temp.id <= MAV_CMD_NAV_LAST) {                       
@@ -118,7 +118,7 @@ static void process_next_command()
             g.command_index.set_and_save(nav_command_index);
             non_nav_command_index = nav_command_index;
             non_nav_command_ID = WAIT_COMMAND;
-            gcs_send_text_fmt(PSTR("Non-Nav command ID updated to #%i idx=%u"),
+            plane_gcs_send_text_fmt(PSTR("Non-Nav command ID updated to #%i idx=%u"),
                               (unsigned)non_nav_command_ID, 
                               (unsigned)non_nav_command_index);
 
@@ -127,7 +127,7 @@ static void process_next_command()
             g.command_index.set_and_save(non_nav_command_index);
             next_nonnav_command = temp;
             non_nav_command_ID = next_nonnav_command.id;
-            gcs_send_text_fmt(PSTR("(2) Non-Nav command ID updated to #%i idx=%u"),
+            plane_gcs_send_text_fmt(PSTR("(2) Non-Nav command ID updated to #%i idx=%u"),
                               (unsigned)non_nav_command_ID, (unsigned)non_nav_command_index);
 
             if (should_log(MASK_LOG_CMD)) {

@@ -157,6 +157,8 @@
 #include <APM_OBC.h>			// Plane
 #include <APM_Control.h>		// Plane
 
+static bool isplane = false;
+
 // key aircraft parameters passed to multiple libraries
 static AP_Vehicle::FixedWing aparm;	// Plane
 

@@ -96,6 +96,8 @@
 #include <APM_OBC.h>			// Plane
 #include <APM_Control.h>		// Plane
 
+static bool isplane = true;
+
 // key aircraft parameters passed to multiple libraries
 static AP_Vehicle::FixedWing aparm;	// Plane
 
@@ -140,7 +142,7 @@ static RC_Channel *channel_rudder;		// Plane
 ////////////////////////////////////////////////////////////////////////////////
 static void update_events(void);
 static void print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode);
-static void gcs_send_text_fmt(const prog_char_t *fmt, ...);
+static void plane_gcs_send_text_fmt(const prog_char_t *fmt, ...);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Dataflash

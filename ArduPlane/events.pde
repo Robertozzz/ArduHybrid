@@ -44,7 +44,7 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
     default:
         break;
     }
-    gcs_send_text_fmt(PSTR("flight mode = %u"), (unsigned)control_mode);
+    plane_gcs_send_text_fmt(PSTR("flight mode = %u"), (unsigned)control_mode);
 }
 
 static void failsafe_long_on_event(enum failsafe_state fstype)
@@ -85,7 +85,7 @@ static void failsafe_long_on_event(enum failsafe_state fstype)
     default:
         break;
     }
-    gcs_send_text_fmt(PSTR("flight mode = %u"), (unsigned)control_mode);
+    plane_gcs_send_text_fmt(PSTR("flight mode = %u"), (unsigned)control_mode);
 }
 
 static void failsafe_short_off_event()
@@ -107,7 +107,7 @@ void low_battery_event(void)
     if (plane_failsafe.low_battery) {
         return;
     }
-    gcs_send_text_fmt(PSTR("Low Battery %.2fV Used %.0f mAh"),
+    plane_gcs_send_text_fmt(PSTR("Low Battery %.2fV Used %.0f mAh"),
                       battery.voltage(), battery.current_total_mah());
     plane_set_mode(RTL);
     aparm.plthr_cruise.load();

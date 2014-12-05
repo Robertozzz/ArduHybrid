@@ -488,7 +488,7 @@ static bool auto_takeoff_check(void)
 
     // Reset states if process has been interrupted
     if (last_check_ms && (now - last_check_ms) > 200) {
-        gcs_send_text_fmt(PSTR("Timer Interrupted AUTO"));
+        plane_gcs_send_text_fmt(PSTR("Timer Interrupted AUTO"));
 	    launchTimerStarted = false;
 	    last_tkoff_arm_time = 0;
         last_check_ms = now;
@@ -514,13 +514,13 @@ static bool auto_takeoff_check(void)
     if (!launchTimerStarted) {
         launchTimerStarted = true;
         last_tkoff_arm_time = now;
-        gcs_send_text_fmt(PSTR("Armed AUTO, xaccel = %.1f m/s/s, waiting %.1f sec"), 
+        plane_gcs_send_text_fmt(PSTR("Armed AUTO, xaccel = %.1f m/s/s, waiting %.1f sec"), 
                           SpdHgt_Controller->get_VXdot(), 0.1f*float(min(g.takeoff_throttle_delay,25)));
     }
 
     // Only perform velocity check if not timed out
     if ((now - last_tkoff_arm_time) > 2500) {
-        gcs_send_text_fmt(PSTR("Timeout AUTO"));
+        plane_gcs_send_text_fmt(PSTR("Timeout AUTO"));
         goto no_launch;
     }
 
@@ -528,14 +528,14 @@ static bool auto_takeoff_check(void)
     if (ahrs.pitch_sensor <= -3000 ||
         ahrs.pitch_sensor >= 4500 ||
         abs(ahrs.roll_sensor) > 3000) {
-        gcs_send_text_fmt(PSTR("Bad Launch AUTO"));
+        plane_gcs_send_text_fmt(PSTR("Bad Launch AUTO"));
         goto no_launch;
     }
 
     // Check ground speed and time delay
     if (((g_gps->ground_speed_cm > g.takeoff_throttle_min_speed*100.0f || g.takeoff_throttle_min_speed == 0.0)) && 
         ((now - last_tkoff_arm_time) >= min(uint16_t(g.takeoff_throttle_delay)*100,2500))) {
-        gcs_send_text_fmt(PSTR("Triggered AUTO, GPSspd = %.1f"), g_gps->ground_speed_cm*0.01f);
+        plane_gcs_send_text_fmt(PSTR("Triggered AUTO, GPSspd = %.1f"), g_gps->ground_speed_cm*0.01f);
         launchTimerStarted = false;
         last_tkoff_arm_time = 0;
         return true;
@@ -606,7 +606,7 @@ static bool suppress_throttle(void)
         if (steer_state.hold_course_cd != -1) {
             // update takeoff course hold, if already initialised
             steer_state.hold_course_cd = ahrs.yaw_sensor;
-            gcs_send_text_fmt(PSTR("Holding course %ld"), steer_state.hold_course_cd);
+            plane_gcs_send_text_fmt(PSTR("Holding course %ld"), steer_state.hold_course_cd);
         }
         return false;
     }
@@ -882,7 +882,7 @@ static void set_servos(void)
 #if HIL_MODE != HIL_MODE_DISABLED
     // get the servos to the GCS immediately for HIL
     if (comm_get_txspace(MAVLINK_COMM_0) - MAVLINK_NUM_NON_PAYLOAD_BYTES >= MAVLINK_MSG_ID_RC_CHANNELS_SCALED_LEN) {
-        send_servo_out(MAVLINK_COMM_0);
+        plane_send_servo_out(MAVLINK_COMM_0);
     }
     if (!g.hil_servos) {
         return;

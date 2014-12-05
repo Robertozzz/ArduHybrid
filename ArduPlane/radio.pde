@@ -209,7 +209,7 @@ static void control_failsafe(uint16_t pwm)
             // throttle has dropped below the mark
             plane_failsafe.ch3_counter++;
             if (plane_failsafe.ch3_counter == 10) {
-                gcs_send_text_fmt(PSTR("MSG FS ON %u"), (unsigned)pwm);
+                plane_gcs_send_text_fmt(PSTR("MSG FS ON %u"), (unsigned)pwm);
                 plane_failsafe.ch3_failsafe = true;
                 AP_Notify::flags.failsafe_radio = true;
             }
@@ -225,7 +225,7 @@ static void control_failsafe(uint16_t pwm)
                 plane_failsafe.ch3_counter = 3;
             }
             if (plane_failsafe.ch3_counter == 1) {
-                gcs_send_text_fmt(PSTR("MSG FS OFF %u"), (unsigned)pwm);
+                plane_gcs_send_text_fmt(PSTR("MSG FS OFF %u"), (unsigned)pwm);
             } else if(plane_failsafe.ch3_counter == 0) {
                 plane_failsafe.ch3_failsafe = false;
                 AP_Notify::flags.failsafe_radio = false;
