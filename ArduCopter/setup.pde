@@ -51,7 +51,6 @@ setup_mode(uint8_t argc, const Menu::arg *argv)
         delay(1000);
         cliSerial->printf_P(PSTR("\n Type 'radio' now.\n\n"));
     }
-
     // Run the setup menu.  When the menu exits, we will return to the main menu.
     setup_menu.run();
     return 0;
@@ -63,6 +62,7 @@ setup_accel_scale(uint8_t argc, const Menu::arg *argv)
     float trim_roll, trim_pitch;
     cliSerial->println_P(PSTR("Initialising gyros"));
     ahrs.init();
+
     ins.init(AP_InertialSensor::COLD_START, ins_sample_rate);
     AP_InertialSensor_UserInteractStream interact(hal.console);
     if(ins.calibrate_accel(&interact, trim_roll, trim_pitch)) {
@@ -117,30 +117,30 @@ setup_erase(uint8_t argc, const Menu::arg *argv)
 static int8_t
 setup_flightmodes(uint8_t argc, const Menu::arg *argv)
 {
-    uint8_t _switchPosition = 0;
-    uint8_t _oldSwitchPosition = 0;
+    uint8_t switchPosition = 0;
+    uint8_t oldSwitchPosition = 0;
     int8_t mode = 0;
 
     cliSerial->printf_P(PSTR("\nMode switch to edit, aileron: select modes, rudder: Simple on/off\n"));
     print_hit_enter();
 
+
     while(1) {
         delay(20);
         read_radio();
-        _switchPosition = readSwitch();
-
+        switchPosition = readSwitch();
 
         // look for control switch change
-        if (_oldSwitchPosition != _switchPosition) {
+        if (oldSwitchPosition != switchPosition) {
 
-            mode = flight_modes[_switchPosition];
+            mode = flight_modes[switchPosition];
             mode = constrain_int16(mode, 0, NUM_MODES-1);
 
             // update the user
-            print_switch(_switchPosition, mode, BIT_IS_SET(g.simple_modes, _switchPosition));
+            print_switch(switchPosition, mode, BIT_IS_SET(g.simple_modes, switchPosition));
 
             // Remember switch position
-            _oldSwitchPosition = _switchPosition;
+            oldSwitchPosition = switchPosition;
         }
 
         // look for stick input
@@ -150,35 +150,39 @@ setup_flightmodes(uint8_t argc, const Menu::arg *argv)
                 mode = 0;
 
             // save new mode
-            flight_modes[_switchPosition] = mode;
+            flight_modes[switchPosition] = mode;
 
             // print new mode
-            print_switch(_switchPosition, mode, BIT_IS_SET(g.simple_modes, _switchPosition));
+            print_switch(switchPosition, mode, BIT_IS_SET(g.simple_modes, switchPosition));
             delay(500);
         }
 
         // look for stick input
         if (g.rc_4.control_in > 3000) {
-            g.simple_modes |= (1<<_switchPosition);
+            g.simple_modes |= (1<<switchPosition);
             // print new mode
-            print_switch(_switchPosition, mode, BIT_IS_SET(g.simple_modes, _switchPosition));
+            print_switch(switchPosition, mode, BIT_IS_SET(g.simple_modes, switchPosition));
             delay(500);
         }
 
         // look for stick input
         if (g.rc_4.control_in < -3000) {
-            g.simple_modes &= ~(1<<_switchPosition);
+            g.simple_modes &= ~(1<<switchPosition);
+
             // print new mode
-            print_switch(_switchPosition, mode, BIT_IS_SET(g.simple_modes, _switchPosition));
+            print_switch(switchPosition, mode, BIT_IS_SET(g.simple_modes, switchPosition));
             delay(500);
+
         }
 
         // escape hatch
         if(cliSerial->available() > 0) {
+
             for (mode = 0; mode < 6; mode++)
                 flight_modes[mode].save();
 
             g.simple_modes.save();
+
             print_done();
             report_flight_modes();
             return (0);
@@ -686,7 +690,6 @@ setup_declination(uint8_t argc, const Menu::arg *argv)
     return 0;
 }
 
-
 static int8_t
 setup_level(uint8_t argc, const Menu::arg *argv)
 {
@@ -741,6 +744,7 @@ static void report_frame()
 
 static void report_radio()
 {
+
     cliSerial->printf_P(PSTR("Radio\n"));
     print_divider();
     // radio
@@ -750,6 +754,7 @@ static void report_radio()
 
 static void report_ins()
 {
+
     cliSerial->printf_P(PSTR("INS\n"));
     print_divider();
 
@@ -760,7 +765,10 @@ static void report_ins()
 
 static void report_compass()
 {
+
+
     cliSerial->printf_P(PSTR("Compass\n"));
+
     print_divider();
 
     print_enabled(g.compass_enabled);
@@ -799,6 +807,7 @@ static void report_compass()
 
 static void report_flight_modes()
 {
+
     cliSerial->printf_P(PSTR("Flight modes\n"));
     print_divider();
 
@@ -809,9 +818,11 @@ static void report_flight_modes()
 }
 
 void report_optflow()
+
 {
  #if OPTFLOW == ENABLED
     cliSerial->printf_P(PSTR("OptFlow\n"));
+
     print_divider();
 
     print_enabled(g.optflow_enabled);
@@ -855,9 +866,9 @@ print_done()
     cliSerial->printf_P(PSTR("\nSaved\n"));
 }
 
-
 static void zero_eeprom(void)
 {
+
     cliSerial->printf_P(PSTR("\nErasing EEPROM\n"));
 
     for (uint16_t i = 0; i < EEPROM_MAX_ADDR; i++) {
@@ -918,9 +929,9 @@ static void print_enabled(bool b)
     cliSerial->print_P(PSTR("abled\n"));
 }
 
-
 static void
 init_esc()
+
 {
     // reduce update rate to motors to 50Hz
     motors.set_update_rate(50);
@@ -942,7 +953,6 @@ static void report_version()
     print_divider();
     print_blanks(2);
 }
-
 
 static void report_tuning()
 {

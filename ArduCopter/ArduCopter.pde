@@ -255,6 +255,7 @@ static GPS_Glitch   gps_glitch(g_gps);
 
 // flight modes convenience array
 static AP_Int8 *flight_modes = &g.flight_mode1;
+static AP_Int8 *plane_flight_modes = &g.plane_flight_mode1;
 
 #if HIL_MODE == HIL_MODE_DISABLED
 
@@ -457,8 +458,8 @@ static union {
 static int8_t control_mode = STABILIZE;
 
 // Used to maintain the state of the previous control switch position
-// This is set to -1 when we need to re-read the switch
-static uint8_t oldSwitchPosition;
+// This is set to 254 when we need to re-read the switch
+static uint8_t oldSwitchPosition = 254;
 static RCMapper rcmap;
 
 // board specific config

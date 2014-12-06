@@ -50,7 +50,7 @@ static uint8_t readSwitch(void){
 
 static void reset_control_switch()
 {
-    oldSwitchPosition = -1;
+    oldSwitchPosition = 254;
     read_control_switch();
 }
 

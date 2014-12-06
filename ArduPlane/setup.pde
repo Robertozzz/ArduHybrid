@@ -106,7 +106,9 @@ setup_erase(uint8_t argc, const Menu::arg *argv)
 static int8_t
 plane_setup_flightmodes(uint8_t argc, const Menu::arg *argv)
 {
-    uint8_t switchPosition, mode = 0;
+    uint8_t switchPosition = 0;
+    uint8_t oldSwitchPosition = 0;
+    int8_t mode = 0;
 
     cliSerial->printf_P(PSTR("\nMove RC toggle switch to each position to edit, move aileron stick to select modes."));
     print_hit_enter();
@@ -506,6 +508,7 @@ print_switch(uint8_t p, uint8_t m)
 {
     cliSerial->printf_P(PSTR("Pos %d: "),p);
     print_flight_mode(cliSerial, m);
+
     cliSerial->println();
 }
 
