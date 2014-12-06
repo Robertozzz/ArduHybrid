@@ -482,12 +482,6 @@ static void Log_Write_IMU()
     DataFlash.Log_Write_IMU(ins);
 }
 
-static void Log_Write_RC(void)
-{
-    DataFlash.Log_Write_RCIN();
-    DataFlash.Log_Write_RCOUT();
-}
-
 static void Log_Write_Baro(void)
 {
     DataFlash.Log_Write_Baro(barometer);

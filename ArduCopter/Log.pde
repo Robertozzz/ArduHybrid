@@ -458,6 +458,52 @@ static void Log_Write_Compass()
 #endif
 }
 
+struct PACKED plane_log_Compass {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    int16_t mag_x;
+    int16_t mag_y;
+    int16_t mag_z;
+    int16_t offset_x;
+    int16_t offset_y;
+    int16_t offset_z;
+};
+
+// Write a Compass packet
+static void plane_Log_Write_Compass()
+{
+    const Vector3f &mag_offsets = compass.get_offsets();
+    const Vector3f &mag = compass.get_field();
+    struct plane_log_Compass pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_COMPASS_MSG),
+        time_ms         : hal.scheduler->millis(),
+        mag_x           : (int16_t)mag.x,
+        mag_y           : (int16_t)mag.y,
+        mag_z           : (int16_t)mag.z,
+        offset_x        : (int16_t)mag_offsets.x,
+        offset_y        : (int16_t)mag_offsets.y,
+        offset_z        : (int16_t)mag_offsets.z
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+#if COMPASS_MAX_INSTANCES > 1
+    if (compass.get_count() > 1) {
+        const Vector3f &mag2_offsets = compass.get_offsets(1);
+        const Vector3f &mag2 = compass.get_field(1);
+        struct plane_log_Compass pkt2 = {
+            LOG_PACKET_HEADER_INIT(LOG_COMPASS2_MSG),
+            time_ms         : hal.scheduler->millis(),
+            mag_x           : (int16_t)mag2.x,
+            mag_y           : (int16_t)mag2.y,
+            mag_z           : (int16_t)mag2.z,
+            offset_x        : (int16_t)mag2_offsets.x,
+            offset_y        : (int16_t)mag2_offsets.y,
+            offset_z        : (int16_t)mag2_offsets.z
+        };
+        DataFlash.WriteBlock(&pkt2, sizeof(pkt2));
+    }
+#endif
+}
+
 struct PACKED log_Performance {
     LOG_PACKET_HEADER;
     uint8_t renorm_count;
@@ -485,6 +531,39 @@ static void Log_Write_Performance()
         i2c_lockup_count : hal.i2c->lockup_count(),
         ins_error_count  : ins.error_count(),
         inav_error_count : inertial_nav.error_count()
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED plane_log_Performance {
+    LOG_PACKET_HEADER;
+    uint32_t loop_time;
+    uint16_t main_loop_count;
+    uint32_t perf_info_max_time;
+    uint8_t  renorm_count;
+    uint8_t  renorm_blowup;
+    int16_t  gyro_drift_x;
+    int16_t  gyro_drift_y;
+    int16_t  gyro_drift_z;
+    uint8_t  i2c_lockup_count;
+    uint16_t ins_error_count;
+};
+
+// Write a performance monitoring packet
+static void plane_Log_Write_Performance()
+{
+    struct plane_log_Performance pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_PERFORMANCE_MSG),
+        loop_time       : millis() - perf_mon_timer,
+        main_loop_count : mainLoop_count,
+        perf_info_max_time        : perf_info_max_time,
+        renorm_count    : ahrs.renorm_range_count,
+        renorm_blowup   : ahrs.renorm_blowup_count,
+        gyro_drift_x    : (int16_t)(ahrs.get_gyro_drift().x * 1000),
+        gyro_drift_y    : (int16_t)(ahrs.get_gyro_drift().y * 1000),
+        gyro_drift_z    : (int16_t)(ahrs.get_gyro_drift().z * 1000),
+        i2c_lockup_count: hal.i2c->lockup_count(),
+        ins_error_count  : ins.error_count()
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -541,6 +620,31 @@ static void Log_Write_Attitude()
         pitch           : (int16_t)ahrs.pitch_sensor,
         control_yaw     : (uint16_t)control_yaw,
         yaw             : (uint16_t)ahrs.yaw_sensor
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED plane_log_Attitude {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    int16_t roll;
+    int16_t pitch;
+    uint16_t yaw;
+    uint16_t error_rp;
+    uint16_t error_yaw;
+};
+
+// Write an attitude packet
+static void plane_Log_Write_Attitude(void)
+{
+    struct plane_log_Attitude pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_ATTITUDE_MSG),
+        time_ms : hal.scheduler->millis(),
+        roll  : (int16_t)ahrs.roll_sensor,
+        pitch : (int16_t)ahrs.pitch_sensor,
+        yaw   : (uint16_t)ahrs.yaw_sensor,
+        error_rp  : (uint16_t)(ahrs.get_error_rp() * 100),
+        error_yaw : (uint16_t)(ahrs.get_error_yaw() * 100)
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -627,6 +731,12 @@ static void Log_Write_Camera()
 #endif
 }
 
+// Write a TECS tuning packet
+static void Log_Write_TECS_Tuning(void)
+{
+    SpdHgt_Controller->log_data(DataFlash, LOG_TECS_MSG);
+}
+
 struct PACKED log_Arm_Disarm {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
@@ -642,6 +752,21 @@ static void Log_Arm_Disarm() {
         arm_checks              : arming.get_enabled_checks()      
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+static void Log_Write_GPS(void)
+{
+    DataFlash.Log_Write_GPS(g_gps, current_loc.alt);
+}
+
+static void Log_Write_IMU() 
+{
+    DataFlash.Log_Write_IMU(ins);
+}
+
+static void Log_Write_Baro(void)
+{
+    DataFlash.Log_Write_Baro(barometer);
 }
 
 struct PACKED log_AIRSPEED {

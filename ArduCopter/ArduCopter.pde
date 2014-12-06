@@ -943,6 +943,8 @@ static AC_WPNav wp_nav(&inertial_nav, &ahrs, &g.pi_loiter_lat, &g.pi_loiter_lon,
 ////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////
+// Timer used to accrue data and trigger recording of the performanc monitoring log message
+static uint32_t perf_mon_timer;
 static int16_t pmTest1;
 // The maximum main loop execution time recorded in the current performance monitoring interval
 static uint32_t perf_info_max_time = 0;
