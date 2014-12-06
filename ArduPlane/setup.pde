@@ -167,7 +167,7 @@ setup_factory(uint8_t argc, const Menu::arg *argv)
     AP_Param::erase_all();
     cliSerial->printf_P(PSTR("\nFACTORY RESET complete - please reset board to continue"));
 
-    //default_flight_modes();   // This will not work here.  Replacement code located in init_ardupilot()
+    //default_plane_flight_modes();   // This will not work here.  Replacement code located in init_ardupilot()
 
     for (;; ) {
     }
@@ -282,10 +282,10 @@ setup_flightmodes(uint8_t argc, const Menu::arg *argv)
         if (oldSwitchPosition != switchPosition) {
             // force position 5 to MANUAL
             if (switchPosition > 4) {
-                flight_modes[switchPosition] = MANUAL;
+                plane_flight_modes[switchPosition] = MANUAL;
             }
             // update our current mode
-            mode = flight_modes[switchPosition];
+            mode = plane_flight_modes[switchPosition];
 
             // update the user
             print_switch(switchPosition, mode);
@@ -327,7 +327,7 @@ setup_flightmodes(uint8_t argc, const Menu::arg *argv)
                 mode = MANUAL;
 
             // save new mode
-            flight_modes[switchPosition] = mode;
+            plane_flight_modes[switchPosition] = mode;
 
             // print new mode
             print_switch(switchPosition, mode);
@@ -337,8 +337,8 @@ setup_flightmodes(uint8_t argc, const Menu::arg *argv)
         if(cliSerial->available() > 0) {
             // save changes
             for (mode=0; mode<6; mode++)
-                flight_modes[mode].save();
-            report_flight_modes();
+                plane_flight_modes[mode].save();
+            report_plane_flight_modes();
             print_done();
             return (0);
         }
@@ -495,14 +495,14 @@ static void report_compass()
     print_blanks(2);
 }
 
-static void report_flight_modes()
+static void report_plane_flight_modes()
 {
     //print_blanks(2);
     cliSerial->printf_P(PSTR("Flight modes\n"));
     print_divider();
 
     for(int16_t i = 0; i < 6; i++ ) {
-        print_switch(i, flight_modes[i]);
+        print_switch(i, plane_flight_modes[i]);
     }
     print_blanks(2);
 }

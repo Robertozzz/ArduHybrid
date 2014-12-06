@@ -191,7 +191,7 @@ static int32_t pitch_limit_min_cd;		// Plane
 static GPS         *g_gps;
 
 // flight modes convenience array
-static AP_Int8 *flight_modes = &g.plane_flight_mode1;
+static AP_Int8 *plane_flight_modes = &g.plane_flight_mode1;
 
 #if HIL_MODE == HIL_MODE_DISABLED
 

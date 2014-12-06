@@ -35,7 +35,7 @@ static void read_control_switch()
             return;
         }
 
-        plane_set_mode((enum FlightMode)(flight_modes[switchPosition].get()));
+        plane_set_mode((enum FlightMode)(plane_flight_modes[switchPosition].get()));
 
         oldSwitchPosition = switchPosition;
         prev_WP = current_loc;
