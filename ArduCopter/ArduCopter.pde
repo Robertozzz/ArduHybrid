@@ -204,6 +204,7 @@ static RC_Channel *channel_rudder;		// Plane
 static void update_events(void);
 static void print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode);
 static void gcs_send_text_fmt(const prog_char_t *fmt, ...);
+static void plane_gcs_send_text_fmt(const prog_char_t *fmt, ...);
 
 ////////////////////////////////////////////////////////////////////////////////
 // Dataflash
@@ -497,6 +498,21 @@ static struct {
     int8_t radio_counter;                  // number of iterations with throttle below throttle_fs_value
     uint32_t last_heartbeat_ms;             // the time when the last HEARTBEAT message arrived from a GCS - used for triggering gcs failsafe
 } failsafe;
+
+// Plane failsafe
+static struct {
+    uint8_t rc_override_active:1; 	// A flag if GCS joystick control is in use
+    uint8_t ch3_failsafe:1; 		// Used to track if the value on channel 3 (throtttle) has fallen below the failsafe threshold
+    uint8_t saved_mode_set:1; 		// has the saved mode for failsafe been set?
+    uint8_t low_battery:1; 			// flag to hold whether battery low voltage threshold has been breached
+    enum FlightMode saved_mode;		// saved flight mode
+    int16_t state;					// A tracking variable for type of failsafe active, Used for failsafe based on loss of RC signal or GCS signal
+    uint8_t ch3_counter;			// number of low ch3 values
+    uint32_t last_heartbeat_ms;             // the time when the last HEARTBEAT message arrived from a GCS - used for triggering gcs failsafe
+    uint32_t ch3_timer_ms;			// A timer used to track how long we have been in a "short failsafe" condition due to loss of RC signal
+    uint32_t last_valid_rc_ms;
+    uint32_t last_radio_status_remrssi_ms;// last RADIO status packet
+} plane_failsafe;
 
 ////////////////////////////////////////////////////////////////////////////////
 // GPS variables
@@ -1112,8 +1128,8 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { ahrs_update,            1,   6400 },
     { update_speed_height,    1,   1600 },
     { update_flight_mode,     1,   1400 },
-    { stabilize,              1,   3500 },
-    { set_servos,             1,   1600 },
+    { plane_stabilize,        1,   3500 },
+    { plane_set_servos,       1,   1600 },
     { read_control_switch,    7,   1000 },
     { gcs_retry_deferred,     1,   1000 },
     { update_GPS_50Hz,        1,   2500 },
@@ -1129,7 +1145,7 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { gcs_data_stream_send,   1,   3000 },
     { update_events,		  1,   1500 }, // 20
     { check_usb_mux,          5,    300 },
-    { read_battery,           5,   1000 },
+    { plane_read_battery,     5,   1000 },
     { compass_accumulate,     1,   1500 },
     { barometer_accumulate,   1,    900 },
     { update_notify,          1,    300 },

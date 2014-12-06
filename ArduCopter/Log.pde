@@ -34,26 +34,31 @@ print_log_menu(void)
     if (0 == g.log_bitmask) {
         cliSerial->printf_P(PSTR("none"));
     }else{
-        if (g.log_bitmask & MASK_LOG_ATTITUDE_FAST) cliSerial->printf_P(PSTR(" ATTITUDE_FAST"));
-        if (g.log_bitmask & MASK_LOG_ATTITUDE_MED) cliSerial->printf_P(PSTR(" ATTITUDE_MED"));
-        if (g.log_bitmask & MASK_LOG_GPS) cliSerial->printf_P(PSTR(" GPS"));
-        if (g.log_bitmask & MASK_LOG_PM) cliSerial->printf_P(PSTR(" PM"));
-        if (g.log_bitmask & MASK_LOG_CTUN) cliSerial->printf_P(PSTR(" CTUN"));
-        if (g.log_bitmask & MASK_LOG_NTUN) cliSerial->printf_P(PSTR(" NTUN"));
-        if (g.log_bitmask & MASK_LOG_RCIN) cliSerial->printf_P(PSTR(" RCIN"));
-        if (g.log_bitmask & MASK_LOG_IMU) cliSerial->printf_P(PSTR(" IMU"));
-        if (g.log_bitmask & MASK_LOG_CMD) cliSerial->printf_P(PSTR(" CMD"));
-        if (g.log_bitmask & MASK_LOG_CURRENT) cliSerial->printf_P(PSTR(" CURRENT"));
-        if (g.log_bitmask & MASK_LOG_RCOUT) cliSerial->printf_P(PSTR(" RCOUT"));
-        if (g.log_bitmask & MASK_LOG_OPTFLOW) cliSerial->printf_P(PSTR(" OPTFLOW"));
-        if (g.log_bitmask & MASK_LOG_COMPASS) cliSerial->printf_P(PSTR(" COMPASS"));
-        if (g.log_bitmask & MASK_LOG_CAMERA) cliSerial->printf_P(PSTR(" CAMERA"));
+        // Macro to make the following code a bit easier on the eye.
+        // Pass it the capitalised name of the log option, as defined
+        // in defines.h but without the LOG_ prefix.  It will check for
+        // the bit being set and print the name of the log option to suit.
+ #define PLOG(_s) if (g.log_bitmask & MASK_LOG_ ## _s) cliSerial->printf_P(PSTR(" %S"), PSTR(# _s))
+        PLOG(ATTITUDE_FAST);
+        PLOG(ATTITUDE_MED);
+        PLOG(GPS);
+        PLOG(PM);
+        PLOG(CTUN);
+        PLOG(NTUN);
+        PLOG(RCIN);
+        PLOG(IMU);
+        PLOG(CMD);
+        PLOG(CURRENT);
+        PLOG(RCOUT);
+        PLOG(OPTFLOW);
+        PLOG(COMPASS);
+        PLOG(CAMERA);
+ #undef PLOG
     }
 
     cliSerial->println();
 
     DataFlash.ListAvailableLogs(cliSerial);
-
     return(true);
 }
 
@@ -214,7 +219,7 @@ struct PACKED log_Current {
     float    current_total;
 };
 
-// Write an Current data packet
+// Write a Current data packet
 static void Log_Write_Current()
 {
     struct log_Current pkt = {
@@ -274,7 +279,7 @@ struct PACKED log_Nav_Tuning {
     float    desired_accel_y;
 };
 
-// Write an Nav Tuning packet
+// Write a navigation tuning packet
 static void Log_Write_Nav_Tuning()
 {
     const Vector3f &desired_position = wp_nav.get_loiter_target();
@@ -507,6 +512,37 @@ static void Log_Write_Startup()
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+struct PACKED log_Camera {
+    LOG_PACKET_HEADER;
+    uint32_t gps_time;
+    uint16_t gps_week;
+    int32_t  latitude;
+    int32_t  longitude;
+    int32_t  altitude;
+    int16_t  roll;
+    int16_t  pitch;
+    uint16_t yaw;
+};
+
+// Write a Camera packet
+static void Log_Write_Camera()
+{
+#if CAMERA == ENABLED
+    struct log_Camera pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_CAMERA_MSG),
+        gps_time    : g_gps->time_week_ms,
+        gps_week    : g_gps->time_week,
+        latitude    : current_loc.lat,
+        longitude   : current_loc.lng,
+        altitude    : current_loc.alt,
+        roll        : (int16_t)ahrs.roll_sensor,
+        pitch       : (int16_t)ahrs.pitch_sensor,
+        yaw         : (uint16_t)ahrs.yaw_sensor
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+#endif
+}
+
 struct PACKED log_Event {
     LOG_PACKET_HEADER;
     uint8_t id;
@@ -617,37 +653,6 @@ static void Log_Write_Data(uint8_t id, float value)
         };
         DataFlash.WriteBlock(&pkt, sizeof(pkt));
     }
-}
-
-struct PACKED log_Camera {
-    LOG_PACKET_HEADER;
-    uint32_t gps_time;
-    uint16_t gps_week;
-    int32_t  latitude;
-    int32_t  longitude;
-    int32_t  altitude;
-    int16_t  roll;
-    int16_t  pitch;
-    uint16_t yaw;
-};
-
-// Write a Camera packet
-static void Log_Write_Camera()
-{
-#if CAMERA == ENABLED
-    struct log_Camera pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_CAMERA_MSG),
-        gps_time    : g_gps->time_week_ms,
-        gps_week    : g_gps->time_week,
-        latitude    : current_loc.lat,
-        longitude   : current_loc.lng,
-        altitude    : current_loc.alt,
-        roll        : (int16_t)ahrs.roll_sensor,
-        pitch       : (int16_t)ahrs.pitch_sensor,
-        yaw         : (uint16_t)ahrs.yaw_sensor
-    };
-    DataFlash.WriteBlock(&pkt, sizeof(pkt));
-#endif
 }
 
 struct PACKED log_Error {
@@ -764,6 +769,7 @@ static void start_logging()
 
 #else // LOGGING_ENABLED
 
+// dummy functions
 static void Log_Write_Startup() {}
 static void Log_Write_Cmd(uint8_t num, const struct Location *wp) {}
 static void Log_Write_Mode(uint8_t mode) {}
