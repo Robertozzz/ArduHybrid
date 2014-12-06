@@ -171,23 +171,34 @@
  # define LOGGING_ENABLED                ENABLED
 #endif
 
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM1 || CONFIG_HAL_BOARD == HAL_BOARD_APM2
-#define DEFAULT_LOG_BITMASK     \
+#if CONFIG_HAL_BOARD == HAL_BOARD_APM1 || CONFIG_HAL_BOARD == HAL_BOARD_APM2 || CONFIG_HAL_BOARD == HAL_BOARD_AVR_SITL
+ // APM1 & APM2 default logging
+ # define DEFAULT_LOG_BITMASK \
     MASK_LOG_ATTITUDE_MED | \
     MASK_LOG_GPS | \
     MASK_LOG_PM | \
-    MASK_LOG_NTUN | \
     MASK_LOG_CTUN | \
-    MASK_LOG_MODE | \
+    MASK_LOG_NTUN | \
+    MASK_LOG_RCIN | \
     MASK_LOG_CMD | \
-    MASK_LOG_COMPASS | \
     MASK_LOG_CURRENT | \
     MASK_LOG_TECS | \
-    MASK_LOG_CAMERA | \
-    MASK_LOG_RC
+    MASK_LOG_COMPASS
 #else
-// other systems have plenty of space for full logs
-#define DEFAULT_LOG_BITMASK   0xffff
+ // PX4, Pixhawk, FlyMaple default logging
+ # define DEFAULT_LOG_BITMASK \
+    MASK_LOG_ATTITUDE_MED | \
+    MASK_LOG_GPS | \
+    MASK_LOG_PM | \
+    MASK_LOG_CTUN | \
+    MASK_LOG_NTUN | \
+    MASK_LOG_RCIN | \
+    MASK_LOG_IMU | \
+    MASK_LOG_CMD | \
+    MASK_LOG_CURRENT | \
+    MASK_LOG_RCOUT | \
+    MASK_LOG_COMPASS | \
+    MASK_LOG_CAMERA
 #endif
 
 //////////////////////////////////////////////////////////////////////////////

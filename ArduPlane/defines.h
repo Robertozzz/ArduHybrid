@@ -217,17 +217,20 @@ enum {
 #define MASK_LOG_PM                     (1<<3)
 #define MASK_LOG_CTUN                   (1<<4)
 #define MASK_LOG_NTUN                   (1<<5)
-#define MASK_LOG_MODE                   (1<<6)	// Plane
+#define MASK_LOG_RCIN                   (1<<6)
 #define MASK_LOG_IMU                    (1<<7)
 #define MASK_LOG_CMD                    (1<<8)
 #define MASK_LOG_CURRENT                (1<<9)
-#define MASK_LOG_COMPASS                (1<<10)	// Plane
-#define MASK_LOG_TECS                   (1<<11)	// Plane
-#define MASK_LOG_CAMERA                 (1<<12)	// Plane
-#define MASK_LOG_RC                     (1<<13)	// Plane
-#define MASK_LOG_SONAR                  (1<<14)	// Plane
-#define MASK_LOG_ARM_DISARM             (1<<15)	// Plane
-#define MASK_LOG_WHEN_DISARMED          (1UL<<30)
+#define MASK_LOG_RCOUT                  (1<<10)
+#define MASK_LOG_OPTFLOW                (1<<11)
+#define MASK_LOG_PID                    (1<<12) // deprecated
+#define MASK_LOG_COMPASS                (1<<13)
+#define MASK_LOG_INAV                   (1<<14) // deprecated
+#define MASK_LOG_CAMERA                 (1<<15)
+#define MASK_LOG_TECS                   (1<<16)		// Plane
+#define MASK_LOG_SONAR                  (1<<17)		// Plane
+#define MASK_LOG_ARM_DISARM             (1<<18)		// Plane
+#define MASK_LOG_WHEN_DISARMED          (1UL<<30)	// Plane
 
 
 // EEPROM addresses

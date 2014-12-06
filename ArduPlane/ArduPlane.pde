@@ -685,6 +685,14 @@ static int32_t nav_roll_cd;		// Plane
 static int32_t nav_pitch_cd;	// Plane
 
 ////////////////////////////////////////////////////////////////////////////////
+// Navigation Throttle control
+////////////////////////////////////////////////////////////////////////////////
+// The Commanded Throttle from the autopilot.
+static int16_t nav_throttle;    // 0-1000 for throttle control
+// This is a simple counter to track the amount of throttle used during flight
+// This could be useful later in determining and debuging current usage and predicting battery life
+static uint32_t throttle_integrator;
+////////////////////////////////////////////////////////////////////////////////
 // Performance monitoring
 ////////////////////////////////////////////////////////////////////////////////
 // Timer used to accrue data and trigger recording of the performanc monitoring log message
@@ -919,8 +927,11 @@ static void update_logging2(void)
     if (should_log(MASK_LOG_NTUN))
         Log_Write_Nav_Tuning();
 
-    if (should_log(MASK_LOG_RC))
-        Log_Write_RC();
+    if (should_log(MASK_LOG_RCIN))
+        DataFlash.Log_Write_RCIN();
+    
+    if (should_log(MASK_LOG_RCOUT))
+        DataFlash.Log_Write_RCOUT();
 }
 
 /*

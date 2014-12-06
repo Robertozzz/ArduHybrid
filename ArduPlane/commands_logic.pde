@@ -245,9 +245,6 @@ static void plane_do_RTL(void)
     }
 
     setup_glide_slope();
-
-    if (should_log(MASK_LOG_MODE))
-        Log_Write_Mode(control_mode);
 }
 
 static void plane_do_takeoff()

@@ -433,9 +433,6 @@ static void plane_set_mode(enum FlightMode mode)
         throttle_suppressed = false;
     }
 
-    if (should_log(MASK_LOG_MODE))
-        Log_Write_Mode(control_mode);
-
     // reset attitude integrators on mode change
     rollController.reset_I();
     pitchController.reset_I();
