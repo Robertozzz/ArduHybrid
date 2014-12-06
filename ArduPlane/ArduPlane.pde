@@ -865,7 +865,7 @@ static void ahrs_update()
     ahrs.update();
 
     if (should_log(MASK_LOG_ATTITUDE_FAST))
-        Log_Write_Attitude();
+        plane_Log_Write_Attitude();
 
     if (should_log(MASK_LOG_IMU))
         Log_Write_IMU();
@@ -910,7 +910,7 @@ static void update_compass(void)
 static void update_logging1(void)
 {
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_ATTITUDE_FAST))
-        Log_Write_Attitude();
+        plane_Log_Write_Attitude();
 
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_IMU))
         Log_Write_IMU();
@@ -999,7 +999,7 @@ static void log_perf_info()
         hal.console->printf_P(PSTR("perf_info_max_time=%lu\n"), (unsigned long)perf_info_max_time);
     }
     if (should_log(MASK_LOG_PM))
-        Log_Write_Performance();
+        plane_Log_Write_Performance();
     perf_info_max_time = 0;
     resetPerfData();
 }

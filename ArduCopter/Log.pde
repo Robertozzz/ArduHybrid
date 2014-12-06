@@ -307,6 +307,37 @@ static void Log_Write_Nav_Tuning()
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+struct PACKED plane_log_Nav_Tuning {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    uint16_t yaw;
+    uint32_t plane_wp_distance;
+    uint16_t target_bearing_cd;
+    uint16_t nav_bearing_cd;
+    int16_t altitude_error_cm;
+    int16_t airspeed_cm;
+    float   altitude;
+    uint32_t groundspeed_cm;
+};
+
+// Write a navigation tuning packet
+static void plane_Log_Write_Nav_Tuning()
+{
+    struct plane_log_Nav_Tuning pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_NTUN_MSG),
+        time_ms             : hal.scheduler->millis(),
+        yaw                 : (uint16_t)ahrs.yaw_sensor,
+        plane_wp_distance         : plane_wp_distance,
+        target_bearing_cd   : (uint16_t)nav_controller->target_bearing_cd(),
+        nav_bearing_cd      : (uint16_t)nav_controller->nav_bearing_cd(),
+        altitude_error_cm   : (int16_t)altitude_error_cm,
+        airspeed_cm         : (int16_t)airspeed.get_airspeed_cm(),
+        altitude            : barometer.get_altitude(),
+        groundspeed_cm      : g_gps->ground_speed_cm
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Control_Tuning {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
@@ -338,6 +369,36 @@ static void Log_Write_Control_Tuning()
         sonar_alt           : sonar_alt,
         desired_climb_rate  : desired_climb_rate,
         climb_rate          : climb_rate
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED plane_log_Control_Tuning {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    int16_t nav_roll_cd;
+    int16_t roll;
+    int16_t nav_pitch_cd;
+    int16_t pitch;
+    int16_t throttle_out;
+    int16_t rudder_out;
+    float   accel_y;
+};
+
+// Write a control tuning packet
+static void plane_Log_Write_Control_Tuning()
+{
+    Vector3f accel = ins.get_accel();
+    struct plane_log_Control_Tuning pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_CTUN_MSG),
+        time_ms         : hal.scheduler->millis(),
+        nav_roll_cd     : (int16_t)nav_roll_cd,
+        roll            : (int16_t)ahrs.roll_sensor,
+        nav_pitch_cd    : (int16_t)nav_pitch_cd,
+        pitch           : (int16_t)ahrs.pitch_sensor,
+        throttle_out    : (int16_t)channel_throttle->servo_out,
+        rudder_out      : (int16_t)channel_rudder->servo_out,
+        accel_y         : accel.y
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
@@ -503,8 +564,29 @@ static void Log_Write_Mode(uint8_t mode)
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
+struct PACKED plane_log_Mode {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    uint8_t mode;
+    uint8_t mode_num;
+};
+
+// Write a mode packet
+static void plane_Log_Write_Mode(uint8_t mode)
+{
+    struct plane_log_Mode pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_MODE_MSG),
+        time_ms  : hal.scheduler->millis(),
+        mode     : mode,
+        mode_num : mode
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
 struct PACKED log_Startup {
     LOG_PACKET_HEADER;
+    uint8_t startup_type;
+    uint8_t command_total;
 };
 
 // Write Startup packet
@@ -545,6 +627,48 @@ static void Log_Write_Camera()
     };
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 #endif
+}
+
+struct PACKED log_Arm_Disarm {
+    LOG_PACKET_HEADER;
+    uint32_t time_ms;
+    uint8_t  arm_state;
+    uint16_t arm_checks;
+};
+
+static void Log_Arm_Disarm() {
+    struct log_Arm_Disarm pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_ARM_DISARM_MSG),
+        time_ms                 : hal.scheduler->millis(),
+        arm_state               : arming.is_armed(),
+        arm_checks              : arming.get_enabled_checks()      
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
+}
+
+struct PACKED log_AIRSPEED {
+    LOG_PACKET_HEADER;
+    uint32_t timestamp;
+    float   airspeed;
+    float   diffpressure;
+    int16_t temperature;
+};
+
+// Write a AIRSPEED packet
+static void Log_Write_Airspeed(void)
+{
+    float temperature;
+    if (!airspeed.get_temperature(temperature)) {
+        temperature = 0;
+    }
+    struct log_AIRSPEED pkt = {
+        LOG_PACKET_HEADER_INIT(LOG_AIRSPEED_MSG),
+        timestamp     : hal.scheduler->millis(),
+        airspeed      : airspeed.get_raw_airspeed(),
+        diffpressure  : airspeed.get_differential_pressure(),
+        temperature   : (int16_t)(temperature * 100.0f)
+    };
+    DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
 struct PACKED log_Event {
@@ -722,6 +846,17 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "CAM",   "IHLLeccC",   "GPSTime,GPSWeek,Lat,Lng,Alt,Roll,Pitch,Yaw" },
     { LOG_ERROR_MSG, sizeof(log_Error),         
       "ERR",   "BB",         "Subsys,ECode" },
+    { LOG_CTUN_MSG, sizeof(plane_log_Control_Tuning),     
+      "CTUN", "Icccchhf",    "TimeMS,NavRoll,Roll,NavPitch,Pitch,ThrOut,RdrOut,AccY" },
+    { LOG_NTUN_MSG, sizeof(plane_log_Nav_Tuning),         
+      "NTUN", "ICICCccfI",   "TimeMS,Yaw,WpDist,TargBrg,NavBrg,AltErr,Arspd,Alt,GSpdCM" },
+    { LOG_MODE_MSG, sizeof(plane_log_Mode),             
+      "MODE", "IMB",         "TimeMS,Mode,ModeNum" },
+    { LOG_ARM_DISARM_MSG, sizeof(log_Arm_Disarm),
+      "ARM", "IHB", "TimeMS,ArmState,ArmChecks" },
+    { LOG_AIRSPEED_MSG, sizeof(log_AIRSPEED),
+      "ARSP",  "Iffc",     "TimeMS,Airspeed,DiffPress,Temp" },
+    TECS_LOG_FORMAT(LOG_TECS_MSG),
 };
 
 // Read the DataFlash log memory
@@ -777,6 +912,8 @@ static void start_logging()
 static void Log_Write_Startup() {}
 static void Log_Write_Cmd(uint8_t num, const struct Location *wp) {}
 static void Log_Write_Mode(uint8_t mode) {}
+static void plane_Log_Write_Mode(uint8_t mode) {}
+
 static void Log_Write_IMU() {}
 static void Log_Write_GPS() {}
 #if AUTOTUNE == ENABLED
@@ -786,6 +923,8 @@ static void Log_Write_AutoTuneDetails(int16_t angle_cd, float rate_cds) {}
 static void Log_Write_Current() {}
 static void Log_Write_Compass() {}
 static void Log_Write_Attitude() {}
+static void plane_Log_Write_Compass() {}
+static void plane_Log_Write_Attitude() {}
 static void Log_Write_Data(uint8_t id, int16_t value){}
 static void Log_Write_Data(uint8_t id, uint16_t value){}
 static void Log_Write_Data(uint8_t id, int32_t value){}
@@ -794,10 +933,18 @@ static void Log_Write_Data(uint8_t id, float value){}
 static void Log_Write_Event(uint8_t id){}
 static void Log_Write_Optflow() {}
 static void Log_Write_Nav_Tuning() {}
+static void plane_Log_Write_Nav_Tuning() {}
+
 static void Log_Write_Control_Tuning() {}
+static void plane_Log_Write_Control_Tuning() {}
+static void Log_Write_TECS_Tuning() {}
+
 static void Log_Write_Performance() {}
+static void plane_Log_Write_Performance() {}
 static void Log_Write_Camera() {}
 static void Log_Write_Error(uint8_t sub_system, uint8_t error_code) {}
+static void Log_Write_Airspeed(void) {}
+static void Log_Write_Baro(void) {}
 static int8_t process_logs(uint8_t argc, const Menu::arg *argv) {
     return 0;
 }

@@ -2,7 +2,7 @@
 
 #if LOGGING_ENABLED == ENABLED
 
-// Code to Write and Read packets from DataFlash.log memory
+// Code to Write and Read packets from DataFlash log memory
 // Code to interact with the user to dump or erase logs
 
 // These are function definitions so the Menu can be constructed before the functions
@@ -299,7 +299,7 @@ static void plane_Log_Write_Compass()
 #endif
 }
 
-struct PACKED log_Performance {
+struct PACKED plane_log_Performance {
     LOG_PACKET_HEADER;
     uint32_t loop_time;
     uint16_t main_loop_count;
@@ -314,9 +314,9 @@ struct PACKED log_Performance {
 };
 
 // Write a performance monitoring packet
-static void Log_Write_Performance()
+static void plane_Log_Write_Performance()
 {
-    struct log_Performance pkt = {
+    struct plane_log_Performance pkt = {
         LOG_PACKET_HEADER_INIT(LOG_PERFORMANCE_MSG),
         loop_time       : millis() - perf_mon_timer,
         main_loop_count : mainLoop_count,
@@ -361,7 +361,7 @@ static void Log_Write_Cmd(uint8_t num, const struct Location *wp)
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
-struct PACKED log_Attitude {
+struct PACKED plane_log_Attitude {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
     int16_t roll;
@@ -372,9 +372,9 @@ struct PACKED log_Attitude {
 };
 
 // Write an attitude packet
-static void Log_Write_Attitude(void)
+static void plane_Log_Write_Attitude(void)
 {
-    struct log_Attitude pkt = {
+    struct plane_log_Attitude pkt = {
         LOG_PACKET_HEADER_INIT(LOG_ATTITUDE_MSG),
         time_ms : hal.scheduler->millis(),
         roll  : (int16_t)ahrs.roll_sensor,
@@ -386,7 +386,7 @@ static void Log_Write_Attitude(void)
     DataFlash.WriteBlock(&pkt, sizeof(pkt));
 }
 
-struct PACKED log_Mode {
+struct PACKED plane_log_Mode {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
     uint8_t mode;
@@ -394,9 +394,9 @@ struct PACKED log_Mode {
 };
 
 // Write a mode packet
-static void Log_Write_Mode(uint8_t mode)
+static void plane_Log_Write_Mode(uint8_t mode)
 {
-    struct log_Mode pkt = {
+    struct plane_log_Mode pkt = {
         LOG_PACKET_HEADER_INIT(LOG_MODE_MSG),
         time_ms  : hal.scheduler->millis(),
         mode     : mode,
@@ -548,28 +548,30 @@ static void Log_Write_Airspeed(void)
 static const struct LogStructure log_structure[] PROGMEM = {
     LOG_COMMON_STRUCTURES,
     { LOG_CURRENT_MSG, sizeof(log_Current),             
-      "CURR", "IhhhHf",      "TimeMS,Thr,Volt,Curr,Vcc,CurrTot" },
-    { LOG_COMPASS_MSG, sizeof(plane_log_Compass),             
-      "MAG", "Ihhhhhh",   "TimeMS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ" },
-    { LOG_COMPASS2_MSG, sizeof(plane_log_Compass),             
-      "MAG2", "Ihhhhhh",   "TimeMS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ" },
-    { LOG_PERFORMANCE_MSG, sizeof(log_Performance), 
-      "PM",  "IHIBBhhhBH", "LTime,MLC,gDt,RNCnt,RNBl,GDx,GDy,GDz,I2CErr,INSErr" },
+      "CURR", "IhIhhhf",     "TimeMS,ThrOut,ThrInt,Volt,Curr,Vcc,CurrTot" },
+//   { LOG_COMPASS_MSG, sizeof(log_Compass),             
+//      "MAG", "Ihhhhhhhhh",    "TimeMS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ" },
+//    { LOG_COMPASS2_MSG, sizeof(log_Compass),             
+//     "MAG2","Ihhhhhhhhh",    "TimeMS,MagX,MagY,MagZ,OfsX,OfsY,OfsZ,MOfsX,MOfsY,MOfsZ" },
+//    { LOG_PERFORMANCE_MSG, sizeof(log_Performance), 
+//      "PM",  "BBHHIhBHB",    "RenCnt,RenBlw,NLon,NLoop,MaxT,PMT,I2CErr,INSErr,INAVErr" },
     { LOG_CMD_MSG, sizeof(log_Cmd),                 
-      "CMD", "BBBBBeLL",   "CTot,CNum,CId,COpt,Prm1,Alt,Lat,Lng" },
-    { LOG_ATTITUDE_MSG, sizeof(log_Attitude),       
-      "ATT", "IccCCC",        "TimeMS,Roll,Pitch,Yaw,ErrorRP,ErrorYaw" },
+      "CMD", "BBBBBeLL",     "CTot,CNum,CId,COpt,Prm1,Alt,Lat,Lng" },
+//   { LOG_ATTITUDE_MSG, sizeof(log_Attitude),       
+//      "ATT", "IccccCC",      "TimeMS,DesRoll,Roll,DesPitch,Pitch,DesYaw,Yaw" },
+//    { LOG_MODE_MSG, sizeof(log_Mode),
+//      "MODE", "Mh",          "Mode,ThrCrs" },
     { LOG_STARTUP_MSG, sizeof(log_Startup),         
-      "STRT", "BB",         "SType,CTot" },
+      "STRT", "",            "" },
     { LOG_CAMERA_MSG, sizeof(log_Camera),                 
-      "CAM", "IHLLeccC",   "GPSTime,GPSWeek,Lat,Lng,Alt,Roll,Pitch,Yaw" },
+      "CAM",   "IHLLeccC",   "GPSTime,GPSWeek,Lat,Lng,Alt,Roll,Pitch,Yaw" },
     { LOG_CTUN_MSG, sizeof(plane_log_Control_Tuning),     
       "CTUN", "Icccchhf",    "TimeMS,NavRoll,Roll,NavPitch,Pitch,ThrOut,RdrOut,AccY" },
     { LOG_NTUN_MSG, sizeof(plane_log_Nav_Tuning),         
       "NTUN", "ICICCccfI",   "TimeMS,Yaw,WpDist,TargBrg,NavBrg,AltErr,Arspd,Alt,GSpdCM" },
     { LOG_SONAR_MSG, sizeof(log_Sonar),             
       "SONR", "IffffB",   "TimeMS,DistCM,Volt,BaroAlt,GSpd,Thr" },
-    { LOG_MODE_MSG, sizeof(log_Mode),             
+    { LOG_MODE_MSG, sizeof(plane_log_Mode),             
       "MODE", "IMB",         "TimeMS,Mode,ModeNum" },
     { LOG_ARM_DISARM_MSG, sizeof(log_Arm_Disarm),
       "ARM", "IHB", "TimeMS,ArmState,ArmChecks" },
@@ -611,24 +613,23 @@ static void start_logging()
 #else // LOGGING_ENABLED
 
 // dummy functions
-static void Log_Write_Startup(uint8_t type) {}
+static void Log_Write_Startup() {}
 static void Log_Write_Cmd(uint8_t num, const struct Location *wp) {}
-static void Log_Write_Mode(uint8_t mode) {}
+static void plane_Log_Write_Mode(uint8_t mode) {}
 static void Log_Write_IMU() {}
 static void Log_Write_GPS() {}
 static void Log_Write_Current() {}
 static void plane_Log_Write_Compass() {}
-static void Log_Write_Attitude() {}
+static void plane_Log_Write_Attitude() {}
 static void plane_Log_Write_Nav_Tuning() {}
 static void plane_Log_Write_Control_Tuning() {}
 static void Log_Write_TECS_Tuning() {}
-static void Log_Write_Performance() {}
+static void plane_Log_Write_Performance() {}
 static void Log_Write_Camera() {}
-static void Log_Write_RC() {}
 static void Log_Write_Airspeed(void) {}
 static void Log_Write_Baro(void) {}
 static int8_t process_logs(uint8_t argc, const Menu::arg *argv) {
     return 0;
 }
 
-#endif // LOGGING_ENABLED
+#endif // LOGGING_DISABLED
