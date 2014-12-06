@@ -52,7 +52,9 @@ print_log_menu(void)
         PLOG(RCOUT);
         PLOG(OPTFLOW);
         PLOG(COMPASS);
+        PLOG(TECS);
         PLOG(CAMERA);
+        PLOG(SONAR);
  #undef PLOG
     }
 
@@ -142,7 +144,9 @@ select_logs(uint8_t argc, const Menu::arg *argv)
         TARG(RCOUT);
         TARG(OPTFLOW);
         TARG(COMPASS);
+        TARG(TECS);
         TARG(CAMERA);
+        TARG(SONAR);
  #undef TARG
     }
 

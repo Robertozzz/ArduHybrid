@@ -897,7 +897,7 @@ static void update_compass(void)
         ahrs.set_compass(&compass);
         compass.null_offsets();
         if (should_log(MASK_LOG_COMPASS)) {
-            Log_Write_Compass();
+            plane_Log_Write_Compass();
         }
     } else {
         ahrs.set_compass(NULL);
@@ -922,10 +922,10 @@ static void update_logging1(void)
 static void update_logging2(void)
 {
     if (should_log(MASK_LOG_CTUN))
-        Log_Write_Control_Tuning();
+        plane_Log_Write_Control_Tuning();
     
     if (should_log(MASK_LOG_NTUN))
-        Log_Write_Nav_Tuning();
+        plane_Log_Write_Nav_Tuning();
 
     if (should_log(MASK_LOG_RCIN))
         DataFlash.Log_Write_RCIN();
