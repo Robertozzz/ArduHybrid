@@ -61,11 +61,6 @@ enum gcs_failsafe {
                                  // drops to 0
 };
 
-// active altitude sensor
-// ----------------------
-#define SONAR 0
-#define BARO 1
-
 #define PITOT_SOURCE_ADC 1
 #define PITOT_SOURCE_ANALOG_PIN 2
 
@@ -443,8 +438,7 @@ enum {
 #define MASK_LOG_INAV                   (1<<14) // deprecated
 #define MASK_LOG_CAMERA                 (1<<15)
 #define MASK_LOG_TECS                   (1<<16)		// Plane
-#define MASK_LOG_SONAR                  (1<<17)		// Plane
-#define MASK_LOG_ARM_DISARM             (1<<18)		// Plane
+#define MASK_LOG_ARM_DISARM             (1<<17)		// Plane
 #define MASK_LOG_WHEN_DISARMED          (1UL<<30)	// Plane
 
 // DATA - event logging

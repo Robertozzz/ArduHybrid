@@ -549,18 +549,6 @@ static void NOINLINE send_wind(mavlink_channel_t chan)
         wind.z);
 }
 
-static void NOINLINE send_rangefinder(mavlink_channel_t chan)
-{
-    if (!sonar.enabled()) {
-        // no sonar to report
-        return;
-    }
-    mavlink_msg_rangefinder_send(
-        chan,
-        sonar.distance_cm() * 0.01f,
-        sonar.voltage());
-}
-
 static void NOINLINE send_current_waypoint(mavlink_channel_t chan)
 {
     mavlink_msg_mission_current_send(
@@ -736,7 +724,6 @@ static bool plane_mavlink_try_send_message(mavlink_channel_t chan, enum ap_messa
 
     case MSG_RANGEFINDER:
         CHECK_PAYLOAD_SIZE(RANGEFINDER);
-        send_rangefinder(chan);
         break;
 
     case MSG_WIND:

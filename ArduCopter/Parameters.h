@@ -163,7 +163,7 @@ public:
         k_param_ground_steer_dps,				// Plane
         k_param_rally_limit_km,					// Plane
         k_param_hil_err_limit,					// Plane
-        k_param_sonar,							// Plane // 66
+
 
 
         // 70: AP_Limits Library

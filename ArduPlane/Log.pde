@@ -53,7 +53,6 @@ print_log_menu(void)
         PLOG(COMPASS);
         PLOG(TECS);
         PLOG(CAMERA);
-        PLOG(SONAR);
  #undef PLOG
     }
 
@@ -145,7 +144,6 @@ select_logs(uint8_t argc, const Menu::arg *argv)
         TARG(COMPASS);
         TARG(TECS);
         TARG(CAMERA);
-        TARG(SONAR);
  #undef TARG
     }
 
@@ -457,31 +455,6 @@ static void Log_Write_TECS_Tuning(void)
     SpdHgt_Controller->log_data(DataFlash, LOG_TECS_MSG);
 }
 
-struct PACKED log_Sonar {
-    LOG_PACKET_HEADER;
-    uint32_t timestamp;
-    float distance;
-    float voltage;
-    float baro_alti;
-    float groundspeed;
-    uint8_t throttle;
-};
-
-// Write a sonar packet
-static void Log_Write_Sonar()
-{
-    struct log_Sonar pkt = {
-        LOG_PACKET_HEADER_INIT(LOG_SONAR_MSG),
-        timestamp   : hal.scheduler->millis(),
-        distance    : sonar.distance_cm(),
-        voltage     : sonar.voltage(),
-        baro_alti    : barometer.get_altitude(),
-        groundspeed : (0.01f * g_gps->ground_speed_cm),
-        throttle    : (uint8_t)(100 * channel_throttle->norm_output())
-    };
-    DataFlash.WriteBlock(&pkt, sizeof(pkt));
-}
-
 struct PACKED log_Arm_Disarm {
     LOG_PACKET_HEADER;
     uint32_t time_ms;
@@ -569,8 +542,6 @@ static const struct LogStructure log_structure[] PROGMEM = {
       "CTUN", "Icccchhf",    "TimeMS,NavRoll,Roll,NavPitch,Pitch,ThrOut,RdrOut,AccY" },
     { LOG_NTUN_MSG, sizeof(plane_log_Nav_Tuning),         
       "NTUN", "ICICCccfI",   "TimeMS,Yaw,WpDist,TargBrg,NavBrg,AltErr,Arspd,Alt,GSpdCM" },
-    { LOG_SONAR_MSG, sizeof(log_Sonar),             
-      "SONR", "IffffB",   "TimeMS,DistCM,Volt,BaroAlt,GSpd,Thr" },
     { LOG_MODE_MSG, sizeof(plane_log_Mode),             
       "MODE", "IMB",         "TimeMS,Mode,ModeNum" },
     { LOG_ARM_DISARM_MSG, sizeof(log_Arm_Disarm),

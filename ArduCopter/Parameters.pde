@@ -1675,10 +1675,6 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Path: ../libraries/AP_Relay/AP_Relay.cpp
     GOBJECT(relay,                  "RELAY_", AP_Relay),
 
-//    // @Group: SONAR_
-//    // @Path: ../libraries/AP_RangeFinder/AP_RangeFinder_analog.cpp
-//    GOBJECT(sonar,                  "SONAR_", AP_RangeFinder_analog),
-
 #if EPM_ENABLED == ENABLED
 	// @Group: EPM_
     // @Path: ../libraries/AP_EPM/AP_EPM.cpp

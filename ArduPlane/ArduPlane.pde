@@ -325,17 +325,6 @@ static const uint8_t num_gcs = MAVLINK_COMM_NUM_BUFFERS;
 static GCS_MAVLINK gcs[MAVLINK_COMM_NUM_BUFFERS];
 
 ////////////////////////////////////////////////////////////////////////////////
-// SONAR selection
-////////////////////////////////////////////////////////////////////////////////
-ModeFilterInt16_Size3 sonar_mode_filter(1);
-#if CONFIG_SONAR == ENABLED
-static AP_HAL::AnalogSource *sonar_analog_source;
-static AP_RangeFinder_MaxsonarXL *sonar;
-#endif
-
-static AP_RangeFinder_analog sonar;
-
-////////////////////////////////////////////////////////////////////////////////
 // User variables
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -762,7 +751,6 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { compass_accumulate,     1,   1500 },
     { barometer_accumulate,   1,    900 },
     { update_notify,          1,    300 },
-    { read_sonars,            1,    500 },
     { one_second_loop,       50,   1000 },
     { check_long_failsafe,   15,   1000 },
     { read_receiver_rssi,     5,   1000 },
@@ -1380,9 +1368,6 @@ static void update_navigation()
 
 static void update_alt()
 {
-    // this function is in place to potentially add a sonar sensor in the future
-    //altitude_sensor = BARO;
-
     if (barometer.healthy) {
         // alt_MSL centimeters (centimeters)
         current_loc.alt = (1 - g.altitude_mix) * g_gps->altitude_cm;

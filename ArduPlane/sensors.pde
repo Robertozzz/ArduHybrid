@@ -3,15 +3,6 @@
 // filter altitude from the barometer with a low pass filter
 static LowPassFilterInt32 altitude_filter;
 
-static void init_sonar(void)
-{
-#if CONFIG_HAL_BOARD == HAL_BOARD_APM1
-    sonar.Init(&adc);
-#else
-    sonar.Init(NULL);
-#endif
-}
- 
 static void init_barometer(bool full_calibration)
 {
     gcs_send_text_P(SEVERITY_LOW, PSTR("Calibrating barometer"));
@@ -34,18 +25,6 @@ static int32_t plane_read_barometer(void)
         Log_Write_Baro();
     }
     return altitude_filter.apply(barometer.get_altitude() * 100.0);
-}
-
-// read the sonars
-static void read_sonars(void)
-{
-    if (!sonar.enabled()) {
-        // this makes it possible to disable sonar at runtime
-        return;
-    }
-
-    if (should_log(MASK_LOG_SONAR))
-        Log_Write_Sonar();
 }
 
 /*
