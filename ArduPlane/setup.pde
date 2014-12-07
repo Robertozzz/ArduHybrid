@@ -19,13 +19,13 @@ const struct Menu::command setup_menu_commands[] PROGMEM = {
     // =======          ===============
     {"reset",                       setup_factory},
     {"radio",                       setup_radio},
-    {"modes",                       plane_setup_flightmodes},
+    {"modes1",                      plane_setup_flightmodes},
     {"level",                       setup_level},
     {"accel",                       setup_accel_scale},
     {"compass",                     setup_compass},
     {"erase",                       setup_erase},
     {"set",                         setup_set},
-    {"declination",         setup_declination},
+    {"declination",       		    setup_declination},
     {"show",                        setup_show},
 };
 
@@ -130,7 +130,7 @@ plane_setup_flightmodes(uint8_t argc, const Menu::arg *argv)
             mode = plane_flight_modes[switchPosition];
 
             // update the user
-            print_switch(switchPosition, mode);
+            plane_print_switch(switchPosition, mode);
 
             // Remember switch position
             oldSwitchPosition = switchPosition;
@@ -172,7 +172,7 @@ plane_setup_flightmodes(uint8_t argc, const Menu::arg *argv)
             plane_flight_modes[switchPosition] = mode;
 
             // print new mode
-            print_switch(switchPosition, mode);
+            plane_print_switch(switchPosition, mode);
         }
 
         // escape hatch
@@ -180,7 +180,7 @@ plane_setup_flightmodes(uint8_t argc, const Menu::arg *argv)
             // save changes
             for (mode=0; mode<6; mode++)
                 plane_flight_modes[mode].save();
-            report_plane_flight_modes();
+            plane_report_flight_modes();
             print_done();
             return (0);
         }
@@ -395,7 +395,6 @@ setup_declination(uint8_t argc, const Menu::arg *argv)
     return 0;
 }
 
-
 static int8_t
 setup_level(uint8_t argc, const Menu::arg *argv)
 {
@@ -409,7 +408,6 @@ setup_level(uint8_t argc, const Menu::arg *argv)
 
 static void report_radio()
 {
-    //print_blanks(2);
     cliSerial->printf_P(PSTR("Radio\n"));
     print_divider();
     // radio
@@ -419,7 +417,6 @@ static void report_radio()
 
 static void report_ins()
 {
-    //print_blanks(2);
     cliSerial->printf_P(PSTR("INS\n"));
     print_divider();
 
@@ -430,58 +427,35 @@ static void report_ins()
 
 static void report_compass()
 {
-    //print_blanks(2);
-    cliSerial->printf_P(PSTR("Compass: "));
-
-    switch (compass.product_id) {
-    case AP_COMPASS_TYPE_HMC5883L:
-        cliSerial->println_P(PSTR("HMC5883L"));
-        break;
-    case AP_COMPASS_TYPE_HMC5843:
-        cliSerial->println_P(PSTR("HMC5843"));
-        break;
-    case AP_COMPASS_TYPE_HIL:
-        cliSerial->println_P(PSTR("HIL"));
-        break;
-    default:
-        cliSerial->println_P(PSTR("??"));
-        break;
-    }
+    cliSerial->printf_P(PSTR("Compass\n"));
 
     print_divider();
 
     print_enabled(g.compass_enabled);
 
     // mag declination
-    cliSerial->printf_P(PSTR("Mag Declination: %4.4f\n"),
+    cliSerial->printf_P(PSTR("Mag Dec: %4.4f\n"),
                     degrees(compass.get_declination()));
 
     Vector3f offsets = compass.get_offsets();
 
     // mag offsets
-    cliSerial->printf_P(PSTR("Mag offsets: %4.4f, %4.4f, %4.4f\n"),
+    cliSerial->printf_P(PSTR("Mag off: %4.4f, %4.4f, %4.4f\n"),
                     offsets.x,
                     offsets.y,
                     offsets.z);
-    print_blanks(2);
+    print_blanks(1);
 }
 
-static void report_plane_flight_modes()
+static void plane_report_flight_modes()
 {
     //print_blanks(2);
     cliSerial->printf_P(PSTR("Flight modes\n"));
     print_divider();
 
     for(int16_t i = 0; i < 6; i++ ) {
-        print_switch(i, plane_flight_modes[i]);
+        plane_print_switch(i, plane_flight_modes[i]);
     }
-    print_blanks(2);
-}
-
-static void report_version()
-{
-    cliSerial->printf_P(PSTR("FW Ver: %d\n"),(int)g.k_format_version);
-    print_divider();
     print_blanks(2);
 }
 
@@ -492,19 +466,19 @@ static void report_version()
 static void
 print_radio_values()
 {
-    cliSerial->printf_P(PSTR("CH1: %d | %d | %d\n"), (int)channel_roll->radio_min, (int)channel_roll->radio_trim, (int)channel_roll->radio_max);
-    cliSerial->printf_P(PSTR("CH2: %d | %d | %d\n"), (int)channel_pitch->radio_min, (int)channel_pitch->radio_trim, (int)channel_pitch->radio_max);
-    cliSerial->printf_P(PSTR("CH3: %d | %d | %d\n"), (int)channel_throttle->radio_min, (int)channel_throttle->radio_trim, (int)channel_throttle->radio_max);
-    cliSerial->printf_P(PSTR("CH4: %d | %d | %d\n"), (int)channel_rudder->radio_min, (int)channel_rudder->radio_trim, (int)channel_rudder->radio_max);
-    cliSerial->printf_P(PSTR("CH5: %d | %d | %d\n"), (int)g.rc_5.radio_min, (int)g.rc_5.radio_trim, (int)g.rc_5.radio_max);
-    cliSerial->printf_P(PSTR("CH6: %d | %d | %d\n"), (int)g.rc_6.radio_min, (int)g.rc_6.radio_trim, (int)g.rc_6.radio_max);
-    cliSerial->printf_P(PSTR("CH7: %d | %d | %d\n"), (int)g.rc_7.radio_min, (int)g.rc_7.radio_trim, (int)g.rc_7.radio_max);
-    cliSerial->printf_P(PSTR("CH8: %d | %d | %d\n"), (int)g.rc_8.radio_min, (int)g.rc_8.radio_trim, (int)g.rc_8.radio_max);
+    cliSerial->printf_P(PSTR("CH1: %d | %d\n"), (int)g.rc_1.radio_min, (int)g.rc_1.radio_max);
+    cliSerial->printf_P(PSTR("CH2: %d | %d\n"), (int)g.rc_2.radio_min, (int)g.rc_2.radio_max);
+    cliSerial->printf_P(PSTR("CH3: %d | %d\n"), (int)g.rc_3.radio_min, (int)g.rc_3.radio_max);
+    cliSerial->printf_P(PSTR("CH4: %d | %d\n"), (int)g.rc_4.radio_min, (int)g.rc_4.radio_max);
+    cliSerial->printf_P(PSTR("CH5: %d | %d\n"), (int)g.rc_5.radio_min, (int)g.rc_5.radio_max);
+    cliSerial->printf_P(PSTR("CH6: %d | %d\n"), (int)g.rc_6.radio_min, (int)g.rc_6.radio_max);
+    cliSerial->printf_P(PSTR("CH7: %d | %d\n"), (int)g.rc_7.radio_min, (int)g.rc_7.radio_max);
+    cliSerial->printf_P(PSTR("CH8: %d | %d\n"), (int)g.rc_8.radio_min, (int)g.rc_8.radio_max);
 
 }
 
 static void
-print_switch(uint8_t p, uint8_t m)
+plane_print_switch(uint8_t p, uint8_t m)
 {
     cliSerial->printf_P(PSTR("Pos %d: "),p);
     print_flight_mode(cliSerial, m);
@@ -515,25 +489,26 @@ print_switch(uint8_t p, uint8_t m)
 static void
 print_done()
 {
-    cliSerial->printf_P(PSTR("\nSaved Settings\n\n"));
+    cliSerial->printf_P(PSTR("\nSaved\n"));
 }
 
 static void zero_eeprom(void)
 {
-    uint8_t b = 0;
     cliSerial->printf_P(PSTR("\nErasing EEPROM\n"));
+
     for (uint16_t i = 0; i < EEPROM_MAX_ADDR; i++) {
-        hal.storage->write_byte(i, b);
+        hal.storage->write_byte(i, 0);
     }
+
     cliSerial->printf_P(PSTR("done\n"));
 }
 
 static void
 print_accel_offsets_and_scaling(void)
 {
-    Vector3f accel_offsets = ins.get_accel_offsets();
-    Vector3f accel_scale = ins.get_accel_scale();
-    cliSerial->printf_P(PSTR("Accel offsets: %4.2f, %4.2f, %4.2f\tscale: %4.2f, %4.2f, %4.2f\n"),
+    const Vector3f &accel_offsets = ins.get_accel_offsets();
+    const Vector3f &accel_scale = ins.get_accel_scale();
+    cliSerial->printf_P(PSTR("A_off: %4.2f, %4.2f, %4.2f\nA_scale: %4.2f, %4.2f, %4.2f\n"),
                     (float)accel_offsets.x,                           // Pitch
                     (float)accel_offsets.y,                           // Roll
                     (float)accel_offsets.z,                           // YAW
@@ -545,8 +520,8 @@ print_accel_offsets_and_scaling(void)
 static void
 print_gyro_offsets(void)
 {
-    Vector3f gyro_offsets = ins.get_gyro_offsets();
-    cliSerial->printf_P(PSTR("Gyro offsets: %4.2f, %4.2f, %4.2f\n"),
+    const Vector3f &gyro_offsets = ins.get_gyro_offsets();
+    cliSerial->printf_P(PSTR("G_off: %4.2f, %4.2f, %4.2f\n"),
                     (float)gyro_offsets.x,
                     (float)gyro_offsets.y,
                     (float)gyro_offsets.z);
@@ -557,15 +532,15 @@ print_blanks(int16_t num)
 {
     while(num > 0) {
         num--;
-        cliSerial->println();
+        cliSerial->println("");
     }
 }
 
 static void
 print_divider(void)
 {
-    for (int16_t i = 0; i < 40; i++) {
-        cliSerial->printf_P(PSTR("-"));
+    for (int i = 0; i < 40; i++) {
+        cliSerial->print_P(PSTR("-"));
     }
     cliSerial->println();
 }
@@ -573,10 +548,17 @@ print_divider(void)
 static void print_enabled(bool b)
 {
     if(b)
-        cliSerial->printf_P(PSTR("en"));
+        cliSerial->print_P(PSTR("en"));
     else
-        cliSerial->printf_P(PSTR("dis"));
-    cliSerial->printf_P(PSTR("abled\n"));
+        cliSerial->print_P(PSTR("dis"));
+    cliSerial->print_P(PSTR("abled\n"));
+}
+
+static void report_version()
+{
+    cliSerial->printf_P(PSTR("FW Ver: %d\n"),(int)g.k_format_version);
+    print_divider();
+    print_blanks(2);
 }
 
 static int8_t

@@ -8,6 +8,7 @@ static int8_t   setup_compass           (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_compassmot        (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_erase             (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_flightmodes       (uint8_t argc, const Menu::arg *argv);
+static int8_t   plane_setup_flightmodes (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_optflow           (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_radio             (uint8_t argc, const Menu::arg *argv);
 static int8_t   setup_range             (uint8_t argc, const Menu::arg *argv);
@@ -24,6 +25,8 @@ const struct Menu::command setup_menu_commands[] PROGMEM = {
     {"reset",                       setup_factory},
     {"radio",                       setup_radio},
     {"modes",                       setup_flightmodes},
+    {"modes1",                      plane_setup_flightmodes},
+    {"level",                       setup_level},
     {"accel",                       setup_accel_scale},
     {"compass",                     setup_compass},
     {"compassmot",                  setup_compassmot},
@@ -31,6 +34,7 @@ const struct Menu::command setup_menu_commands[] PROGMEM = {
     {"optflow",                     setup_optflow},
     {"range",                       setup_range},
     {"set",                         setup_set},
+    {"declination",       		    setup_declination},
     {"show",                        setup_show},
     {"sonar",                       setup_sonar},
 };
@@ -185,6 +189,90 @@ setup_flightmodes(uint8_t argc, const Menu::arg *argv)
 
             print_done();
             report_flight_modes();
+            return (0);
+        }
+    }
+}
+
+static int8_t
+plane_setup_flightmodes(uint8_t argc, const Menu::arg *argv)
+{
+    uint8_t switchPosition = 0;
+    uint8_t oldSwitchPosition = 0;
+    int8_t mode = 0;
+
+    cliSerial->printf_P(PSTR("\nMove RC toggle switch to each position to edit, move aileron stick to select modes."));
+    print_hit_enter();
+    trim_radio();
+
+    while(1) {
+        delay(20);
+        read_radio();
+        switchPosition = readSwitch();
+
+
+        // look for control switch change
+        if (oldSwitchPosition != switchPosition) {
+            // force position 5 to MANUAL
+            if (switchPosition > 4) {
+                plane_flight_modes[switchPosition] = MANUAL;
+            }
+            // update our current mode
+            mode = plane_flight_modes[switchPosition];
+
+            // update the user
+            plane_print_switch(switchPosition, mode);
+
+            // Remember switch position
+            oldSwitchPosition = switchPosition;
+        }
+
+        // look for stick input
+        int16_t radioInputSwitch = radio_input_switch();
+
+        if (radioInputSwitch != 0) {
+
+            mode += radioInputSwitch;
+
+            while (
+                mode != MANUAL &&
+                mode != CIRCLE &&
+                mode != STABILIZE &&
+                mode != TRAINING &&
+                mode != ACRO &&
+                mode != FLY_BY_WIRE_A &&
+                mode != FLY_BY_WIRE_B &&
+                mode != CRUISE &&
+                mode != AUTO &&
+                mode != RTL &&
+                mode != LOITER)
+            {
+                if (mode < MANUAL)
+                    mode = LOITER;
+                else if (mode >LOITER)
+                    mode = MANUAL;
+                else
+                    mode += radioInputSwitch;
+            }
+
+            // Override position 5
+            if(switchPosition > 4)
+                mode = MANUAL;
+
+            // save new mode
+            plane_flight_modes[switchPosition] = mode;
+
+            // print new mode
+            plane_print_switch(switchPosition, mode);
+        }
+
+        // escape hatch
+        if(cliSerial->available() > 0) {
+            // save changes
+            for (mode=0; mode<6; mode++)
+                plane_flight_modes[mode].save();
+            plane_report_flight_modes();
+            print_done();
             return (0);
         }
     }
@@ -744,7 +832,6 @@ static void report_frame()
 
 static void report_radio()
 {
-
     cliSerial->printf_P(PSTR("Radio\n"));
     print_divider();
     // radio
@@ -754,7 +841,6 @@ static void report_radio()
 
 static void report_ins()
 {
-
     cliSerial->printf_P(PSTR("INS\n"));
     print_divider();
 
@@ -765,8 +851,6 @@ static void report_ins()
 
 static void report_compass()
 {
-
-
     cliSerial->printf_P(PSTR("Compass\n"));
 
     print_divider();
@@ -817,6 +901,18 @@ static void report_flight_modes()
     print_blanks(2);
 }
 
+static void plane_report_flight_modes()
+{
+    //print_blanks(2);
+    cliSerial->printf_P(PSTR("Flight modes\n"));
+    print_divider();
+
+    for(int16_t i = 0; i < 6; i++ ) {
+        plane_print_switch(i, plane_flight_modes[i]);
+    }
+    print_blanks(2);
+}
+
 void report_optflow()
 
 {
@@ -861,6 +957,15 @@ print_switch(uint8_t p, uint8_t m, bool b)
 }
 
 static void
+plane_print_switch(uint8_t p, uint8_t m)
+{
+    cliSerial->printf_P(PSTR("Pos %d: "),p);
+    print_flight_mode(cliSerial, m);
+
+    cliSerial->println();
+}
+
+static void
 print_done()
 {
     cliSerial->printf_P(PSTR("\nSaved\n"));
@@ -868,7 +973,6 @@ print_done()
 
 static void zero_eeprom(void)
 {
-
     cliSerial->printf_P(PSTR("\nErasing EEPROM\n"));
 
     for (uint16_t i = 0; i < EEPROM_MAX_ADDR; i++) {
@@ -966,6 +1070,32 @@ static void report_tuning()
         cliSerial->printf_P(PSTR(" %d, Low:%1.4f, High:%1.4f\n"),(int)g.radio_tuning.get(), low, high);
     }
     print_blanks(2);
+}
+
+static int8_t
+radio_input_switch(void)
+{
+    static int8_t bouncer = 0;
+
+
+    if (int16_t(channel_roll->radio_in - channel_roll->radio_trim) > 100) {
+        bouncer = 10;
+    }
+    if (int16_t(channel_roll->radio_in - channel_roll->radio_trim) < -100) {
+        bouncer = -10;
+    }
+    if (bouncer >0) {
+        bouncer--;
+    }
+    if (bouncer <0) {
+        bouncer++;
+    }
+
+    if (bouncer == 1 || bouncer == -1) {
+        return bouncer;
+    } else {
+        return 0;
+    }
 }
 
 #endif // CLI_ENABLED
