@@ -24,7 +24,7 @@
 #define GPS_PROTOCOL          GPS_PROTOCOL_UBLOX  // hard code GPS to Ublox to save 8k of flash
 //#define GPS_PROTOCOL          GPS_PROTOCOL_MTK19  // hard cdoe GPS to Mediatek to save 10k of flash
 //#define MOUNT                 DISABLED            // disable the camera gimbal to save 8K of flash space
-//#define AUTOTUNE              DISABLED            // disable the auto tune functionality to save 7k of flash
+#define AUTOTUNE              DISABLED            // disable the auto tune functionality to save 7k of flash
 #define OPTFLOW               DISABLED            // disable optical flow sensor to save 5K of flash space
 //#define AC_FENCE              DISABLED            // disable fence to save 2k of flash
 //#define CAMERA                DISABLED            // disable camera trigger to save 1k of flash
