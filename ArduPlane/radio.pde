@@ -1,12 +1,12 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-//Function that will read the radio data, limit servos and trigger a failsafe
+// Function that will read the radio data, limit servos and trigger a failsafe
 // ----------------------------------------------------------------------------
 
 static void set_control_channels(void)
 {
     channel_roll     = RC_Channel::rc_channel(rcmap.roll()-1);
-    channel_pitch    = RC_Channel::rc_channel(rcmap.pitch()-1);
+	channel_pitch    = RC_Channel::rc_channel(rcmap.pitch()-1);
     channel_throttle = RC_Channel::rc_channel(rcmap.throttle()-1);
     channel_rudder   = RC_Channel::rc_channel(rcmap.yaw()-1);
 
@@ -45,9 +45,6 @@ static void init_rc_in()
     default_dead_zones();
 }
 
-/*
-  initialise RC output channels
- */
 static void init_rc_out()
 {
     channel_roll->enable_out();
@@ -56,7 +53,6 @@ static void init_rc_out()
         channel_throttle->enable_out();
     }
     channel_rudder->enable_out();
-    enable_aux_servos();
 
     // Initialization of servo outputs
     for (uint8_t i=0; i<8; i++) {

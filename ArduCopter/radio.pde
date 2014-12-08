@@ -57,6 +57,13 @@ static void init_rc_in()
  // init_rc_out -- initialise motors and check if pilot wants to perform ESC calibration
 static void init_rc_out()
 {
+    channel_roll->enable_out();
+    channel_pitch->enable_out();
+    if (arming.arming_required() != AP_Arming::YES_ZERO_PWM) {
+        channel_throttle->enable_out();
+    }
+    channel_rudder->enable_out();
+
     motors.set_update_rate(g.rc_speed);
     motors.set_frame_orientation(g.frame_orientation);
     motors.Init();                                              // motor initialisation

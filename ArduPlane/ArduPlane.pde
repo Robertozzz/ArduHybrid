@@ -953,7 +953,8 @@ static void one_second_loop()
     mavlink_system.sysid = g.sysid_this_mav;
 
     aux_servos_update_fn();
-
+    enable_aux_servos();
+	
     // update notify flags
     AP_Notify::flags.pre_arm_check = arming.pre_arm_checks(false);
     AP_Notify::flags.armed = arming.is_armed() || arming.arming_required() == AP_Arming::NO;
