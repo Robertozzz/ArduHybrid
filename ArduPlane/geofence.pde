@@ -183,7 +183,7 @@ static void geofence_check(bool altitude_check_only)
         if (geofence_state != NULL &&
             (g.fence_action == FENCE_ACTION_GUIDED || g.fence_action == FENCE_ACTION_GUIDED_THR_PASS) &&
             g.fence_channel != 0 &&
-            control_mode == GUIDED &&
+            plane_control_mode == GUIDED &&
             g.fence_total >= 5 &&
             geofence_state->boundary_uptodate &&
             geofence_state->old_switch_position == oldSwitchPosition &&
@@ -240,7 +240,7 @@ static void geofence_check(bool altitude_check_only)
 
     // we are outside the fence
     if (geofence_state->fence_triggered &&
-        (control_mode == GUIDED || g.fence_action == FENCE_ACTION_REPORT)) {
+        (plane_control_mode == GUIDED || g.fence_action == FENCE_ACTION_REPORT)) {
         // we have already triggered, don't trigger again until the
         // user disables/re-enables using the fence channel switch
         return;
@@ -287,9 +287,9 @@ static void geofence_check(bool altitude_check_only)
 
         set_guided_WP();
 
-        if (control_mode == MANUAL && g.auto_trim) {
+        if (plane_control_mode == MANUAL && g.auto_trim) {
             // make sure we don't auto trim the surfaces on this change
-            control_mode = STABILIZE;
+            plane_control_mode = STABILIZE;
         }
 
         plane_set_mode(GUIDED);
@@ -311,7 +311,7 @@ static bool geofence_stickmixing(void) {
     if (geofence_enabled() &&
         geofence_state != NULL &&
         geofence_state->fence_triggered &&
-        control_mode == GUIDED) {
+        plane_control_mode == GUIDED) {
         // don't mix in user input
         return false;
     }

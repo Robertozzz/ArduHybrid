@@ -30,7 +30,7 @@ void change_command(uint8_t cmd_index)
           it. If not in AUTO then we just set the index as give.
           Thanks to Michael Day for finding this!
          */
-        if (control_mode == AUTO) {
+        if (plane_control_mode == AUTO) {
             nav_command_index       = cmd_index - 1;
         } else {
             nav_command_index       = cmd_index;
@@ -44,7 +44,7 @@ void change_command(uint8_t cmd_index)
 // --------------------
 static void update_commands(void)
 {
-    if(control_mode == AUTO) {
+    if(plane_control_mode == AUTO) {
         if(ap.home_is_set == true && g.command_total > 1) {
             process_next_command();
         }

@@ -234,7 +234,7 @@ static bool verify_condition_command()          // Returns true if command compl
 
 static void plane_do_RTL(void)
 {
-    control_mode    = RTL;
+    plane_control_mode    = RTL;
     prev_WP = current_loc;
     next_WP = rally_find_best_location(current_loc, home);
 

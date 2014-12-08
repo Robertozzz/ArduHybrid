@@ -53,7 +53,7 @@ static void read_control_switch()
     if (g.inverted_flight_ch != 0) {
         // if the user has configured an inverted flight channel, then
         // fly upside down when that channel goes above INVERTED_FLIGHT_PWM
-        inverted_flight = (control_mode != MANUAL && hal.rcin->read(g.inverted_flight_ch-1) > INVERTED_FLIGHT_PWM);
+        inverted_flight = (plane_control_mode != MANUAL && hal.rcin->read(g.inverted_flight_ch-1) > INVERTED_FLIGHT_PWM);
     }
 }
 

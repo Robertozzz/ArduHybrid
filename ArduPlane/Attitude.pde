@@ -79,7 +79,7 @@ static void stabilize_roll(float speed_scaler)
     }
 
     bool disable_integrator = false;
-    if (control_mode == STABILIZE && channel_roll->control_in != 0) {
+    if (plane_control_mode == STABILIZE && channel_roll->control_in != 0) {
         disable_integrator = true;
     }
     channel_roll->servo_out = rollController.get_servo_out(nav_roll_cd - ahrs.roll_sensor, 
@@ -96,7 +96,7 @@ static void stabilize_pitch(float speed_scaler)
 {
     int32_t demanded_pitch = nav_pitch_cd + g.pitch_trim_cd + channel_throttle->servo_out * g.kff_throttle_to_pitch;
     bool disable_integrator = false;
-    if (control_mode == STABILIZE && channel_pitch->control_in != 0) {
+    if (plane_control_mode == STABILIZE && channel_pitch->control_in != 0) {
         disable_integrator = true;
     }
     channel_pitch->servo_out = pitchController.get_servo_out(demanded_pitch - ahrs.pitch_sensor, 
@@ -128,11 +128,11 @@ static void stick_mix_channel(RC_Channel *channel)
 static void stabilize_stick_mixing_direct()
 {
     if (!stick_mixing_enabled() ||
-        control_mode == ACRO ||
-        control_mode == FLY_BY_WIRE_A ||
-        control_mode == FLY_BY_WIRE_B ||
-        control_mode == CRUISE ||
-        control_mode == TRAINING) {
+        plane_control_mode == ACRO ||
+        plane_control_mode == FLY_BY_WIRE_A ||
+        plane_control_mode == FLY_BY_WIRE_B ||
+        plane_control_mode == CRUISE ||
+        plane_control_mode == TRAINING) {
         return;
     }
     stick_mix_channel(channel_roll);
@@ -146,12 +146,12 @@ static void stabilize_stick_mixing_direct()
 static void stabilize_stick_mixing_fbw()
 {
     if (!stick_mixing_enabled() ||
-        control_mode == ACRO ||
-        control_mode == FLY_BY_WIRE_A ||
-        control_mode == FLY_BY_WIRE_B ||
-        control_mode == CRUISE ||
-        control_mode == TRAINING ||
-        (control_mode == AUTO && g.auto_fbw_steer)) {
+        plane_control_mode == ACRO ||
+        plane_control_mode == FLY_BY_WIRE_A ||
+        plane_control_mode == FLY_BY_WIRE_B ||
+        plane_control_mode == CRUISE ||
+        plane_control_mode == TRAINING ||
+        (plane_control_mode == AUTO && g.auto_fbw_steer)) {
         return;
     }
     // do FBW style stick mixing. We don't treat it linearly
@@ -311,23 +311,23 @@ static void stabilize_acro(float speed_scaler)
  */
 static void plane_stabilize()
 {
-    if (control_mode == MANUAL) {
+    if (plane_control_mode == MANUAL) {
         // nothing to do
         return;
     }
     float speed_scaler = get_speed_scaler();
 
-    if (control_mode == TRAINING) {
+    if (plane_control_mode == TRAINING) {
         stabilize_training(speed_scaler);
-    } else if (control_mode == ACRO) {
+    } else if (plane_control_mode == ACRO) {
         stabilize_acro(speed_scaler);
     } else {
-        if (g.stick_mixing == STICK_MIXING_FBW && control_mode != STABILIZE) {
+        if (g.stick_mixing == STICK_MIXING_FBW && plane_control_mode != STABILIZE) {
             stabilize_stick_mixing_fbw();
         }
         stabilize_roll(speed_scaler);
         stabilize_pitch(speed_scaler);
-        if (g.stick_mixing == STICK_MIXING_DIRECT || control_mode == STABILIZE) {
+        if (g.stick_mixing == STICK_MIXING_DIRECT || plane_control_mode == STABILIZE) {
             stabilize_stick_mixing_direct();
         }
         stabilize_yaw(speed_scaler);
@@ -373,7 +373,7 @@ static void calc_throttle()
 static void calc_nav_yaw_coordinated(float speed_scaler)
 {
     bool disable_integrator = false;
-    if (control_mode == STABILIZE && channel_rudder->control_in != 0) {
+    if (plane_control_mode == STABILIZE && channel_rudder->control_in != 0) {
         disable_integrator = true;
     }
     channel_rudder->servo_out = yawController.get_servo_out(speed_scaler, disable_integrator);
@@ -595,12 +595,12 @@ static bool suppress_throttle(void)
         return false;
     }
 
-    if (control_mode==AUTO && g.auto_fbw_steer) {
+    if (plane_control_mode==AUTO && g.auto_fbw_steer) {
         // user has throttle control
         return false;
     }
 
-    if (control_mode==AUTO && ap.takeoff_complete == false && auto_takeoff_check()) {
+    if (plane_control_mode==AUTO && ap.takeoff_complete == false && auto_takeoff_check()) {
         // we're in auto takeoff 
         throttle_suppressed = false;
         if (steer_state.hold_course_cd != -1) {
@@ -686,7 +686,7 @@ static void plane_set_servos(void)
 {
     int16_t last_throttle = channel_throttle->radio_out;
 
-    if (control_mode == MANUAL) {
+    if (plane_control_mode == MANUAL) {
         // do a direct pass through of radio values
         if (g.mix_mode == 0 || g.elevon_output != MIXING_DISABLED) {
             channel_roll->radio_out                = channel_roll->radio_in;
@@ -803,14 +803,14 @@ static void plane_set_servos(void)
                 channel_throttle->calc_pwm();                
             }
         } else if (g.throttle_passthru_stabilize && 
-                   (control_mode == STABILIZE || 
-                    control_mode == TRAINING ||
-                    control_mode == ACRO ||
-                    control_mode == FLY_BY_WIRE_A)) {
+                   (plane_control_mode == STABILIZE || 
+                    plane_control_mode == TRAINING ||
+                    plane_control_mode == ACRO ||
+                    plane_control_mode == FLY_BY_WIRE_A)) {
             // manual pass through of throttle while in FBWA or
             // STABILIZE mode with THR_PASS_STAB set
             channel_throttle->radio_out = channel_throttle->radio_in;
-        } else if (control_mode == GUIDED && 
+        } else if (plane_control_mode == GUIDED && 
                    guided_throttle_passthru) {
             // manual pass through of throttle while in GUIDED
             channel_throttle->radio_out = channel_throttle->radio_in;
@@ -822,13 +822,13 @@ static void plane_set_servos(void)
     }
 
     // Auto flap deployment
-    if(control_mode < FLY_BY_WIRE_B) {
+    if(plane_control_mode < FLY_BY_WIRE_B) {
         RC_Channel_aux::copy_radio_in_out(RC_Channel_aux::k_flap_auto);
-    } else if (control_mode >= FLY_BY_WIRE_B) {
+    } else if (plane_control_mode >= FLY_BY_WIRE_B) {
         int16_t flapSpeedSource = 0;
 
         // FIXME: use target_airspeed in both FBW_B and g.airspeed_enabled cases - Doug?
-        if (control_mode == FLY_BY_WIRE_B) {
+        if (plane_control_mode == FLY_BY_WIRE_B) {
             flapSpeedSource = target_airspeed_cm * 0.01;
         } else if (airspeed.use()) {
             flapSpeedSource = g.airspeed_cruise_cm * 0.01;
@@ -844,13 +844,13 @@ static void plane_set_servos(void)
         }
     }
 
-    if (control_mode >= FLY_BY_WIRE_B) {
+    if (plane_control_mode >= FLY_BY_WIRE_B) {
         /* only do throttle slew limiting in modes where throttle
          *  control is automatic */
         throttle_slew_limit(last_throttle);
     }
 
-    if (control_mode == TRAINING) {
+    if (plane_control_mode == TRAINING) {
         // copy rudder in training mode
         channel_rudder->radio_out   = channel_rudder->radio_in;
     }

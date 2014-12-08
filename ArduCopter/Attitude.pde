@@ -1241,3 +1241,25 @@ static void set_accel_throttle_I_from_pilot_throttle(int16_t pilot_throttle)
     // shift difference between pilot's throttle and hover throttle into accelerometer I
     g.pid_throttle_accel.set_integrator(pilot_throttle-g.throttle_cruise);
 }
+
+static void calc_throttle()
+{
+    if (aparm.plthr_cruise <= 1) {
+        // user has asked for zero throttle - this may be done by a
+        // mission which wants to turn off the engine for a parachute
+        // landing
+        channel_throttle->servo_out = 0;
+        return;
+    }
+
+    channel_throttle->servo_out = SpdHgt_Controller->get_throttle_demand();
+}
+
+static void calc_nav_pitch()
+{
+    // Calculate the Pitch of the plane
+    // --------------------------------
+    nav_pitch_cd = SpdHgt_Controller->get_pitch_demand();
+    nav_pitch_cd = constrain_int32(nav_pitch_cd, pitch_limit_min_cd, aparm.pitch_limit_max_cd.get());
+}
+

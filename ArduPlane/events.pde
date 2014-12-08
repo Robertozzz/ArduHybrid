@@ -7,7 +7,7 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
     plane_failsafe.state = fstype;
     plane_failsafe.ch3_timer_ms = millis();
     gcs_send_text_P(SEVERITY_LOW, PSTR("Failsafe - Short event on, "));
-    switch(control_mode)
+    switch(plane_control_mode)
     {
     case MANUAL:
     case STABILIZE:
@@ -16,7 +16,7 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
     case FLY_BY_WIRE_B:
     case CRUISE:
     case TRAINING:
-        plane_failsafe.saved_mode = control_mode;
+        plane_failsafe.saved_mode = plane_control_mode;
         plane_failsafe.saved_mode_set = 1;
         if(g.short_fs_action == 2) {
             plane_set_mode(FLY_BY_WIRE_A);
@@ -29,7 +29,7 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
     case GUIDED:
     case LOITER:
         if(g.short_fs_action != 0) {
-            plane_failsafe.saved_mode = control_mode;
+            plane_failsafe.saved_mode = plane_control_mode;
             plane_failsafe.saved_mode_set = 1;
             if(g.short_fs_action == 2) {
                 plane_set_mode(FLY_BY_WIRE_A);
@@ -44,7 +44,7 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
     default:
         break;
     }
-    plane_gcs_send_text_fmt(PSTR("flight mode = %u"), (unsigned)control_mode);
+    plane_gcs_send_text_fmt(PSTR("flight mode = %u"), (unsigned)plane_control_mode);
 }
 
 static void failsafe_long_on_event(enum failsafe_state fstype)
@@ -54,7 +54,7 @@ static void failsafe_long_on_event(enum failsafe_state fstype)
     //  If the GCS is locked up we allow control to revert to RC
     hal.rcin->clear_overrides();
     plane_failsafe.state = fstype;
-    switch(control_mode)
+    switch(plane_control_mode)
     {
     case MANUAL:
     case STABILIZE:
@@ -85,7 +85,7 @@ static void failsafe_long_on_event(enum failsafe_state fstype)
     default:
         break;
     }
-    plane_gcs_send_text_fmt(PSTR("flight mode = %u"), (unsigned)control_mode);
+    plane_gcs_send_text_fmt(PSTR("flight mode = %u"), (unsigned)plane_control_mode);
 }
 
 static void failsafe_short_off_event()
@@ -96,7 +96,7 @@ static void failsafe_short_off_event()
 
     // re-read the switch so we can return to our preferred mode
     // --------------------------------------------------------
-    if (control_mode == CIRCLE && plane_failsafe.saved_mode_set) {
+    if (plane_control_mode == CIRCLE && plane_failsafe.saved_mode_set) {
         plane_failsafe.saved_mode_set = 0;
         plane_set_mode(plane_failsafe.saved_mode);
     }

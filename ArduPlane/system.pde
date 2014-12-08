@@ -341,16 +341,16 @@ static void startup_ground()
 // ACRO, STABILIZE, ALTHOLD, LAND, DRIFT and SPORT can always be set successfully but the return state of other flight modes should be checked and the caller should deal with failures appropriately
 static void plane_set_mode(enum FlightMode mode)
 {
-    if(control_mode == mode) {
+    if(plane_control_mode == mode) {
         // don't switch modes if we are already in the correct mode.
         return;
     }
-    if(g.auto_trim > 0 && control_mode == MANUAL)
+    if(g.auto_trim > 0 && plane_control_mode == MANUAL)
         trim_control_surfaces();
 
-    control_mode = mode;
+    plane_control_mode = mode;
 
-    switch(control_mode)
+    switch(plane_control_mode)
     {
     case INITIALISING:
     case MANUAL:
@@ -406,7 +406,7 @@ static void plane_set_mode(enum FlightMode mode)
 
     // if in an auto-throttle mode, start with throttle suppressed for
     // safety. suppress_throttle() will unsupress it when appropriate
-    if (control_mode == CIRCLE || control_mode >= FLY_BY_WIRE_B) {
+    if (plane_control_mode == CIRCLE || plane_control_mode >= FLY_BY_WIRE_B) {
         auto_throttle_mode = true;
         throttle_suppressed = true;
     } else {

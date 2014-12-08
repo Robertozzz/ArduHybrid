@@ -131,3 +131,8 @@ void read_receiver_rssi(void)
         receiver_rssi = constrain_int16(ret, 0, 255);
     }
 }
+
+static int32_t adjusted_altitude_cm(void)
+{
+    return current_loc.alt - (g.alt_offset*100);
+}

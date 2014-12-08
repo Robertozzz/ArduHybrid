@@ -2547,5 +2547,45 @@ static void tuning(){
     }
 }
 
+static void update_navigation()
+{
+    // plane_wp_distance is in ACTUAL meters, not the *100 meters we get from the GPS
+    // ------------------------------------------------------------------------
+
+    // distance and bearing calcs only
+    switch(plane_control_mode) {
+    case AUTO:
+        verify_commands();
+        break;
+            
+    case LOITER:
+    case RTL:
+    case GUIDED:
+        // allow loiter direction to be changed in flight
+        if (g.loiter_radius < 0) {
+            loiter.direction = -1;
+        } else {
+            loiter.direction = 1;
+        }
+        update_loiter();
+        break;
+
+    case CRUISE:
+        update_cruise();
+        break;
+
+    case MANUAL:
+    case STABILIZE:
+    case TRAINING:
+    case INITIALISING:
+    case ACRO:
+    case FLY_BY_WIRE_A:
+    case FLY_BY_WIRE_B:
+    case CIRCLE:
+        // nothing to do
+        break;
+    }
+}
+
 AP_HAL_MAIN();
 

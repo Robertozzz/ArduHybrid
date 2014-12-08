@@ -31,7 +31,7 @@ static NOINLINE void plane_send_heartbeat(mavlink_channel_t chan)
 {
     uint8_t base_mode = MAV_MODE_FLAG_CUSTOM_MODE_ENABLED;
     uint8_t system_status = is_flying() ? MAV_STATE_ACTIVE : MAV_STATE_STANDBY;
-    uint32_t custom_mode = control_mode;
+    uint32_t custom_mode = plane_control_mode;
     
     if (plane_failsafe.state != FAILSAFE_NONE) {
         system_status = MAV_STATE_CRITICAL;
@@ -45,7 +45,7 @@ static NOINLINE void plane_send_heartbeat(mavlink_channel_t chan)
     // only get useful information from the custom_mode, which maps to
     // the APM flight mode and has a well defined meaning in the
     // ArduPlane documentation
-    switch (control_mode) {
+    switch (plane_control_mode) {
     case MANUAL:
     case TRAINING:
     case ACRO:
@@ -77,12 +77,12 @@ static NOINLINE void plane_send_heartbeat(mavlink_channel_t chan)
         base_mode |= MAV_MODE_FLAG_STABILIZE_ENABLED;        
     }
 
-    if (control_mode != MANUAL && control_mode != INITIALISING) {
+    if (plane_control_mode != MANUAL && plane_control_mode != INITIALISING) {
         // stabiliser of some form is enabled
         base_mode |= MAV_MODE_FLAG_STABILIZE_ENABLED;
     }
 
-    if (g.stick_mixing != STICK_MIXING_DISABLED && control_mode != INITIALISING) {
+    if (g.stick_mixing != STICK_MIXING_DISABLED && plane_control_mode != INITIALISING) {
         // all modes except INITIALISING have some form of manual
         // override if stick mixing is enabled
         base_mode |= MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
@@ -93,7 +93,7 @@ static NOINLINE void plane_send_heartbeat(mavlink_channel_t chan)
 #endif
 
     // we are armed if we are not initialising
-    if (control_mode != INITIALISING && arming.is_armed()) {
+    if (plane_control_mode != INITIALISING && arming.is_armed()) {
         base_mode |= MAV_MODE_FLAG_SAFETY_ARMED;
     }
 
@@ -159,7 +159,7 @@ static NOINLINE void plane_send_extended_status1(mavlink_channel_t chan)
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE;
     }
 
-    switch (control_mode) {
+    switch (plane_control_mode) {
     case MANUAL:
         break;
 
@@ -627,7 +627,7 @@ static bool plane_mavlink_try_send_message(mavlink_channel_t chan, enum ap_messa
         break;
 
     case MSG_NAV_CONTROLLER_OUTPUT:
-        if (control_mode != MANUAL) {
+        if (plane_control_mode != MANUAL) {
             CHECK_PAYLOAD_SIZE(NAV_CONTROLLER_OUTPUT);
             plane_send_nav_controller_output(chan);
         }

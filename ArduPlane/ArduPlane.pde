@@ -379,7 +379,7 @@ static union {
 ////////////////////////////////////////////////////////////////////////////////
 // This is the state of the flight control system
 // There are multiple states defined such as MANUAL, FBW-A, AUTO
-static enum FlightMode control_mode  = INITIALISING;
+static enum FlightMode plane_control_mode  = INITIALISING;
 
 // Used to maintain the state of the previous control switch position
 // This is set to 254 when we need to re-read the switch
@@ -929,7 +929,7 @@ static void obc_fs_check(void)
 {
 #if OBC_FAILSAFE == ENABLED
     // perform OBC failsafe checks
-    obc.check(OBC_MODE(control_mode),
+    obc.check(OBC_MODE(plane_control_mode),
               plane_failsafe.last_heartbeat_ms,
               g_gps ? g_gps->last_fix_time : 0);
 #endif
@@ -1156,8 +1156,8 @@ static void handle_auto_mode(void)
  */
 static void update_flight_mode(void)
 {
-    enum FlightMode effective_mode = control_mode;
-    if (control_mode == AUTO && g.auto_fbw_steer) {
+    enum FlightMode effective_mode = plane_control_mode;
+    if (plane_control_mode == AUTO && g.auto_fbw_steer) {
         effective_mode = FLY_BY_WIRE_A;
     }
 
@@ -1311,7 +1311,7 @@ static void update_navigation()
     // ------------------------------------------------------------------------
 
     // distance and bearing calcs only
-    switch(control_mode) {
+    switch(plane_control_mode) {
     case AUTO:
         verify_commands();
         break;
@@ -1362,7 +1362,7 @@ static void update_alt()
     if (auto_throttle_mode && !throttle_suppressed) {
         AP_SpdHgtControl::FlightStage flight_stage = AP_SpdHgtControl::FLIGHT_NORMAL;
         
-        if (control_mode==AUTO) {
+        if (plane_control_mode==AUTO) {
             if (ap.takeoff_complete == false) {
                 flight_stage = AP_SpdHgtControl::FLIGHT_TAKEOFF;
             } else if (nav_command_ID == MAV_CMD_NAV_LAND && ap.land_complete == true) {
