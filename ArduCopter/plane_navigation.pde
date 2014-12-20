@@ -84,8 +84,8 @@ static void calc_airspeed_errors()
     target_airspeed_cm = g.airspeed_cruise_cm;
 
     // FBW_B airspeed target
-    if (control_mode == FLY_BY_WIRE_B || 
-        control_mode == CRUISE) {
+    if (plane_control_mode == FLY_BY_WIRE_B || 
+        plane_control_mode == CRUISE) {
         target_airspeed_cm = ((int32_t)(aparm.airspeed_max -
                                         aparm.airspeed_min) *
                               channel_throttle->control_in) +
@@ -95,14 +95,14 @@ static void calc_airspeed_errors()
     // Set target to current airspeed + ground speed undershoot,
     // but only when this is faster than the target airspeed commanded
     // above.
-    if (control_mode >= FLY_BY_WIRE_B && (g.min_gndspeed_cm > 0)) {
+    if (plane_control_mode >= FLY_BY_WIRE_B && (g.min_gndspeed_cm > 0)) {
         int32_t min_gnd_target_airspeed = aspeed_cm + groundspeed_undershoot;
         if (min_gnd_target_airspeed > target_airspeed_cm)
             target_airspeed_cm = min_gnd_target_airspeed;
     }
 
     // Bump up the target airspeed based on throttle nudging
-    if (control_mode >= AUTO && airspeed_nudge_cm > 0) {
+    if (plane_control_mode >= AUTO && airspeed_nudge_cm > 0) {
         target_airspeed_cm += airspeed_nudge_cm;
     }
 
@@ -129,8 +129,8 @@ static void calc_gndspeed_undershoot()
 
 static void calc_altitude_error()
 {
-    if (control_mode == FLY_BY_WIRE_B ||
-        control_mode == CRUISE) {
+    if (plane_control_mode == FLY_BY_WIRE_B ||
+        plane_control_mode == CRUISE) {
         return;
     }
     if (nav_controller->reached_loiter_target()) {
@@ -240,7 +240,7 @@ static void setup_glide_slope(void)
       work out if we will gradually change altitude, or try to get to
       the new altitude as quickly as possible.
      */
-    switch (control_mode) {
+    switch (plane_control_mode) {
     case RTL:
     case GUIDED:
         /* glide down slowly if above target altitude, but ascend more

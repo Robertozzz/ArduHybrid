@@ -456,6 +456,7 @@ static union {
 // This is the state of the flight control system
 // There are multiple states defined such as STABILIZE, ACRO,
 static int8_t control_mode = STABILIZE;
+static enum FlightMode plane_control_mode  = INITIALISING;
 
 // Used to maintain the state of the previous control switch position
 // This is set to 254 when we need to re-read the switch
