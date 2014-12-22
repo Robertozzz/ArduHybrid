@@ -2,17 +2,17 @@
 
 // For changing active command mid-mission
 //----------------------------------------
-void change_command(uint8_t cmd_index)
+void plane_change_command(uint8_t cmd_index)
 {
     struct Location temp;
 
     if (cmd_index == 0) {
-        init_commands();
+        plane_init_commands();
         plane_gcs_send_text_fmt(PSTR("Received Request - reset mission"));
         return;
     }
 
-    temp = get_cmd_with_index(cmd_index);
+    temp = plane_get_cmd_with_index(cmd_index);
 
     if (temp.id > MAV_CMD_NAV_LAST ) {
         plane_gcs_send_text_fmt(PSTR("Cannot change to non-Nav cmd %u"), (unsigned)cmd_index);
@@ -36,13 +36,13 @@ void change_command(uint8_t cmd_index)
             nav_command_index       = cmd_index;
         }
         g.command_index.set_and_save(cmd_index);
-        update_commands();
+        plane_update_commands();
     }
 }
 
 // called by 10 Hz loop
 // --------------------
-static void update_commands(void)
+static void plane_update_commands(void)
 {
     if(plane_control_mode == AUTO) {
         if(ap.home_is_set == true && g.command_total > 1) {
@@ -51,7 +51,7 @@ static void update_commands(void)
     }
 }
 
-static void verify_commands(void)
+static void plane_verify_commands(void)
 {
     if(plane_verify_nav_command()) {
         nav_command_ID = NO_COMMAND;
@@ -61,7 +61,6 @@ static void verify_commands(void)
         non_nav_command_ID = NO_COMMAND;
     }
 }
-
 
 static void process_next_command()
 {
@@ -77,7 +76,7 @@ static void process_next_command()
         temp.id = MAV_CMD_NAV_LAST;
         while(temp.id >= MAV_CMD_NAV_LAST && nav_command_index <= g.command_total) {
             nav_command_index++;
-            temp = get_cmd_with_index(nav_command_index);
+            temp = plane_get_cmd_with_index(nav_command_index);
         }
 
         plane_gcs_send_text_fmt(PSTR("Nav command index updated to #%i"),nav_command_index);
@@ -112,7 +111,7 @@ static void process_next_command()
     //plane_gcs_send_text_fmt(PSTR("Non-Nav command index #%i"),non_nav_command_index);
     //plane_gcs_send_text_fmt(PSTR("Non-Nav command ID #%i"),non_nav_command_ID);
     if (nav_command_index <= (int)g.command_total && non_nav_command_ID == NO_COMMAND) {
-        temp = get_cmd_with_index(non_nav_command_index);
+        temp = plane_get_cmd_with_index(non_nav_command_index);
         if (temp.id <= MAV_CMD_NAV_LAST) {                       
             // The next command is a nav command.  No non-nav commands to do
             g.command_index.set_and_save(nav_command_index);

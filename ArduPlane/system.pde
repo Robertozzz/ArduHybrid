@@ -256,7 +256,7 @@ static void init_ardupilot()
 
     // initialize commands
     // -------------------
-    init_commands();
+    plane_init_commands();
 
     reset_control_switch();
 #if LOGGING_ENABLED == ENABLED

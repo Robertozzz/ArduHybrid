@@ -741,7 +741,7 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { read_airspeed,          5,   1200 },
     { update_alt,             5,   3400 },
     { calc_altitude_error,    5,   1000 },
-    { update_commands,        5,   5000 },
+    { plane_update_commands,        5,   5000 },
     { obc_fs_check,           5,   1000 },
     { gcs_update,             1,   1700 },
     { gcs_data_stream_send,   1,   3000 },
@@ -1050,7 +1050,7 @@ static void update_GPS_10Hz(void)
                 ground_start_count = 5;
 
             } else {
-                init_home();
+                plane_init_home();
 
                 // set system clock for log timestamps
                 hal.util->set_system_clock(g_gps->time_epoch_usec());
@@ -1313,7 +1313,7 @@ static void update_navigation()
     // distance and bearing calcs only
     switch(plane_control_mode) {
     case AUTO:
-        verify_commands();
+        plane_verify_commands();
         break;
             
     case LOITER:

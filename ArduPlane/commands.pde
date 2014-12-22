@@ -3,7 +3,7 @@
  *  logic for dealing with the current command in the mission and home location
  */
 
-static void init_commands()
+static void plane_init_commands()
 {
     g.command_index.set_and_save(0);
     nav_command_ID  = NO_COMMAND;
@@ -12,7 +12,7 @@ static void init_commands()
     nav_command_index = 0;
 }
 
-static void update_auto()
+static void update_auto() // plane
 {
     if (g.command_index >= g.command_total) {
         handle_no_commands();
@@ -35,7 +35,7 @@ static void update_auto()
 /*
   fetch a mission item from EEPROM
 */
-static struct Location get_cmd_with_index_raw(int16_t i)
+static struct Location get_cmd_with_index_raw(int16_t i) // plane
 {
     struct Location temp;
     uint16_t mem;
@@ -72,7 +72,7 @@ static struct Location get_cmd_with_index_raw(int16_t i)
 /*
   fetch a mission item from EEPROM. Adjust altitude to be absolute
 */
-static struct Location get_cmd_with_index(int16_t i)
+static struct Location plane_get_cmd_with_index(int16_t i)
 {
     struct Location temp;
 
@@ -90,7 +90,7 @@ static struct Location get_cmd_with_index(int16_t i)
 
 // Setters
 // -------
-static void set_cmd_with_index(struct Location temp, int16_t i)
+static void plane_set_cmd_with_index(struct Location temp, int16_t i)
 {
     i = constrain_int16(i, 0, g.command_total.get());
     uint16_t mem = WP_START_BYTE + (i * WP_SIZE);
@@ -120,7 +120,7 @@ static void set_cmd_with_index(struct Location temp, int16_t i)
     hal.storage->write_dword(mem, temp.lng);
 }
 
-static int32_t read_alt_to_hold()
+static int32_t read_alt_to_hold()  // Plane
 {
     if (g.RTL_altitude_cm < 0) {
         return current_loc.alt;
@@ -128,12 +128,11 @@ static int32_t read_alt_to_hold()
     return g.RTL_altitude_cm + home.alt;
 }
 
-
 /*
  *  This function stores waypoint commands
  *  It looks to see what the next command type is and finds the last command.
  */
-static void set_next_WP(const struct Location *wp)
+static void set_next_WP(const struct Location *wp)  // Plane
 {
     // copy the current WP into the OldWP slot
     // ---------------------------------------
@@ -178,7 +177,7 @@ static void set_next_WP(const struct Location *wp)
     loiter_angle_reset();
 }
 
-static void set_guided_WP(void)
+static void set_guided_WP(void)  // Plane
 {
     if (g.loiter_radius < 0) {
         loiter.direction = -1;
@@ -205,7 +204,7 @@ static void set_guided_WP(void)
 
 // run this at setup on the ground
 // -------------------------------
-static void init_home()
+static void plane_init_home()
 {
     gcs_send_text_P(SEVERITY_LOW, PSTR("init home"));
 
@@ -229,7 +228,7 @@ static void init_home()
 
     // Save Home to EEPROM - Command 0
     // -------------------
-    set_cmd_with_index(home, 0);
+    plane_set_cmd_with_index(home, 0);
 
     // Save prev loc
     // -------------
@@ -247,7 +246,7 @@ static void init_home()
   this is called as long as we have 3D lock and the arming switch is
   not pushed
 */
-static void update_home()
+static void update_home()  // Plane
 {
     home.lng        = g_gps->longitude;                                 // Lon * 10**7
     home.lat        = g_gps->latitude;                                  // Lat * 10**7

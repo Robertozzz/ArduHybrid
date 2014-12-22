@@ -3,8 +3,7 @@
 /********************************************************************************/
 // Command Event Handlers
 /********************************************************************************/
-static void
-handle_process_nav_cmd()
+static void handle_process_nav_cmd()
 {
     // set ap.land_complete to false to stop us zeroing the throttle
     ap.land_complete = false;
@@ -49,8 +48,7 @@ handle_process_nav_cmd()
     }
 }
 
-static void
-handle_process_condition_command()
+static void handle_process_condition_command()
 {
     plane_gcs_send_text_fmt(PSTR("Executing command ID #%i"),next_nonnav_command.id);
     switch(next_nonnav_command.id) {
@@ -301,7 +299,7 @@ static void plane_do_loiter_time()
 }
 
 /********************************************************************************/
-//  Verify Nav (Must) commands
+//	Verify Nav (Must) commands
 /********************************************************************************/
 static bool plane_verify_takeoff()
 {
@@ -458,9 +456,8 @@ static bool plane_verify_RTL()
 }
 
 /********************************************************************************/
-//  Condition (May) commands
+//	Condition (May) commands
 /********************************************************************************/
-
 static void plane_do_wait_delay()
 {
     condition_start = millis();
@@ -518,9 +515,8 @@ static bool plane_verify_within_distance()
 }
 
 /********************************************************************************/
-//  Do (Now) commands
+//	Do (Now) commands
 /********************************************************************************/
-
 static void do_loiter_at_location()
 {
     if (g.loiter_radius < 0) {
@@ -544,7 +540,7 @@ static void plane_do_jump()
     }
 
     struct Location temp;
-    temp = get_cmd_with_index(g.command_index);
+    temp = plane_get_cmd_with_index(g.command_index);
 
     plane_gcs_send_text_fmt(PSTR("Jump to WP %u. Jumps left: %d"),
                       (unsigned)next_nonnav_command.p1,
@@ -552,7 +548,7 @@ static void plane_do_jump()
     if (next_nonnav_command.lat > 0) {
         // Decrement repeat counter
         temp.lat                        = next_nonnav_command.lat - 1;                                          
-        set_cmd_with_index(temp, g.command_index);
+        plane_set_cmd_with_index(temp, g.command_index);
     }
 
     nav_command_ID          = NO_COMMAND;
@@ -565,7 +561,7 @@ static void plane_do_jump()
     // Need to back "next_WP" up as it was set to the next waypoint following the jump
     next_WP = prev_WP;
 
-    temp = get_cmd_with_index(g.command_index);
+    temp = plane_get_cmd_with_index(g.command_index);
 
     next_nav_command = temp;
     nav_command_ID = next_nav_command.id;
@@ -603,7 +599,7 @@ static void plane_do_change_speed()
 static void plane_do_set_home()
 {
     if (next_nonnav_command.p1 == 1 && g_gps->status() == GPS::GPS_OK_FIX_3D) {
-        init_home();
+        plane_init_home();
     } else {
         home.id         = MAV_CMD_NAV_WAYPOINT;
         home.lng        = next_nonnav_command.lng;                                      // Lon * 10**7

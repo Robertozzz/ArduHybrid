@@ -1271,7 +1271,7 @@ if (isplane == true){
                             channel_throttle->disable_out();  
                         }
                         // reset the mission on disarm
-                        change_command(0);
+                        plane_change_command(0);
                         //only log if disarming was successful
                         Log_Arm_Disarm();
                         result = MAV_RESULT_ACCEPTED;
@@ -1632,7 +1632,7 @@ if (isplane == true){
         if (mavlink_check_target(packet.target_system,packet.target_component)) break;
 
         // set current command
-        change_command(packet.seq);
+        plane_change_command(packet.seq);
 
         mavlink_msg_mission_current_send(chan, g.command_index);
         break;
@@ -1884,7 +1884,7 @@ if (isplane == true){
                 goto mission_failed;
             }
 
-            set_cmd_with_index(tell_command, packet.seq);
+            plane_set_cmd_with_index(tell_command, packet.seq);
 
             // update waypoint receiving state machine
             waypoint_timelast_receive = millis();
