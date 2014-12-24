@@ -152,7 +152,7 @@ static void read_radio()
         pwm_pitch = (BOOL_TO_SIGN(g.reverse_ch2_elevon) * int16_t(elevon.ch2_temp - elevon.trim2) + BOOL_TO_SIGN(g.reverse_ch1_elevon) * int16_t(elevon.ch1_temp - elevon.trim1)) / 2 + 1500;
     }
     
-    if (plane_control_mode == TRAINING) {
+    if (plane_control_mode == PLANE_TRAINING) {
         // in training mode we don't want to use a deadzone, as we
         // want manual pass through when not exceeding attitude limits
         channel_roll->set_pwm_no_deadzone(pwm_roll);

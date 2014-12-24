@@ -179,11 +179,11 @@ static void geofence_check(bool altitude_check_only)
 {
     if (!geofence_enabled()) {
         // switch back to the chosen control mode if still in
-        // GUIDED to the return point
+        // PLANE_GUIDED to the return point
         if (geofence_state != NULL &&
             (g.fence_action == FENCE_ACTION_GUIDED || g.fence_action == FENCE_ACTION_GUIDED_THR_PASS) &&
             g.fence_channel != 0 &&
-            plane_control_mode == GUIDED &&
+            plane_control_mode == PLANE_GUIDED &&
             g.fence_total >= 5 &&
             geofence_state->boundary_uptodate &&
             geofence_state->old_switch_position == oldSwitchPosition &&
@@ -240,7 +240,7 @@ static void geofence_check(bool altitude_check_only)
 
     // we are outside the fence
     if (geofence_state->fence_triggered &&
-        (plane_control_mode == GUIDED || g.fence_action == FENCE_ACTION_REPORT)) {
+        (plane_control_mode == PLANE_GUIDED || g.fence_action == FENCE_ACTION_REPORT)) {
         // we have already triggered, don't trigger again until the
         // user disables/re-enables using the fence channel switch
         return;
@@ -287,12 +287,12 @@ static void geofence_check(bool altitude_check_only)
 
         set_guided_WP();
 
-        if (plane_control_mode == MANUAL && g.auto_trim) {
+        if (plane_control_mode == PLANE_MANUAL && g.auto_trim) {
             // make sure we don't auto trim the surfaces on this change
-            plane_control_mode = STABILIZE;
+            plane_control_mode = PLANE_STABILIZE;
         }
 
-        plane_set_mode(GUIDED);
+        plane_set_mode(PLANE_GUIDED);
         if (g.fence_action == FENCE_ACTION_GUIDED_THR_PASS) {
             guided_throttle_passthru = true;
         }
@@ -303,7 +303,7 @@ static void geofence_check(bool altitude_check_only)
 
 /*
  *  return true if geofencing allows stick mixing. When we have
- *  triggered failsafe and are in GUIDED mode then stick mixing is
+ *  triggered failsafe and are in PLANE_GUIDED mode then stick mixing is
  *  disabled. Otherwise the aircraft may not be able to recover from
  *  a breach of the geo-fence
  */
@@ -311,7 +311,7 @@ static bool geofence_stickmixing(void) {
     if (geofence_enabled() &&
         geofence_state != NULL &&
         geofence_state->fence_triggered &&
-        plane_control_mode == GUIDED) {
+        plane_control_mode == PLANE_GUIDED) {
         // don't mix in user input
         return false;
     }

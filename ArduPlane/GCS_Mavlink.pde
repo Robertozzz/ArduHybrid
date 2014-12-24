@@ -46,29 +46,29 @@ static NOINLINE void plane_send_heartbeat(mavlink_channel_t chan)
     // the APM flight mode and has a well defined meaning in the
     // ArduPlane documentation
     switch (plane_control_mode) {
-    case MANUAL:
-    case TRAINING:
-    case ACRO:
+    case PLANE_MANUAL:
+    case PLANE_TRAINING:
+    case PLANE_ACRO:
         base_mode = MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
         break;
-    case STABILIZE:
-    case FLY_BY_WIRE_A:
-    case FLY_BY_WIRE_B:
-    case CRUISE:
+    case PLANE_STABILIZE:
+    case PLANE_FLY_BY_WIRE_A:
+    case PLANE_FLY_BY_WIRE_B:
+    case PLANE_CRUISE:
         base_mode = MAV_MODE_FLAG_STABILIZE_ENABLED;
         break;
-    case AUTO:
-    case RTL:
-    case LOITER:
-    case GUIDED:
-    case CIRCLE:
+    case PLANE_AUTO:
+    case PLANE_RTL:
+    case PLANE_LOITER:
+    case PLANE_GUIDED:
+    case PLANE_CIRCLE:
         base_mode = MAV_MODE_FLAG_GUIDED_ENABLED |
                     MAV_MODE_FLAG_STABILIZE_ENABLED;
         // note that MAV_MODE_FLAG_AUTO_ENABLED does not match what
         // APM does in any mode, as that is defined as "system finds its own goal
         // positions", which APM does not currently do
         break;
-    case INITIALISING:
+    case PLANE_INITIALISING:
         system_status = MAV_STATE_CALIBRATING;
         break;
     }
@@ -77,13 +77,13 @@ static NOINLINE void plane_send_heartbeat(mavlink_channel_t chan)
         base_mode |= MAV_MODE_FLAG_STABILIZE_ENABLED;        
     }
 
-    if (plane_control_mode != MANUAL && plane_control_mode != INITIALISING) {
+    if (plane_control_mode != PLANE_MANUAL && plane_control_mode != PLANE_INITIALISING) {
         // stabiliser of some form is enabled
         base_mode |= MAV_MODE_FLAG_STABILIZE_ENABLED;
     }
 
-    if (g.stick_mixing != STICK_MIXING_DISABLED && plane_control_mode != INITIALISING) {
-        // all modes except INITIALISING have some form of manual
+    if (g.stick_mixing != STICK_MIXING_DISABLED && plane_control_mode != PLANE_INITIALISING) {
+        // all modes except PLANE_INITIALISING have some form of manual
         // override if stick mixing is enabled
         base_mode |= MAV_MODE_FLAG_MANUAL_INPUT_ENABLED;
     }
@@ -93,7 +93,7 @@ static NOINLINE void plane_send_heartbeat(mavlink_channel_t chan)
 #endif
 
     // we are armed if we are not initialising
-    if (plane_control_mode != INITIALISING && arming.is_armed()) {
+    if (plane_control_mode != PLANE_INITIALISING && arming.is_armed()) {
         base_mode |= MAV_MODE_FLAG_SAFETY_ARMED;
     }
 
@@ -160,38 +160,38 @@ static NOINLINE void plane_send_extended_status1(mavlink_channel_t chan)
     }
 
     switch (plane_control_mode) {
-    case MANUAL:
+    case PLANE_MANUAL:
         break;
 
-    case ACRO:
+    case PLANE_ACRO:
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL; // 3D angular rate control
         break;
 
-    case STABILIZE:
-    case FLY_BY_WIRE_A:
+    case PLANE_STABILIZE:
+    case PLANE_FLY_BY_WIRE_A:
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL; // 3D angular rate control
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION; // attitude stabilisation
         break;
 
-    case FLY_BY_WIRE_B:
-    case CRUISE:
+    case PLANE_FLY_BY_WIRE_B:
+    case PLANE_CRUISE:
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL; // 3D angular rate control
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION; // attitude stabilisation
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS; // motor control
         break;
 
-    case TRAINING:
+    case PLANE_TRAINING:
         if (!training_manual_roll || !training_manual_pitch) {
             control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL; // 3D angular rate control
             control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION; // attitude stabilisation        
         }
         break;
 
-    case AUTO:
-    case RTL:
-    case LOITER:
-    case GUIDED:
-    case CIRCLE:
+    case PLANE_AUTO:
+    case PLANE_RTL:
+    case PLANE_LOITER:
+    case PLANE_GUIDED:
+    case PLANE_CIRCLE:
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ANGULAR_RATE_CONTROL; // 3D angular rate control
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_ATTITUDE_STABILIZATION; // attitude stabilisation
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_YAW_POSITION; // yaw position
@@ -200,7 +200,7 @@ static NOINLINE void plane_send_extended_status1(mavlink_channel_t chan)
         control_sensors_enabled |= MAV_SYS_STATUS_SENSOR_MOTOR_OUTPUTS; // motor control
         break;
 
-    case INITIALISING:
+    case PLANE_INITIALISING:
         break;
     }
 
@@ -627,7 +627,7 @@ static bool plane_mavlink_try_send_message(mavlink_channel_t chan, enum ap_messa
         break;
 
     case MSG_NAV_CONTROLLER_OUTPUT:
-        if (plane_control_mode != MANUAL) {
+        if (plane_control_mode != PLANE_MANUAL) {
             CHECK_PAYLOAD_SIZE(NAV_CONTROLLER_OUTPUT);
             plane_send_nav_controller_output(chan);
         }
@@ -1212,17 +1212,17 @@ if (isplane == true){
         switch(packet.command) {
 
         case MAV_CMD_NAV_LOITER_UNLIM:
-            plane_set_mode(LOITER);
+            plane_set_mode(PLANE_LOITER);
             result = MAV_RESULT_ACCEPTED;
             break;
 
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-            plane_set_mode(RTL);
+            plane_set_mode(PLANE_RTL);
             result = MAV_RESULT_ACCEPTED;
             break;
 
         case MAV_CMD_MISSION_START:
-            plane_set_mode(AUTO);
+            plane_set_mode(PLANE_AUTO);
             result = MAV_RESULT_ACCEPTED;
             break;
 
@@ -1290,19 +1290,19 @@ if (isplane == true){
             switch ((uint16_t)packet.param1) {
             case MAV_MODE_MANUAL_ARMED:
             case MAV_MODE_MANUAL_DISARMED:
-                plane_set_mode(MANUAL);
+                plane_set_mode(PLANE_MANUAL);
                 result = MAV_RESULT_ACCEPTED;
                 break;
 
             case MAV_MODE_AUTO_ARMED:
             case MAV_MODE_AUTO_DISARMED:
-                plane_set_mode(AUTO);
+                plane_set_mode(PLANE_AUTO);
                 result = MAV_RESULT_ACCEPTED;
                 break;
 
             case MAV_MODE_STABILIZE_DISARMED:
             case MAV_MODE_STABILIZE_ARMED:
-                plane_set_mode(FLY_BY_WIRE_A);
+                plane_set_mode(PLANE_FLY_BY_WIRE_A);
                 result = MAV_RESULT_ACCEPTED;
                 break;
 
@@ -1369,17 +1369,17 @@ if (isplane == true){
             break;
         }
         switch (packet.custom_mode) {
-        case MANUAL:
-        case CIRCLE:
-        case STABILIZE:
-        case TRAINING:
-        case ACRO:
-        case FLY_BY_WIRE_A:
-        case FLY_BY_WIRE_B:
-        case CRUISE:
-        case AUTO:
-        case RTL:
-        case LOITER:
+        case PLANE_MANUAL:
+        case PLANE_CIRCLE:
+        case PLANE_STABILIZE:
+        case PLANE_TRAINING:
+        case PLANE_ACRO:
+        case PLANE_FLY_BY_WIRE_A:
+        case PLANE_FLY_BY_WIRE_B:
+        case PLANE_CRUISE:
+        case PLANE_AUTO:
+        case PLANE_RTL:
+        case PLANE_LOITER:
             plane_set_mode((enum FlightMode)packet.custom_mode);
             break;
         }
@@ -1843,7 +1843,7 @@ if (isplane == true){
                 guided_WP.alt += home.alt;
             }
 
-            plane_set_mode(GUIDED);
+            plane_set_mode(PLANE_GUIDED);
 
             // make any new wp uploaded instant (in case we are already in Guided mode)
             set_guided_WP();

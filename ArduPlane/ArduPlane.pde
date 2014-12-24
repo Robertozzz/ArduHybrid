@@ -378,8 +378,8 @@ static union {
 // Radio
 ////////////////////////////////////////////////////////////////////////////////
 // This is the state of the flight control system
-// There are multiple states defined such as MANUAL, FBW-A, AUTO
-static enum FlightMode plane_control_mode  = INITIALISING;
+// There are multiple states defined such as PLANE_MANUAL, FBW-A, PLANE_AUTO
+static enum FlightMode plane_control_mode  = PLANE_INITIALISING;
 
 // Used to maintain the state of the previous control switch position
 // This is set to 254 when we need to re-read the switch
@@ -589,7 +589,7 @@ static int32_t groundspeed_undershoot = 0;
 AP_Airspeed airspeed(aparm);
 
 ////////////////////////////////////////////////////////////////////////////////
-// ACRO Mode
+// PLANE_ACRO Mode
 ////////////////////////////////////////////////////////////////////////////////
 
 static struct {					// Plane
@@ -600,7 +600,7 @@ static struct {					// Plane
 } acro_state;
 
 ////////////////////////////////////////////////////////////////////////////////
-// CRUISE controller state		// Plane
+// PLANE_CRUISE controller state		// Plane
 ////////////////////////////////////////////////////////////////////////////////
 static struct {
     bool locked_heading;
@@ -1082,7 +1082,7 @@ static void update_GPS_10Hz(void)
 }
 
 /*
-  main handling for AUTO mode
+  main handling for PLANE_AUTO mode
  */
 static void handle_auto_mode(void)
 {
@@ -1140,7 +1140,7 @@ static void handle_auto_mode(void)
         break;
         
     default:
-        // we are doing normal AUTO flight, the special cases
+        // we are doing normal PLANE_AUTO flight, the special cases
         // are for takeoff and landing
         steer_state.hold_course_cd = -1;
         ap.land_complete = false;
@@ -1157,30 +1157,30 @@ static void handle_auto_mode(void)
 static void update_flight_mode(void)
 {
     enum FlightMode effective_mode = plane_control_mode;
-    if (plane_control_mode == AUTO && g.auto_fbw_steer) {
-        effective_mode = FLY_BY_WIRE_A;
+    if (plane_control_mode == PLANE_AUTO && g.auto_fbw_steer) {
+        effective_mode = PLANE_FLY_BY_WIRE_A;
     }
 
-    if (effective_mode != AUTO) {
+    if (effective_mode != PLANE_AUTO) {
         // hold_course is only used in takeoff and landing
         steer_state.hold_course_cd = -1;
     }
 
     switch (effective_mode) 
     {
-    case AUTO:
+    case PLANE_AUTO:
         handle_auto_mode();
         break;
 
-    case RTL:
-    case LOITER:
-    case GUIDED:
+    case PLANE_RTL:
+    case PLANE_LOITER:
+    case PLANE_GUIDED:
         calc_nav_roll();
         calc_nav_pitch();
         calc_throttle();
         break;
         
-    case TRAINING: {
+    case PLANE_TRAINING: {
         training_manual_roll = false;
         training_manual_pitch = false;
         
@@ -1211,7 +1211,7 @@ static void update_flight_mode(void)
         break;
     }
 
-    case ACRO: {
+    case PLANE_ACRO: {
         // handle locked/unlocked control
         if (acro_state.locked_roll) {
             nav_roll_cd = acro_state.locked_roll_err;
@@ -1226,7 +1226,7 @@ static void update_flight_mode(void)
         break;
     }
 
-    case FLY_BY_WIRE_A: {
+    case PLANE_FLY_BY_WIRE_A: {
         // set nav_roll and nav_pitch using sticks
         nav_roll_cd  = channel_roll->norm_input() * roll_limit_cd;
         nav_roll_cd = constrain_int32(nav_roll_cd, -roll_limit_cd, roll_limit_cd);
@@ -1248,15 +1248,15 @@ static void update_flight_mode(void)
         break;
     }
 
-    case FLY_BY_WIRE_B:
+    case PLANE_FLY_BY_WIRE_B:
         // Thanks to Yury MonZon for the altitude limit code!
         nav_roll_cd = channel_roll->norm_input() * roll_limit_cd;
         update_fbwb_speed_height();
         break;
         
-    case CRUISE:
+    case PLANE_CRUISE:
         /*
-          in CRUISE mode we use the navigation code to control
+          in PLANE_CRUISE mode we use the navigation code to control
           roll when heading is locked. Heading becomes unlocked on
           any aileron or rudder input
         */
@@ -1274,13 +1274,13 @@ static void update_flight_mode(void)
         update_fbwb_speed_height();
         break;
         
-    case STABILIZE:
+    case PLANE_STABILIZE:
         nav_roll_cd        = 0;
         nav_pitch_cd       = 0;
         // throttle is passthrough
         break;
         
-    case CIRCLE:
+    case PLANE_CIRCLE:
         // we have no GPS installed and have lost radio contact
         // or we just want to fly around in a gentle circle w/o GPS,
         // holding altitude at the altitude we set when we
@@ -1290,7 +1290,7 @@ static void update_flight_mode(void)
         calc_throttle();
         break;
 
-    case MANUAL:
+    case PLANE_MANUAL:
         // servo_out is for Sim control only
         // ---------------------------------
         channel_roll->servo_out = channel_roll->pwm_to_angle();
@@ -1299,7 +1299,7 @@ static void update_flight_mode(void)
         break;
         //roll: -13788.000,  pitch: -13698.000,   thr: 0.000, rud: -13742.000
         
-    case INITIALISING:
+    case PLANE_INITIALISING:
         // handled elsewhere
         break;
     }
@@ -1312,13 +1312,13 @@ static void update_navigation()
 
     // distance and bearing calcs only
     switch(plane_control_mode) {
-    case AUTO:
+    case PLANE_AUTO:
         plane_verify_commands();
         break;
             
-    case LOITER:
-    case RTL:
-    case GUIDED:
+    case PLANE_LOITER:
+    case PLANE_RTL:
+    case PLANE_GUIDED:
         // allow loiter direction to be changed in flight
         if (g.loiter_radius < 0) {
             loiter.direction = -1;
@@ -1328,18 +1328,18 @@ static void update_navigation()
         update_loiter();
         break;
 
-    case CRUISE:
+    case PLANE_CRUISE:
         update_cruise();
         break;
 
-    case MANUAL:
-    case STABILIZE:
-    case TRAINING:
-    case INITIALISING:
-    case ACRO:
-    case FLY_BY_WIRE_A:
-    case FLY_BY_WIRE_B:
-    case CIRCLE:
+    case PLANE_MANUAL:
+    case PLANE_STABILIZE:
+    case PLANE_TRAINING:
+    case PLANE_INITIALISING:
+    case PLANE_ACRO:
+    case PLANE_FLY_BY_WIRE_A:
+    case PLANE_FLY_BY_WIRE_B:
+    case PLANE_CIRCLE:
         // nothing to do
         break;
     }
@@ -1362,7 +1362,7 @@ static void update_alt()
     if (auto_throttle_mode && !throttle_suppressed) {
         AP_SpdHgtControl::FlightStage flight_stage = AP_SpdHgtControl::FLIGHT_NORMAL;
         
-        if (plane_control_mode==AUTO) {
+        if (plane_control_mode==PLANE_AUTO) {
             if (ap.takeoff_complete == false) {
                 flight_stage = AP_SpdHgtControl::FLIGHT_TAKEOFF;
             } else if (nav_command_ID == MAV_CMD_NAV_LAND && ap.land_complete == true) {

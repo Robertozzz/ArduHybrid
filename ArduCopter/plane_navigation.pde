@@ -84,8 +84,8 @@ static void calc_airspeed_errors()
     target_airspeed_cm = g.airspeed_cruise_cm;
 
     // FBW_B airspeed target
-    if (plane_control_mode == FLY_BY_WIRE_B || 
-        plane_control_mode == CRUISE) {
+    if (plane_control_mode == PLANE_FLY_BY_WIRE_B || 
+        plane_control_mode == PLANE_CRUISE) {
         target_airspeed_cm = ((int32_t)(aparm.airspeed_max -
                                         aparm.airspeed_min) *
                               channel_throttle->control_in) +
@@ -95,14 +95,14 @@ static void calc_airspeed_errors()
     // Set target to current airspeed + ground speed undershoot,
     // but only when this is faster than the target airspeed commanded
     // above.
-    if (plane_control_mode >= FLY_BY_WIRE_B && (g.min_gndspeed_cm > 0)) {
+    if (plane_control_mode >= PLANE_FLY_BY_WIRE_B && (g.min_gndspeed_cm > 0)) {
         int32_t min_gnd_target_airspeed = aspeed_cm + groundspeed_undershoot;
         if (min_gnd_target_airspeed > target_airspeed_cm)
             target_airspeed_cm = min_gnd_target_airspeed;
     }
 
     // Bump up the target airspeed based on throttle nudging
-    if (plane_control_mode >= AUTO && airspeed_nudge_cm > 0) {
+    if (plane_control_mode >= PLANE_AUTO && airspeed_nudge_cm > 0) {
         target_airspeed_cm += airspeed_nudge_cm;
     }
 
@@ -129,8 +129,8 @@ static void calc_gndspeed_undershoot()
 
 static void calc_altitude_error()
 {
-    if (plane_control_mode == FLY_BY_WIRE_B ||
-        plane_control_mode == CRUISE) {
+    if (plane_control_mode == PLANE_FLY_BY_WIRE_B ||
+        plane_control_mode == PLANE_CRUISE) {
         return;
     }
     if (nav_controller->reached_loiter_target()) {
@@ -160,7 +160,7 @@ static void update_loiter()
 }
 
 /*
-  handle CRUISE mode, locking heading to GPS course when we have
+  handle PLANE_CRUISE mode, locking heading to GPS course when we have
   sufficient ground speed, and no aileron or rudder input
  */
 static void update_cruise()
@@ -195,7 +195,7 @@ static void update_cruise()
 
 
 /*
-  handle speed and height control in FBWB or CRUISE mode. 
+  handle speed and height control in FBWB or PLANE_CRUISE mode. 
   In this mode the elevator is used to change target altitude. The
   throttle is used to change target airspeed or throttle
  */
@@ -241,8 +241,8 @@ static void setup_glide_slope(void)
       the new altitude as quickly as possible.
      */
     switch (plane_control_mode) {
-    case RTL:
-    case GUIDED:
+    case PLANE_RTL:
+    case PLANE_GUIDED:
         /* glide down slowly if above target altitude, but ascend more
            rapidly if below it. See
            https://github.com/diydrones/ardupilot/issues/39
@@ -254,7 +254,7 @@ static void setup_glide_slope(void)
         }
         break;
 
-    case AUTO:
+    case PLANE_AUTO:
         if (prev_WP.id != MAV_CMD_NAV_TAKEOFF && 
             prev_WP.alt != home.alt && 
             (next_WP.id == MAV_CMD_NAV_WAYPOINT || next_WP.id == MAV_CMD_NAV_LAND)) {

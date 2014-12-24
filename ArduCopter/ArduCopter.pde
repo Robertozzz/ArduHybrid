@@ -456,7 +456,7 @@ static union {
 // This is the state of the flight control system
 // There are multiple states defined such as STABILIZE, ACRO,
 static int8_t control_mode = STABILIZE;
-static enum FlightMode plane_control_mode  = INITIALISING;
+static enum FlightMode plane_control_mode  = PLANE_INITIALISING;
 
 // Used to maintain the state of the previous control switch position
 // This is set to 254 when we need to re-read the switch
@@ -765,6 +765,10 @@ static int32_t acro_pitch_rate;             // desired pitch rate while acro mod
 static int32_t acro_yaw_rate;               // desired yaw rate while acro mode
 static float acro_level_mix;                // scales back roll, pitch and yaw inversely proportional to input from pilot
 
+////////////////////////////////////////////////////////////////////////////////
+// PLANE_ACRO Mode
+////////////////////////////////////////////////////////////////////////////////
+
 static struct {					// Plane
     bool locked_roll;
     bool locked_pitch;
@@ -773,7 +777,7 @@ static struct {					// Plane
 } acro_state;
 
 ////////////////////////////////////////////////////////////////////////////////
-// CRUISE controller state		// Plane
+// PLANE_CRUISE controller state		// Plane
 ////////////////////////////////////////////////////////////////////////////////
 static struct {
     bool locked_heading;
@@ -2555,13 +2559,13 @@ static void update_navigation()
 
     // distance and bearing calcs only
     switch(plane_control_mode) {
-    case AUTO:
+    case PLANE_AUTO:
         plane_verify_commands();
         break;
             
-    case LOITER:
-    case RTL:
-    case GUIDED:
+    case PLANE_LOITER:
+    case PLANE_RTL:
+    case PLANE_GUIDED:
         // allow loiter direction to be changed in flight
         if (g.loiter_radius < 0) {
             loiter.direction = -1;
@@ -2571,18 +2575,18 @@ static void update_navigation()
         update_loiter();
         break;
 
-    case CRUISE:
+    case PLANE_CRUISE:
         update_cruise();
         break;
 
-    case MANUAL:
-    case STABILIZE:
-    case TRAINING:
-    case INITIALISING:
-    case ACRO:
-    case FLY_BY_WIRE_A:
-    case FLY_BY_WIRE_B:
-    case CIRCLE:
+    case PLANE_MANUAL:
+    case PLANE_STABILIZE:
+    case PLANE_TRAINING:
+    case PLANE_INITIALISING:
+    case PLANE_ACRO:
+    case PLANE_FLY_BY_WIRE_A:
+    case PLANE_FLY_BY_WIRE_B:
+    case PLANE_CIRCLE:
         // nothing to do
         break;
     }

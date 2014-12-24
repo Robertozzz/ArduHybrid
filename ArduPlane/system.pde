@@ -276,7 +276,7 @@ static void init_ardupilot()
 	    // reset last heartbeat time, so we don't trigger failsafe on slow startup
     plane_failsafe.last_heartbeat_ms = millis();
 	
-    plane_set_mode(MANUAL);
+    plane_set_mode(PLANE_MANUAL);
 
 	//INS ground start
     startup_ground();
@@ -338,62 +338,62 @@ static void startup_ground()
 // plane_set_mode - change flight mode and perform any necessary initialisation
 // optional force parameter used to force the flight mode change (used only first time mode is set)
 // returns true if mode was succesfully set
-// ACRO, STABILIZE, ALTHOLD, LAND, DRIFT and SPORT can always be set successfully but the return state of other flight modes should be checked and the caller should deal with failures appropriately
+// PLANE_ACRO, PLANE_STABILIZE, ALTHOLD, LAND, DRIFT and SPORT can always be set successfully but the return state of other flight modes should be checked and the caller should deal with failures appropriately
 static void plane_set_mode(enum FlightMode mode)
 {
     if(plane_control_mode == mode) {
         // don't switch modes if we are already in the correct mode.
         return;
     }
-    if(g.auto_trim > 0 && plane_control_mode == MANUAL)
+    if(g.auto_trim > 0 && plane_control_mode == PLANE_MANUAL)
         trim_control_surfaces();
 
     plane_control_mode = mode;
 
     switch(plane_control_mode)
     {
-    case INITIALISING:
-    case MANUAL:
-    case STABILIZE:
-    case TRAINING:
-    case FLY_BY_WIRE_A:
+    case PLANE_INITIALISING:
+    case PLANE_MANUAL:
+    case PLANE_STABILIZE:
+    case PLANE_TRAINING:
+    case PLANE_FLY_BY_WIRE_A:
         break;
 
-    case ACRO:
+    case PLANE_ACRO:
         acro_state.locked_roll = false;
         acro_state.locked_pitch = false;
         break;
 
-    case CRUISE:
+    case PLANE_CRUISE:
         cruise_state.locked_heading = false;
         cruise_state.lock_timer_ms = 0;
         target_altitude_cm = current_loc.alt;
         break;
 
-    case FLY_BY_WIRE_B:
+    case PLANE_FLY_BY_WIRE_B:
         target_altitude_cm = current_loc.alt;
         break;
 
-    case CIRCLE:
+    case PLANE_CIRCLE:
         // the altitude to circle at is taken from the current altitude
         next_WP.alt = current_loc.alt;
         break;
 
-    case AUTO:
+    case PLANE_AUTO:
         prev_WP = current_loc;
         update_auto();
         break;
 
-    case RTL:
+    case PLANE_RTL:
         prev_WP = current_loc;
         plane_do_RTL();
         break;
 
-    case LOITER:
+    case PLANE_LOITER:
         do_loiter_at_location();
         break;
 
-    case GUIDED:
+    case PLANE_GUIDED:
         guided_throttle_passthru = false;
         set_guided_WP();
         break;
@@ -406,7 +406,7 @@ static void plane_set_mode(enum FlightMode mode)
 
     // if in an auto-throttle mode, start with throttle suppressed for
     // safety. suppress_throttle() will unsupress it when appropriate
-    if (plane_control_mode == CIRCLE || plane_control_mode >= FLY_BY_WIRE_B) {
+    if (plane_control_mode == PLANE_CIRCLE || plane_control_mode >= PLANE_FLY_BY_WIRE_B) {
         auto_throttle_mode = true;
         throttle_suppressed = true;
     } else {
@@ -574,38 +574,38 @@ static void
 print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
 {
     switch (mode) {
-    case MANUAL:
+    case PLANE_MANUAL:
         port->print_P(PSTR("Manual"));
         break;
-    case STABILIZE:
-        port->print_P(PSTR("STABILIZE"));
+    case PLANE_STABILIZE:
+        port->print_P(PSTR("PLANE_STABILIZE"));
         break;
-    case TRAINING:
+    case PLANE_TRAINING:
         port->print_P(PSTR("Training"));
         break;
-    case ACRO:
-        port->print_P(PSTR("ACRO"));
+    case PLANE_ACRO:
+        port->print_P(PSTR("PLANE_ACRO"));
         break;
-    case FLY_BY_WIRE_A:
+    case PLANE_FLY_BY_WIRE_A:
         port->print_P(PSTR("FBW_A"));
         break;
-    case FLY_BY_WIRE_B:
+    case PLANE_FLY_BY_WIRE_B:
         port->print_P(PSTR("FBW_B"));
         break;
-    case CRUISE:
-        port->print_P(PSTR("CRUISE"));
+    case PLANE_CRUISE:
+        port->print_P(PSTR("PLANE_CRUISE"));
         break;
-    case AUTO:
-        port->print_P(PSTR("AUTO"));
+    case PLANE_AUTO:
+        port->print_P(PSTR("PLANE_AUTO"));
         break;
-    case LOITER:
-        port->print_P(PSTR("LOITER"));
+    case PLANE_LOITER:
+        port->print_P(PSTR("PLANE_LOITER"));
         break;
-    case RTL:
-        port->print_P(PSTR("RTL"));
+    case PLANE_RTL:
+        port->print_P(PSTR("PLANE_RTL"));
         break;
-    case CIRCLE:
-        port->print_P(PSTR("CIRCLE"));
+    case PLANE_CIRCLE:
+        port->print_P(PSTR("PLANE_CIRCLE"));
         break;
     default:
         port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);

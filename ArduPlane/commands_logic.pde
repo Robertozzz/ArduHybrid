@@ -232,7 +232,7 @@ static bool verify_condition_command()          // Returns true if command compl
 
 static void plane_do_RTL(void)
 {
-    plane_control_mode    = RTL;
+    plane_control_mode    = PLANE_RTL;
     prev_WP = current_loc;
     next_WP = rally_find_best_location(current_loc, home);
 
@@ -425,7 +425,7 @@ static bool plane_verify_loiter_time()
             loiter.start_time_ms = millis();
         }
     } else if ((millis() - loiter.start_time_ms) > loiter.time_max_ms) {
-        gcs_send_text_P(SEVERITY_LOW,PSTR("verify_nav: LOITER time complete"));
+        gcs_send_text_P(SEVERITY_LOW,PSTR("verify_nav: PLANE_LOITER time complete"));
         return true;
     }
     return false;
@@ -436,7 +436,7 @@ static bool verify_loiter_turns()
     update_loiter();
     if (loiter.sum_cd > loiter.total_cd) {
         loiter.total_cd = 0;
-        gcs_send_text_P(SEVERITY_LOW,PSTR("verify_nav: LOITER orbits complete"));
+        gcs_send_text_P(SEVERITY_LOW,PSTR("verify_nav: PLANE_LOITER orbits complete"));
         // clear the command queue;
         return true;
     }

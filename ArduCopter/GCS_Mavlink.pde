@@ -2208,17 +2208,17 @@ mission_failed:
         switch(packet.command) {
 
         case MAV_CMD_NAV_LOITER_UNLIM:
-            plane_set_mode(LOITER);
+            plane_set_mode(PLANE_LOITER);
             result = MAV_RESULT_ACCEPTED;
             break;
 
         case MAV_CMD_NAV_RETURN_TO_LAUNCH:
-            plane_set_mode(RTL);
+            plane_set_mode(PLANE_RTL);
             result = MAV_RESULT_ACCEPTED;
             break;
 
         case MAV_CMD_MISSION_START:
-            plane_set_mode(AUTO);
+            plane_set_mode(PLANE_AUTO);
             result = MAV_RESULT_ACCEPTED;
             break;
 
@@ -2286,19 +2286,19 @@ mission_failed:
             switch ((uint16_t)packet.param1) {
             case MAV_MODE_MANUAL_ARMED:
             case MAV_MODE_MANUAL_DISARMED:
-                plane_set_mode(MANUAL);
+                plane_set_mode(PLANE_MANUAL);
                 result = MAV_RESULT_ACCEPTED;
                 break;
 
             case MAV_MODE_AUTO_ARMED:
             case MAV_MODE_AUTO_DISARMED:
-                plane_set_mode(AUTO);
+                plane_set_mode(PLANE_AUTO);
                 result = MAV_RESULT_ACCEPTED;
                 break;
 
             case MAV_MODE_STABILIZE_DISARMED:
             case MAV_MODE_STABILIZE_ARMED:
-                plane_set_mode(FLY_BY_WIRE_A);
+                plane_set_mode(PLANE_FLY_BY_WIRE_A);
                 result = MAV_RESULT_ACCEPTED;
                 break;
 
@@ -2365,17 +2365,17 @@ mission_failed:
             break;
         }
         switch (packet.custom_mode) {
-        case MANUAL:
-        case CIRCLE:
-        case STABILIZE:
-        case TRAINING:
-        case ACRO:
-        case FLY_BY_WIRE_A:
-        case FLY_BY_WIRE_B:
-        case CRUISE:
-        case AUTO:
-        case RTL:
-        case LOITER:
+        case PLANE_MANUAL:
+        case PLANE_CIRCLE:
+        case PLANE_STABILIZE:
+        case PLANE_TRAINING:
+        case PLANE_ACRO:
+        case PLANE_FLY_BY_WIRE_A:
+        case PLANE_FLY_BY_WIRE_B:
+        case PLANE_CRUISE:
+        case PLANE_AUTO:
+        case PLANE_RTL:
+        case PLANE_LOITER:
             plane_set_mode((enum FlightMode)packet.custom_mode);
             break;
         }
@@ -2839,7 +2839,7 @@ mission_failed:
                 guided_WP.alt += home.alt;
             }
 
-            plane_set_mode(GUIDED);
+            plane_set_mode(PLANE_GUIDED);
 
             // make any new wp uploaded instant (in case we are already in Guided mode)
             set_guided_WP();

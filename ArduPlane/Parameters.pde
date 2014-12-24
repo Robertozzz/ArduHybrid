@@ -87,7 +87,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: STICK_MIXING
     // @DisplayName: Stick Mixing
-    // @Description: When enabled, this adds user stick input to the control surfaces in auto modes, allowing the user to have some degree of flight control without changing modes.  There are two types of stick mixing available. If you set STICK_MIXING to 1 then it will use "fly by wire" mixing, which controls the roll and pitch in the same way that the FBWA mode does. This is the safest option if you usually fly ArduPlane in FBWA or FBWB mode. If you set STICK_MIXING to 2 then it will enable direct mixing mode, which is what the STABILIZE mode uses. That will allow for much more extreme maneuvers while in AUTO mode.
+    // @Description: When enabled, this adds user stick input to the control surfaces in auto modes, allowing the user to have some degree of flight control without changing modes.  There are two types of stick mixing available. If you set STICK_MIXING to 1 then it will use "fly by wire" mixing, which controls the roll and pitch in the same way that the FBWA mode does. This is the safest option if you usually fly ArduPlane in FBWA or FBWB mode. If you set STICK_MIXING to 2 then it will enable direct mixing mode, which is what the PLANE_STABILIZE mode uses. That will allow for much more extreme maneuvers while in PLANE_AUTO mode.
     // @Values: 0:Disabled,1:FBWMixing,2:DirectMixing
     // @User: Advanced
     GSCALAR(stick_mixing,           "STICK_MIXING",   STICK_MIXING_FBW),
@@ -100,8 +100,8 @@ const AP_Param::Info var_info[] PROGMEM = {
     GSCALAR(skip_gyro_cal,           "SKIP_GYRO_CAL",   0),
 
     // @Param: AUTO_FBW_STEER
-    // @DisplayName: Use FBWA steering in AUTO
-    // @Description: When enabled this option gives FBWA navigation and steering in AUTO mode. This can be used to allow manual stabilised piloting with waypoint logic for triggering payloads. With this enabled the pilot has the same control over the plane as in FBWA mode, and the normal AUTO navigation is completely disabled. This option is not recommended for normal use.
+    // @DisplayName: Use FBWA steering in PLANE_AUTO
+    // @Description: When enabled this option gives FBWA navigation and steering in PLANE_AUTO mode. This can be used to allow manual stabilised piloting with waypoint logic for triggering payloads. With this enabled the pilot has the same control over the plane as in FBWA mode, and the normal PLANE_AUTO navigation is completely disabled. This option is not recommended for normal use.
     // @Values: 0:Disabled,1:Enabled
     // @User: Advanced
     GSCALAR(auto_fbw_steer,          "AUTO_FBW_STEER",   0),
@@ -208,7 +208,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: WP_MAX_RADIUS
     // @DisplayName: Waypoint Maximum Radius
-    // @Description: Sets the maximum distance to a waypoint for the waypoint to be considered complete. This overrides the "cross the finish line" logic that is normally used to consider a waypoint complete. For normal AUTO behaviour this parameter should be set to zero. Using a non-zero value is only recommended when it is critical that the aircraft does approach within the given radius, and should loop around until it has done so. This can cause the aircraft to loop forever if its turn radius is greater than the maximum radius set.
+    // @Description: Sets the maximum distance to a waypoint for the waypoint to be considered complete. This overrides the "cross the finish line" logic that is normally used to consider a waypoint complete. For normal PLANE_AUTO behaviour this parameter should be set to zero. Using a non-zero value is only recommended when it is critical that the aircraft does approach within the given radius, and should loop around until it has done so. This can cause the aircraft to loop forever if its turn radius is greater than the maximum radius set.
     // @Units: Meters
     // @Range: 0 32767
     // @Increment: 1
@@ -227,7 +227,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 #if GEOFENCE_ENABLED == ENABLED
     // @Param: FENCE_ACTION
     // @DisplayName: Action on geofence breach
-    // @Description: What to do on fence breach. If this is set to 0 then no action is taken, and geofencing is disabled. If this is set to 1 then the plane will enter GUIDED mode, with the target waypoint as the fence return point. If this is set to 2 then the fence breach is reported to the ground station, but no other action is taken. If set to 3 then the plane enters guided mode but the pilot retains manual throttle control.
+    // @Description: What to do on fence breach. If this is set to 0 then no action is taken, and geofencing is disabled. If this is set to 1 then the plane will enter PLANE_GUIDED mode, with the target waypoint as the fence return point. If this is set to 2 then the fence breach is reported to the ground station, but no other action is taken. If set to 3 then the plane enters guided mode but the pilot retains manual throttle control.
     // @Values: 0:None,1:GuidedMode,2:ReportOnly,3:GuidedModeThrPass
     // @User: Standard
     GSCALAR(fence_action,           "FENCE_ACTION",   0),
@@ -280,7 +280,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: RALLY_LIMIT_KM
     // @DisplayName: Rally Limit
-    // @Description: Maximum distance to rally point. If the closest rally point is more than this number of kilometers from the current position and the home location is closer than any of the rally points from the current position then do RTL to home rather than to the closest rally point. This prevents a leftover rally point from a different airfield being used accidentally. If this is set to 0 then the closest rally point is always used.
+    // @Description: Maximum distance to rally point. If the closest rally point is more than this number of kilometers from the current position and the home location is closer than any of the rally points from the current position then do PLANE_RTL to home rather than to the closest rally point. This prevents a leftover rally point from a different airfield being used accidentally. If this is set to 0 then the closest rally point is always used.
     // @User: Advanced
     // @Units: kilometers
     // @Increment: 0.1
@@ -288,7 +288,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: ARSPD_FBW_MIN
     // @DisplayName: Fly By Wire Minimum Airspeed
-    // @Description: Airspeed corresponding to minimum throttle in auto throttle modes (FBWB, CRUISE, AUTO, GUIDED, LOITER, CIRCLE and RTL). This is a calibrated (apparent) airspeed.
+    // @Description: Airspeed corresponding to minimum throttle in auto throttle modes (FBWB, PLANE_CRUISE, PLANE_AUTO, PLANE_GUIDED, PLANE_LOITER, PLANE_CIRCLE and PLANE_RTL). This is a calibrated (apparent) airspeed.
     // @Units: m/s
     // @Range: 5 50
     // @Increment: 1
@@ -297,7 +297,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: ARSPD_FBW_MAX
     // @DisplayName: Fly By Wire Maximum Airspeed
-    // @Description: Airspeed corresponding to maximum throttle in auto throttle modes (FBWB, CRUISE, AUTO, GUIDED, LOITER, CIRCLE and RTL). This is a calibrated (apparent) airspeed.
+    // @Description: Airspeed corresponding to maximum throttle in auto throttle modes (FBWB, PLANE_CRUISE, PLANE_AUTO, PLANE_GUIDED, PLANE_LOITER, PLANE_CIRCLE and PLANE_RTL). This is a calibrated (apparent) airspeed.
     // @Units: m/s
     // @Range: 5 50
     // @Increment: 1
@@ -306,14 +306,14 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: FBWB_ELEV_REV
     // @DisplayName: Fly By Wire elevator reverse
-    // @Description: Reverse sense of elevator in FBWB and CRUISE modes. When set to 0 up elevator (pulling back on the stick) means to lower altitude. When set to 1, up elevator means to raise altitude.
+    // @Description: Reverse sense of elevator in FBWB and PLANE_CRUISE modes. When set to 0 up elevator (pulling back on the stick) means to lower altitude. When set to 1, up elevator means to raise altitude.
     // @Values: 0:Disabled,1:Enabled
     // @User: Standard
     GSCALAR(flybywire_elev_reverse, "FBWB_ELEV_REV",  0),
 
     // @Param: FBWB_CLIMB_RATE
     // @DisplayName: Fly By Wire B altitude change rate
-    // @Description: This sets the rate in m/s at which FBWB and CRUISE modes will change its target altitude for full elevator deflection. Note that the actual climb rate of the aircraft can be lower than this, depending on your airspeed and throttle control settings. If you have this parameter set to the default value of 2.0, then holding the elevator at maximum deflection for 10 seconds would change the target altitude by 20 meters.
+    // @Description: This sets the rate in m/s at which FBWB and PLANE_CRUISE modes will change its target altitude for full elevator deflection. Note that the actual climb rate of the aircraft can be lower than this, depending on your airspeed and throttle control settings. If you have this parameter set to the default value of 2.0, then holding the elevator at maximum deflection for 10 seconds would change the target altitude by 20 meters.
     // @Range: 1-10
 	// @Increment: 0.1
     // @User: Standard
@@ -355,7 +355,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: THR_PASS_STAB
     // @DisplayName: Throttle passthru in stabilize
-    // @Description: If this is set then when in STABILIZE, FBWA or ACRO modes the throttle is a direct passthru from the transmitter. This means the PL_THR_MIN and PL_THR_MAX settings are not used in these modes. This is useful for petrol engines where you setup a throttle cut switch that suppresses the throttle below the normal minimum.
+    // @Description: If this is set then when in PLANE_STABILIZE, FBWA or PLANE_ACRO modes the throttle is a direct passthru from the transmitter. This means the PL_THR_MIN and PL_THR_MAX settings are not used in these modes. This is useful for petrol engines where you setup a throttle cut switch that suppresses the throttle below the normal minimum.
 	// @Values: 0:Disabled,1:Enabled
     // @User: Advanced
     GSCALAR(throttle_passthru_stabilize,"THR_PASS_STAB",   0),
@@ -395,7 +395,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: FS_SHORT_ACTN
     // @DisplayName: Short failsafe action
-    // @Description: The action to take on a short (FS_SHORT_TIMEOUT) failsafe event in AUTO, GUIDED or LOITER modes. A short failsafe event in stabilization modes will always cause an immediate change to CIRCLE mode. In AUTO mode you can choose whether it will enter CIRCLE mode or continue with the mission. If FS_SHORT_ACTN is 0 then it will continue with the mission, if it is 1 then it will enter CIRCLE mode, and then enter RTL if the failsafe condition persists for FS_LONG_TIMEOUT seconds. If it is set to 2 then the plane will enter FBWA mode with zero throttle and level attitude to glide in.
+    // @Description: The action to take on a short (FS_SHORT_TIMEOUT) failsafe event in PLANE_AUTO, PLANE_GUIDED or PLANE_LOITER modes. A short failsafe event in stabilization modes will always cause an immediate change to PLANE_CIRCLE mode. In PLANE_AUTO mode you can choose whether it will enter PLANE_CIRCLE mode or continue with the mission. If FS_SHORT_ACTN is 0 then it will continue with the mission, if it is 1 then it will enter PLANE_CIRCLE mode, and then enter PLANE_RTL if the failsafe condition persists for FS_LONG_TIMEOUT seconds. If it is set to 2 then the plane will enter FBWA mode with zero throttle and level attitude to glide in.
     // @Values: 0:Continue,1:Circle/ReturnToLaunch,2:Glide
     // @User: Standard
     GSCALAR(short_fs_action,        "FS_SHORT_ACTN",  SHORT_FAILSAFE_ACTION),
@@ -411,7 +411,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: FS_LONG_ACTN
     // @DisplayName: Long failsafe action
-    // @Description: The action to take on a long (FS_LONG_TIMEOUT seconds) failsafe event in AUTO, GUIDED or LOITER modes. A long failsafe event in stabilization modes will always cause an RTL (ReturnToLaunch). In AUTO modes you can choose whether it will RTL or continue with the mission. If FS_LONG_ACTN is 0 then it will continue with the mission, if it is 1 then it will enter RTL mode. Note that if FS_SHORT_ACTN is 1, then the aircraft will enter CIRCLE mode after FS_SHORT_TIMEOUT seconds of failsafe, and will always enter RTL after FS_LONG_TIMEOUT seconds of failsafe, regardless of the FS_LONG_ACTN setting. If FS_LONG_ACTN is set to 2 then instead of using RTL it will enter a FBWA glide with zero throttle.
+    // @Description: The action to take on a long (FS_LONG_TIMEOUT seconds) failsafe event in PLANE_AUTO, PLANE_GUIDED or PLANE_LOITER modes. A long failsafe event in stabilization modes will always cause an PLANE_RTL (ReturnToLaunch). In PLANE_AUTO modes you can choose whether it will PLANE_RTL or continue with the mission. If FS_LONG_ACTN is 0 then it will continue with the mission, if it is 1 then it will enter PLANE_RTL mode. Note that if FS_SHORT_ACTN is 1, then the aircraft will enter PLANE_CIRCLE mode after FS_SHORT_TIMEOUT seconds of failsafe, and will always enter PLANE_RTL after FS_LONG_TIMEOUT seconds of failsafe, regardless of the FS_LONG_ACTN setting. If FS_LONG_ACTN is set to 2 then instead of using PLANE_RTL it will enter a FBWA glide with zero throttle.
     // @Values: 0:Continue,1:ReturnToLaunch,2:Glide
     // @User: Standard
     GSCALAR(long_fs_action,         "FS_LONG_ACTN",   LONG_FAILSAFE_ACTION),
@@ -521,42 +521,42 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Param: PLFLTMODE1
     // @DisplayName: Flight Mode 1
     // @Description: Flight mode when Channel 5 pwm is <= 1230
-    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @Values: 20:Manual,21:CIRCLE,22:STABILIZE,23:TRAINING,24:ACRO,25:FBWA,26:FBWB,27:CRUISE,30:Auto,31:RTL,32:Loiter,35:Guided
     // @User: Standard
     GSCALAR(plane_flight_mode1, "PLFLTMODE1",               PLANE_FLIGHT_MODE_1),
 
     // @Param: PLFLTMODE2
     // @DisplayName: Flight Mode 2
     // @Description: Flight mode when Channel 5 pwm is >1230, <= 1360
-    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @Values: 20:Manual,21:CIRCLE,22:STABILIZE,23:TRAINING,24:ACRO,25:FBWA,26:FBWB,27:CRUISE,30:Auto,31:RTL,32:Loiter,35:Guided
     // @User: Standard
     GSCALAR(plane_flight_mode2, "PLFLTMODE2",               PLANE_FLIGHT_MODE_2),
 
     // @Param: PLFLTMODE3
     // @DisplayName: Flight Mode 3
     // @Description: Flight mode when Channel 5 pwm is >1360, <= 1490
-    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @Values: 20:Manual,21:CIRCLE,22:STABILIZE,23:TRAINING,24:ACRO,25:FBWA,26:FBWB,27:CRUISE,30:Auto,31:RTL,32:Loiter,35:Guided
     // @User: Standard
     GSCALAR(plane_flight_mode3, "PLFLTMODE3",               PLANE_FLIGHT_MODE_3),
 
     // @Param: PLFLTMODE4
     // @DisplayName: Flight Mode 4
     // @Description: Flight mode when Channel 5 pwm is >1490, <= 1620
-    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @Values: 20:Manual,21:CIRCLE,22:STABILIZE,23:TRAINING,24:ACRO,25:FBWA,26:FBWB,27:CRUISE,30:Auto,31:RTL,32:Loiter,35:Guided
     // @User: Standard
     GSCALAR(plane_flight_mode4, "PLFLTMODE4",               PLANE_FLIGHT_MODE_4),
 
     // @Param: PLFLTMODE5
     // @DisplayName: Flight Mode 5
     // @Description: Flight mode when Channel 5 pwm is >1620, <= 1749
-    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @Values: 20:Manual,21:CIRCLE,22:STABILIZE,23:TRAINING,24:ACRO,25:FBWA,26:FBWB,27:CRUISE,30:Auto,31:RTL,32:Loiter,35:Guided
     // @User: Standard
     GSCALAR(plane_flight_mode5, "PLFLTMODE5",               PLANE_FLIGHT_MODE_5),
 
     // @Param: PLFLTMODE6
     // @DisplayName: Flight Mode 6
     // @Description: Flight mode when Channel 5 pwm is >=1750
-    // @Values: 0:Stabilize/Manual,1:Acro/Circle,2:AltHold/Stabilize,3:Auto/Training,4:Guided/Acro,5:Loiter/FBWA,6:RTL/FBWB,7:Circle/Cruise,8:Position,9:Land,10:OF_Loiter/Auto,11:Drift/RTL,12:PlaneLoiter,13:Sport,15:PlaneGuided
+    // @Values: 20:Manual,21:CIRCLE,22:STABILIZE,23:TRAINING,24:ACRO,25:FBWA,26:FBWB,27:CRUISE,30:Auto,31:RTL,32:Loiter,35:Guided
     // @User: Standard
     GSCALAR(plane_flight_mode6, "PLFLTMODE6",               PLANE_FLIGHT_MODE_6),
 
@@ -588,8 +588,8 @@ const AP_Param::Info var_info[] PROGMEM = {
     ASCALAR(pitch_limit_min_cd,     "LIM_PITCH_MIN",  PITCH_MIN_CENTIDEGREE),
 
     // @Param: ACRO_ROLL_RATEP
-    // @DisplayName: ACRO mode roll rate
-    // @Description: The maximum roll rate at full stick deflection in ACRO mode
+    // @DisplayName: PLANE_ACRO mode roll rate
+    // @Description: The maximum roll rate at full stick deflection in PLANE_ACRO mode
     // @Units: degrees/second
     // @Range: 10 500
     // @Increment: 1
@@ -597,8 +597,8 @@ const AP_Param::Info var_info[] PROGMEM = {
     GSCALAR(acro_roll_ratep,          "ACRO_ROLL_RATEP",    180),
 
     // @Param: ACRO_PITCH_RATEP
-    // @DisplayName: ACRO mode pitch rate
-    // @Description: The maximum pitch rate at full stick deflection in ACRO mode
+    // @DisplayName: PLANE_ACRO mode pitch rate
+    // @Description: The maximum pitch rate at full stick deflection in PLANE_ACRO mode
     // @Units: degrees/second
     // @Range: 10 500
     // @Increment: 1
@@ -606,7 +606,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     GSCALAR(acro_pitch_ratep,          "ACRO_PITCH_RATEP",  180),
 
     // @Param: ACRO_LOCKING
-    // @DisplayName: ACRO mode attitude locking
+    // @DisplayName: PLANE_ACRO mode attitude locking
     // @Description: Enable attitude locking when sticks are released
     // @Values: 0:Disabled,1:Enabled
     // @User: Standard
@@ -632,7 +632,7 @@ const AP_Param::Info var_info[] PROGMEM = {
 
     // @Param: TRIM_AUTO
     // @DisplayName: Automatic trim adjustment
-    // @Description: Set RC trim PWM levels to current levels when switching away from manual mode. When this option is enabled and you change from MANUAL to any other mode then the APM will take the current position of the control sticks as the trim values for aileron, elevator and rudder. It will use those to set RC1_TRIM, RC2_TRIM and RC4_TRIM. This option is disabled by default as if a pilot is not aware of this option and changes from MANUAL to another mode while control inputs are not centered then the trim could be changed to a dangerously bad value. You can enable this option to assist with trimming your plane, by enabling it before takeoff then switching briefly to MANUAL in flight, and seeing how the plane reacts. You can then switch back to FBWA, trim the surfaces then again test MANUAL mode. Each time you switch from MANUAL the APM will take your control inputs as the new trim. After you have good trim on your aircraft you can disable TRIM_AUTO for future flights.
+    // @Description: Set RC trim PWM levels to current levels when switching away from manual mode. When this option is enabled and you change from PLANE_MANUAL to any other mode then the APM will take the current position of the control sticks as the trim values for aileron, elevator and rudder. It will use those to set RC1_TRIM, RC2_TRIM and RC4_TRIM. This option is disabled by default as if a pilot is not aware of this option and changes from PLANE_MANUAL to another mode while control inputs are not centered then the trim could be changed to a dangerously bad value. You can enable this option to assist with trimming your plane, by enabling it before takeoff then switching briefly to PLANE_MANUAL in flight, and seeing how the plane reacts. You can then switch back to FBWA, trim the surfaces then again test PLANE_MANUAL mode. Each time you switch from PLANE_MANUAL the APM will take your control inputs as the new trim. After you have good trim on your aircraft you can disable TRIM_AUTO for future flights.
     // @Values: 0:Disabled,1:Enabled
     // @User: Standard
     GSCALAR(auto_trim,              "TRIM_AUTO",      AUTO_TRIM),
@@ -741,15 +741,15 @@ const AP_Param::Info var_info[] PROGMEM = {
     GSCALAR(pitch_trim_cd,        "TRIM_PITCH_CD",  0),
 
     // @Param: ALT_HOLD_RTL
-    // @DisplayName: RTL altitude
-    // @Description: Return to launch target altitude. This is the altitude the plane will aim for and loiter at when returning home. If this is negative (usually -1) then the plane will use the current altitude at the time of entering RTL. Note that when transiting to a Rally Point the alitude of the Rally Point is used instead of ALT_HOLD_RTL.
+    // @DisplayName: PLANE_RTL altitude
+    // @Description: Return to launch target altitude. This is the altitude the plane will aim for and loiter at when returning home. If this is negative (usually -1) then the plane will use the current altitude at the time of entering PLANE_RTL. Note that when transiting to a Rally Point the alitude of the Rally Point is used instead of ALT_HOLD_RTL.
     // @Units: centimeters
     // @User: User
     GSCALAR(RTL_altitude_cm,        "ALT_HOLD_RTL",   ALT_HOLD_HOME_CM),
 
     // @Param: ALT_HOLD_FBWCM
     // @DisplayName: Minimum altitude for FBWB mode
-    // @Description: This is the minimum altitude in centimeters that FBWB and CRUISE modes will allow. If you attempt to descend below this altitude then the plane will level off. A value of zero means no limit.
+    // @Description: This is the minimum altitude in centimeters that FBWB and PLANE_CRUISE modes will allow. If you attempt to descend below this altitude then the plane will level off. A value of zero means no limit.
     // @Units: centimeters
     // @User: User
     GSCALAR(FBWB_min_altitude_cm,   "ALT_HOLD_FBWCM", ALT_HOLD_FBW_CM),

@@ -260,17 +260,17 @@
 //  Name            | Description
 // -----------------+--------------------------------------------
 //                  |
-//  MANUAL          | Full manual control via the hardware multiplexer.
+//  PLANE_MANUAL          | Full manual control via the hardware multiplexer.
 //                  |
-//  STABILIZE       | Tries to maintain level flight, but can be overridden with radio control inputs.
+//  PLANE_STABILIZE       | Tries to maintain level flight, but can be overridden with radio control inputs.
 //                  |
-//  FLY_BY_WIRE_A   | Autopilot style control via user input, with manual throttle.
+//  PLANE_FLY_BY_WIRE_A   | Autopilot style control via user input, with manual throttle.
 //                  |
-//  FLY_BY_WIRE_B   | Autopilot style control via user input, aispeed controlled with throttle.
+//  PLANE_FLY_BY_WIRE_B   | Autopilot style control via user input, aispeed controlled with throttle.
 //                  |
-//  RTL             | Returns to the Home location and then LOITERs at a safe altitude.
+//  PLANE_RTL             | Returns to the Home location and then PLANE_LOITERs at a safe altitude.
 //                  |
-//  AUTO            | Autonomous flight based on programmed waypoints.  Use the WaypointWriter
+//  PLANE_AUTO            | Autonomous flight based on programmed waypoints.  Use the WaypointWriter
 //                  | application or your Ground Control System to edit and upload
 //                  | waypoints and other commands.
 //                  |
@@ -281,24 +281,24 @@
 //  Name            | Description
 // -----------------+--------------------------------------------
 //                  |
-//  LOITER          | Flies in a circle around the current location.
+//  PLANE_LOITER          | Flies in a circle around the current location.
 //                  |
-//  CIRCLE          | Flies in a stabilized 'dumb' circle.
+//  PLANE_CIRCLE          | Flies in a stabilized 'dumb' circle.
 //                  |
 //
 //
 // If you are using channel 8 for mode switching then PLANE_FLIGHT_MODE_5 and
-// PLANE_FLIGHT_MODE_6 should be MANUAL.
+// PLANE_FLIGHT_MODE_6 should be PLANE_MANUAL.
 //
 //
 //#define FLIGHT_MODE_CHANNEL	8
 //
-//#define PLANE_FLIGHT_MODE_1         RTL
-//#define PLANE_FLIGHT_MODE_2         RTL
-//#define PLANE_FLIGHT_MODE_3         STABILIZE
-//#define PLANE_FLIGHT_MODE_4         STABILIZE
-//#define PLANE_FLIGHT_MODE_5         MANUAL
-//#define PLANE_FLIGHT_MODE_6         MANUAL
+//#define PLANE_FLIGHT_MODE_1         PLANE_RTL
+//#define PLANE_FLIGHT_MODE_2         PLANE_RTL
+//#define PLANE_FLIGHT_MODE_3         PLANE_STABILIZE
+//#define PLANE_FLIGHT_MODE_4         PLANE_STABILIZE
+//#define PLANE_FLIGHT_MODE_5         PLANE_MANUAL
+//#define PLANE_FLIGHT_MODE_6         PLANE_MANUAL
 //
 
 //////////////////////////////////////////////////////////////////////////////
@@ -359,27 +359,27 @@
 // in the preceeding 20 seconds then this will also trigger a "long" failsafe.
 //
 // The SHORT_FAILSAFE_ACTION and LONG_FAILSAFE_ACTION settings determines what APM will do when
-// a failsafe mode is entered while flying in AUTO or LOITER mode.  This is important in order to avoid
+// a failsafe mode is entered while flying in PLANE_AUTO or PLANE_LOITER mode.  This is important in order to avoid
 // accidental failsafe behaviour when flying waypoints that take the aircraft
 // out of radio range.
 //
-// If SHORT_FAILSAFE_ACTION is 1, when failsafe is entered in AUTO or LOITER modes,
-// the aircraft will head for home in RTL mode.  If the failsafe condition is
-// resolved, it will return to AUTO or LOITER mode.
+// If SHORT_FAILSAFE_ACTION is 1, when failsafe is entered in PLANE_AUTO or PLANE_LOITER modes,
+// the aircraft will head for home in PLANE_RTL mode.  If the failsafe condition is
+// resolved, it will return to PLANE_AUTO or PLANE_LOITER mode.
 
-// If LONG_FAILSAFE_ACTION is 1, when failsafe is entered in AUTO or LOITER modes,
-// the aircraft will head for home in RTL mode.  If the failsafe condition is
-// resolved the aircraft will not be returned to AUTO or LOITER mode, but will continue home
+// If LONG_FAILSAFE_ACTION is 1, when failsafe is entered in PLANE_AUTO or PLANE_LOITER modes,
+// the aircraft will head for home in PLANE_RTL mode.  If the failsafe condition is
+// resolved the aircraft will not be returned to PLANE_AUTO or PLANE_LOITER mode, but will continue home
 
-// If XX_FAILSAFE_ACTION is 0 and the applicable failsafe occurs while in AUTO or LOITER
+// If XX_FAILSAFE_ACTION is 0 and the applicable failsafe occurs while in PLANE_AUTO or PLANE_LOITER
 // mode the aircraft will continue in that mode ignoring the failsafe condition.
 
 // Note that for Manual, Stabilize, and Fly-By-Wire (A and B) modes the aircraft will always
-// enter a circling mode for short failsafe conditions and will be switched to RTL for long
-// failsafe conditions.  RTL mode is unaffected by failsafe conditions.
+// enter a circling mode for short failsafe conditions and will be switched to PLANE_RTL for long
+// failsafe conditions.  PLANE_RTL mode is unaffected by failsafe conditions.
 //
 // The default is to have GCS Heartbeat failsafes DISABLED
-// The default behaviour is to ignore failsafes in AUTO and LOITER modes.
+// The default behaviour is to ignore failsafes in PLANE_AUTO and PLANE_LOITER modes.
 //
 //#define GCS_HEARTBEAT_FAILSAFE	DISABLED
 //#define SHORT_FAILSAFE_ACTION 	0
@@ -390,9 +390,9 @@
 // AUTO_TRIM                                OPTIONAL
 //
 // ArduPilot Mega can update its trim settings by looking at the
-// radio inputs when switching out of MANUAL mode.  This allows you to
+// radio inputs when switching out of PLANE_MANUAL mode.  This allows you to
 // manually trim your aircraft before switching to an assisted mode, but it
-// also means that you should avoid switching out of MANUAL while you have
+// also means that you should avoid switching out of PLANE_MANUAL while you have
 // any control stick deflection.
 //
 // The default is to disable AUTO_TRIM.
@@ -417,7 +417,7 @@
 // ENABLE_STICK_MIXING                     OPTIONAL
 //
 // If this option is set to ENABLED, manual control inputs are are respected
-// while in the autopilot modes (AUTO, RTL, LOITER, CIRCLE etc.)
+// while in the autopilot modes (PLANE_AUTO, PLANE_RTL, PLANE_LOITER, PLANE_CIRCLE etc.)
 //
 // The default is to enable stick mixing, allowing the pilot to take
 // emergency action without switching modes.
@@ -524,7 +524,7 @@
 //
 
 //////////////////////////////////////////////////////////////////////////////
-// FLY_BY_WIRE_B airspeed control (also used for throttle "nudging" in AUTO)
+// PLANE_FLY_BY_WIRE_B airspeed control (also used for throttle "nudging" in PLANE_AUTO)
 //
 // AIRSPEED_FBW_MIN                         OPTIONAL
 // AIRSPEED_FBW_MAX                         OPTIONAL
@@ -532,9 +532,9 @@
 // Airspeed corresponding to minimum and maximum throttle in Fly By Wire B mode.
 // The defaults are 6 and 30 metres per second.
 //
-// AIRSPEED_FBW_MAX also sets the maximum airspeed that the cruise airspeed can be "nudged" to in AUTO mode when ENABLE_STICK_MIXING is set.
-// In AUTO the cruise airspeed can be increased between AIRSPEED_CRUISE and AIRSPEED_FBW_MAX by positioning the throttle
-// stick in the top 1/2 of its range.  Throttle stick in the bottom 1/2 provide regular AUTO control.
+// AIRSPEED_FBW_MAX also sets the maximum airspeed that the cruise airspeed can be "nudged" to in PLANE_AUTO mode when ENABLE_STICK_MIXING is set.
+// In PLANE_AUTO the cruise airspeed can be increased between AIRSPEED_CRUISE and AIRSPEED_FBW_MAX by positioning the throttle
+// stick in the top 1/2 of its range.  Throttle stick in the bottom 1/2 provide regular PLANE_AUTO control.
 //
 //#define AIRSPEED_FBW_MIN    6
 //#define AIRSPEED_FBW_MAX    22

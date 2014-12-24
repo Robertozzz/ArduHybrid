@@ -122,9 +122,9 @@ plane_setup_flightmodes(uint8_t argc, const Menu::arg *argv)
 
         // look for control switch change
         if (oldSwitchPosition != switchPosition) {
-            // force position 5 to MANUAL
+            // force position 5 to PLANE_MANUAL
             if (switchPosition > 4) {
-                plane_flight_modes[switchPosition] = MANUAL;
+                plane_flight_modes[switchPosition] = PLANE_MANUAL;
             }
             // update our current mode
             mode = plane_flight_modes[switchPosition];
@@ -144,29 +144,29 @@ plane_setup_flightmodes(uint8_t argc, const Menu::arg *argv)
             mode += radioInputSwitch;
 
             while (
-                mode != MANUAL &&
-                mode != CIRCLE &&
-                mode != STABILIZE &&
-                mode != TRAINING &&
-                mode != ACRO &&
-                mode != FLY_BY_WIRE_A &&
-                mode != FLY_BY_WIRE_B &&
-                mode != CRUISE &&
-                mode != AUTO &&
-                mode != RTL &&
-                mode != LOITER)
+                mode != PLANE_MANUAL &&
+                mode != PLANE_CIRCLE &&
+                mode != PLANE_STABILIZE &&
+                mode != PLANE_TRAINING &&
+                mode != PLANE_ACRO &&
+                mode != PLANE_FLY_BY_WIRE_A &&
+                mode != PLANE_FLY_BY_WIRE_B &&
+                mode != PLANE_CRUISE &&
+                mode != PLANE_AUTO &&
+                mode != PLANE_RTL &&
+                mode != PLANE_LOITER)
             {
-                if (mode < MANUAL)
-                    mode = LOITER;
-                else if (mode >LOITER)
-                    mode = MANUAL;
+                if (mode < PLANE_MANUAL)
+                    mode = PLANE_LOITER;
+                else if (mode >PLANE_LOITER)
+                    mode = PLANE_MANUAL;
                 else
                     mode += radioInputSwitch;
             }
 
             // Override position 5
             if(switchPosition > 4)
-                mode = MANUAL;
+                mode = PLANE_MANUAL;
 
             // save new mode
             plane_flight_modes[switchPosition] = mode;

@@ -24,13 +24,13 @@ void plane_change_command(uint8_t cmd_index)
         non_nav_command_ID      = NO_COMMAND;
 
         /*
-          if we are in AUTO then we need to set the nav_command_index
+          if we are in PLANE_AUTO then we need to set the nav_command_index
           to one less than the requested index as
           process_next_command() will increment the index before using
-          it. If not in AUTO then we just set the index as give.
+          it. If not in PLANE_AUTO then we just set the index as give.
           Thanks to Michael Day for finding this!
          */
-        if (plane_control_mode == AUTO) {
+        if (plane_control_mode == PLANE_AUTO) {
             nav_command_index       = cmd_index - 1;
         } else {
             nav_command_index       = cmd_index;
@@ -44,7 +44,7 @@ void plane_change_command(uint8_t cmd_index)
 // --------------------
 static void plane_update_commands(void)
 {
-    if(plane_control_mode == AUTO) {
+    if(plane_control_mode == PLANE_AUTO) {
         if(ap.home_is_set == true && g.command_total > 1) {
             process_next_command();
         }

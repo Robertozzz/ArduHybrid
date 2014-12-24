@@ -81,13 +81,13 @@ static Location rally_location_to_location(const RallyLocation &r_loc, const Loc
     return ret;
 }
 
-// return best RTL location from current position
+// return best PLANE_RTL location from current position
 static Location rally_find_best_location(const Location &myloc, const Location &homeloc)
 {
     RallyLocation ral_loc = {};
     Location ret = {};
     if (find_best_rally_point(myloc, home, ral_loc)) {
-        //we have setup Rally points: use them instead of Home for RTL
+        //we have setup Rally points: use them instead of Home for PLANE_RTL
         ret = rally_location_to_location(ral_loc, home);
     } else {
         ret = homeloc;

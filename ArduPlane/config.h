@@ -323,22 +323,22 @@
 #endif
 
 #if !defined(PLANE_FLIGHT_MODE_1)
- # define PLANE_FLIGHT_MODE_1                  RTL
+ # define PLANE_FLIGHT_MODE_1                  PLANE_RTL
 #endif
 #if !defined(PLANE_FLIGHT_MODE_2)
- # define PLANE_FLIGHT_MODE_2                  RTL
+ # define PLANE_FLIGHT_MODE_2                  PLANE_RTL
 #endif
 #if !defined(PLANE_FLIGHT_MODE_3)
- # define PLANE_FLIGHT_MODE_3                  FLY_BY_WIRE_A
+ # define PLANE_FLIGHT_MODE_3                  PLANE_FLY_BY_WIRE_A
 #endif
 #if !defined(PLANE_FLIGHT_MODE_4)
- # define PLANE_FLIGHT_MODE_4                  FLY_BY_WIRE_A
+ # define PLANE_FLIGHT_MODE_4                  PLANE_FLY_BY_WIRE_A
 #endif
 #if !defined(PLANE_FLIGHT_MODE_5)
- # define PLANE_FLIGHT_MODE_5                  MANUAL
+ # define PLANE_FLIGHT_MODE_5                  PLANE_MANUAL
 #endif
 #if !defined(PLANE_FLIGHT_MODE_6)
- # define PLANE_FLIGHT_MODE_6                  MANUAL
+ # define PLANE_FLIGHT_MODE_6                  PLANE_MANUAL
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -432,7 +432,7 @@
 #define MIN_GNDSPEED_CM MIN_GNDSPEED*100
 
 //////////////////////////////////////////////////////////////////////////////
-// FLY_BY_WIRE_B airspeed control
+// PLANE_FLY_BY_WIRE_B airspeed control
 //
 #ifndef AIRSPEED_FBW_MIN
  # define AIRSPEED_FBW_MIN               9

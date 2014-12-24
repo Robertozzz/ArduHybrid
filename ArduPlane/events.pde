@@ -9,38 +9,38 @@ static void failsafe_short_on_event(enum failsafe_state fstype)
     gcs_send_text_P(SEVERITY_LOW, PSTR("Failsafe - Short event on, "));
     switch(plane_control_mode)
     {
-    case MANUAL:
-    case STABILIZE:
-    case ACRO:
-    case FLY_BY_WIRE_A:
-    case FLY_BY_WIRE_B:
-    case CRUISE:
-    case TRAINING:
+    case PLANE_MANUAL:
+    case PLANE_STABILIZE:
+    case PLANE_ACRO:
+    case PLANE_FLY_BY_WIRE_A:
+    case PLANE_FLY_BY_WIRE_B:
+    case PLANE_CRUISE:
+    case PLANE_TRAINING:
         plane_failsafe.saved_mode = plane_control_mode;
         plane_failsafe.saved_mode_set = 1;
         if(g.short_fs_action == 2) {
-            plane_set_mode(FLY_BY_WIRE_A);
+            plane_set_mode(PLANE_FLY_BY_WIRE_A);
         } else {
-            plane_set_mode(CIRCLE);
+            plane_set_mode(PLANE_CIRCLE);
         }
         break;
 
-    case AUTO:
-    case GUIDED:
-    case LOITER:
+    case PLANE_AUTO:
+    case PLANE_GUIDED:
+    case PLANE_LOITER:
         if(g.short_fs_action != 0) {
             plane_failsafe.saved_mode = plane_control_mode;
             plane_failsafe.saved_mode_set = 1;
             if(g.short_fs_action == 2) {
-                plane_set_mode(FLY_BY_WIRE_A);
+                plane_set_mode(PLANE_FLY_BY_WIRE_A);
             } else {
-                plane_set_mode(CIRCLE);
+                plane_set_mode(PLANE_CIRCLE);
             }
         }
         break;
 
-    case CIRCLE:
-    case RTL:
+    case PLANE_CIRCLE:
+    case PLANE_RTL:
     default:
         break;
     }
@@ -56,32 +56,32 @@ static void failsafe_long_on_event(enum failsafe_state fstype)
     plane_failsafe.state = fstype;
     switch(plane_control_mode)
     {
-    case MANUAL:
-    case STABILIZE:
-    case ACRO:
-    case FLY_BY_WIRE_A:
-    case FLY_BY_WIRE_B:
-    case CRUISE:
-    case TRAINING:
-    case CIRCLE:
+    case PLANE_MANUAL:
+    case PLANE_STABILIZE:
+    case PLANE_ACRO:
+    case PLANE_FLY_BY_WIRE_A:
+    case PLANE_FLY_BY_WIRE_B:
+    case PLANE_CRUISE:
+    case PLANE_TRAINING:
+    case PLANE_CIRCLE:
         if(g.long_fs_action == 2) {
-            plane_set_mode(FLY_BY_WIRE_A);
+            plane_set_mode(PLANE_FLY_BY_WIRE_A);
         } else {
-            plane_set_mode(RTL);
+            plane_set_mode(PLANE_RTL);
         }
         break;
 
-    case AUTO:
-    case GUIDED:
-    case LOITER:
+    case PLANE_AUTO:
+    case PLANE_GUIDED:
+    case PLANE_LOITER:
         if(g.long_fs_action == 2) {
-            plane_set_mode(FLY_BY_WIRE_A);
+            plane_set_mode(PLANE_FLY_BY_WIRE_A);
         } else if (g.long_fs_action == 1) {
-            plane_set_mode(RTL);
+            plane_set_mode(PLANE_RTL);
         }
         break;
 
-    case RTL:
+    case PLANE_RTL:
     default:
         break;
     }
@@ -96,7 +96,7 @@ static void failsafe_short_off_event()
 
     // re-read the switch so we can return to our preferred mode
     // --------------------------------------------------------
-    if (plane_control_mode == CIRCLE && plane_failsafe.saved_mode_set) {
+    if (plane_control_mode == PLANE_CIRCLE && plane_failsafe.saved_mode_set) {
         plane_failsafe.saved_mode_set = 0;
         plane_set_mode(plane_failsafe.saved_mode);
     }
@@ -109,7 +109,7 @@ void low_battery_event(void)
     }
     plane_gcs_send_text_fmt(PSTR("Low Battery %.2fV Used %.0f mAh"),
                       battery.voltage(), battery.current_total_mah());
-    plane_set_mode(RTL);
+    plane_set_mode(PLANE_RTL);
     aparm.plthr_cruise.load();
     plane_failsafe.low_battery = true;
     AP_Notify::flags.failsafe_battery = true;
