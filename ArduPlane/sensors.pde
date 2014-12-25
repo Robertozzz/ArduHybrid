@@ -47,27 +47,6 @@ static void zero_airspeed(void)
     gcs_send_text_P(SEVERITY_LOW,PSTR("zero airspeed calibrated"));
 }
 
-// plane_read_battery - reads battery voltage and current and invokes failsafe
-// should be called at 10hz
-static void plane_read_battery(void)
-{
-    battery.read();
-
-    if (!ap.usb_connected && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah)) {
-        low_battery_event();
-    }
-}
-
-/*
-  return current_loc.alt adjusted for ALT_OFFSET
-  This is useful during long flights to account for barometer changes
-  from the GCS, or to adjust the flying height of a long mission
- */
-static int32_t adjusted_altitude_cm(void)
-{
-    return current_loc.alt - (g.alt_offset*100);
-}
-
 static void init_compass()
 {
     if (g.compass_enabled==true) {
@@ -79,6 +58,17 @@ static void init_compass()
 		}
 		ahrs.set_compass(&compass);
 	}
+}
+
+// plane_read_battery - reads battery voltage and current and invokes failsafe
+// should be called at 10hz
+static void plane_read_battery(void)
+{
+    battery.read();
+
+    if (!ap.usb_connected && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah)) {
+        low_battery_event();
+    }
 }
 
 // read the receiver RSSI as an 8 bit number for MAVLink
@@ -93,4 +83,9 @@ void read_receiver_rssi(void)
         float ret = rssi_analog_source->voltage_average() * 255 / g.rssi_range;
         receiver_rssi = constrain_int16(ret, 0, 255);
     }
+}
+
+static int32_t adjusted_altitude_cm(void)
+{
+    return current_loc.alt - (g.alt_offset*100);
 }

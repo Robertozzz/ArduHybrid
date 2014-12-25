@@ -227,7 +227,7 @@ static bool verify_condition_command()          // Returns true if command compl
 }
 
 /********************************************************************************/
-//  Nav (Must) commands
+//	Nav (Must) commands
 /********************************************************************************/
 
 static void plane_do_RTL(void)

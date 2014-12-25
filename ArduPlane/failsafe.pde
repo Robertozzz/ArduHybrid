@@ -1,23 +1,38 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
-/*
- *  failsafe support
- *  Andrew Tridgell, December 2011
- */
+//
+//  failsafe support
+//  Andrew Tridgell, December 2011
+//
+//  our failsafe strategy is to detect main loop lockup and disarm the motors
+//
 
-/*
- *  our failsafe strategy is to detect main loop lockup and switch to
- *  passing inputs straight from the RC inputs to RC outputs.
- */
+static bool failsafe_enabled = true;
+static uint16_t last_mainLoop_count;
+static uint32_t last_timestamp;
+static bool in_failsafe;
 
-/*
- *  this failsafe_check function is called from the core timer interrupt
- *  at 1kHz.
- */
-void failsafe_check(void)
+//
+// failsafe_enable - enable failsafe
+//
+void failsafe_enable()
 {
-    static uint16_t last_mainLoop_count;
-    static uint32_t last_timestamp;
-    static bool in_failsafe;
+    failsafe_enabled = true;
+    last_timestamp = micros();
+}
+
+//
+// failsafe_disable - used when we know we are going to delay the mainloop significantly
+//
+void failsafe_disable()
+{
+    failsafe_enabled = false;
+}
+
+//
+//  failsafe_check - this function is called from the core timer interrupt at 1kHz.
+//
+void failsafe_check()
+{
     uint32_t tnow = hal.scheduler->micros();
 
     if (mainLoop_count != last_mainLoop_count) {

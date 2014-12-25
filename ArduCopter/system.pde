@@ -215,7 +215,7 @@ static void init_ardupilot()
      *  the RC library being initialised.
      */
     hal.scheduler->register_timer_failsafe(failsafe_check, 1000);
-
+	
 #if HIL_MODE != HIL_MODE_ATTITUDE
  #if CONFIG_ADC == ENABLED
     // begin filtering the ADC Gyros
@@ -466,6 +466,87 @@ static bool set_mode(uint8_t mode)
 
     // return success or failure
     return success;
+}
+
+static void plane_set_mode(enum FlightMode mode)
+{
+    if(plane_control_mode == mode) {
+        // don't switch modes if we are already in the correct mode.
+        return;
+    }
+    if(g.auto_trim > 0 && plane_control_mode == PLANE_MANUAL)
+        trim_control_surfaces();
+
+    plane_control_mode = mode;
+
+    switch(plane_control_mode)
+    {
+    case PLANE_INITIALISING:
+    case PLANE_MANUAL:
+    case PLANE_STABILIZE:
+    case PLANE_TRAINING:
+    case PLANE_FLY_BY_WIRE_A:
+        break;
+
+    case PLANE_ACRO:
+        acro_state.locked_roll = false;
+        acro_state.locked_pitch = false;
+        break;
+
+    case PLANE_CRUISE:
+        cruise_state.locked_heading = false;
+        cruise_state.lock_timer_ms = 0;
+        target_altitude_cm = current_loc.alt;
+        break;
+
+    case PLANE_FLY_BY_WIRE_B:
+        target_altitude_cm = current_loc.alt;
+        break;
+
+    case PLANE_CIRCLE:
+        // the altitude to circle at is taken from the current altitude
+        next_WP.alt = current_loc.alt;
+        break;
+
+    case PLANE_AUTO:
+        prev_WP = current_loc;
+        update_auto();
+        break;
+
+    case PLANE_RTL:
+        prev_WP = current_loc;
+        plane_do_RTL();
+        break;
+
+    case PLANE_LOITER:
+        do_loiter_at_location();
+        break;
+
+    case PLANE_GUIDED:
+        guided_throttle_passthru = false;
+        set_guided_WP();
+        break;
+
+    default:
+        prev_WP = current_loc;
+        plane_do_RTL();
+        break;
+    }
+
+    // if in an auto-throttle mode, start with throttle suppressed for
+    // safety. suppress_throttle() will unsupress it when appropriate
+    if (plane_control_mode == PLANE_CIRCLE || plane_control_mode >= PLANE_FLY_BY_WIRE_B) {
+        auto_throttle_mode = true;
+        throttle_suppressed = true;
+    } else {
+        auto_throttle_mode = false;        
+        throttle_suppressed = false;
+    }
+
+    // reset attitude integrators on mode change
+    rollController.reset_I();
+    pitchController.reset_I();
+    yawController.reset_I();    
 }
 
 // returns true if the GPS is ok and home position is set

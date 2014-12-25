@@ -732,7 +732,7 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { update_flight_mode,     1,   1400 },
     { plane_stabilize,        1,   3500 },
     { plane_set_servos,       1,   1600 },
-    { read_control_switch,    7,   1000 },
+    { plane_read_control_switch,    7,   1000 },
     { gcs_retry_deferred,     1,   1000 },
     { update_GPS_50Hz,        1,   2500 },
     { update_GPS_10Hz,        5,   2500 }, // 10

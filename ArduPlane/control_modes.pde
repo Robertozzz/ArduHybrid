@@ -1,7 +1,7 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
 
-static void read_control_switch()
+static void plane_read_control_switch()
 {
     static bool switch_debouncer;
     uint8_t switchPosition = readSwitch();
@@ -58,7 +58,7 @@ static void read_control_switch()
 }
 
 static uint8_t readSwitch(void){
-    uint16_t pulsewidth = hal.rcin->read(g.flight_mode_channel - 1);
+    int16_t pulsewidth = g.rc_5.radio_in;   // default for Arducopter
     if (pulsewidth <= 910 || pulsewidth >= 2090) return 255;            // This is an error condition
     if (pulsewidth > 1230 && pulsewidth <= 1360) return 1;
     if (pulsewidth > 1360 && pulsewidth <= 1490) return 2;
@@ -71,6 +71,6 @@ static uint8_t readSwitch(void){
 static void reset_control_switch()
 {
     oldSwitchPosition = 254;
-    read_control_switch();
+    plane_read_control_switch();
 }
 

@@ -1,6 +1,6 @@
 // -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
- // filter altitude from the barometer with a low pass filter
+// filter altitude from the barometer with a low pass filter
 static LowPassFilterInt32 altitude_filter;
 
 // Sensors are not available in HIL_MODE_ATTITUDE
@@ -36,6 +36,35 @@ static int32_t read_barometer(void)
 {
     barometer.read();
     return barometer.get_altitude() * 100.0f;
+}
+
+static int32_t plane_read_barometer(void)
+{
+    barometer.read();
+    if (should_log(MASK_LOG_IMU)) {
+        Log_Write_Baro();
+    }
+    return altitude_filter.apply(barometer.get_altitude() * 100.0);
+}
+
+/*
+  ask airspeed sensor for a new value
+ */
+static void read_airspeed(void)
+{
+    if (airspeed.enabled()) {
+        airspeed.read();
+        if (should_log(MASK_LOG_IMU)) {
+            Log_Write_Airspeed();
+        }
+        calc_airspeed_errors();
+    }
+}
+
+static void zero_airspeed(void)
+{
+    airspeed.calibrate();
+    gcs_send_text_P(SEVERITY_LOW,PSTR("zero airspeed calibrated"));
 }
 
 // return sonar altitude in centimeters
@@ -115,6 +144,17 @@ static void read_battery(void)
     // we only check when we're not powered by USB to avoid false alarms during bench tests
     if (!ap.usb_connected && !failsafe.battery && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah)) {
         failsafe_battery_event();
+    }
+}
+
+// plane_read_battery - reads battery voltage and current and invokes failsafe
+// should be called at 10hz
+static void plane_read_battery(void)
+{
+    battery.read();
+
+    if (!ap.usb_connected && battery.exhausted(g.fs_batt_voltage, g.fs_batt_mah)) {
+        low_battery_event();
     }
 }
 

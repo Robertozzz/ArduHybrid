@@ -115,7 +115,7 @@ void low_battery_event(void)
     AP_Notify::flags.failsafe_battery = true;
 }
 
-static void update_events(void)
+static void update_events()
 {
     ServoRelayEvents.update_events();
 }
