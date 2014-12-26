@@ -1,4 +1,22 @@
-# ArduPilot Project
+# ArduHybrid Project
+This build is a merge between ArduCopter 3.1.5 and Arduplane 2.78
+
+THIS IS AN UNFINISHED BUILD AND NOT READY TO FLY!!!!
+
+todo:
+
+- Reduce sketch size to fit on APM2.
+- Build switching code between Plane/Copter using receiver input
+- Build switching code between Plane/Copter using mission commands
+- Figure out how to deal with failsafe and maybe switching between the two depending on distance to home/rally point
+- SERVO MASK for mount/aux
+- change default plane servo outputs to prevent interference with MOTORS. Keep motors on default outputs (1 to 8)
+
+- g_gps->init(hal.uartB, GPS::GPS_ENGINE_AIRBORNE_4G); ??
+- AHRS sets  during init ??
+
+=========================================================================================================================
+
 
 You can find lots of development information at the [ArduPilot development site](http://dev.ardupilot.com)
 
