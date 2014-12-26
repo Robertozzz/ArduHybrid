@@ -841,7 +841,7 @@ static void update_mount()
     camera.trigger_pic_cleanup();
 #endif
 }
- 
+
 // update AHRS system
 static void ahrs_update()
 {
