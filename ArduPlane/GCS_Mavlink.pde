@@ -2264,7 +2264,7 @@ plane_mission_failed:
  *  MAVLink to process packets while waiting for the initialisation to
  *  complete
  */
-static void plane_mavlink_delay_cb()
+static void mavlink_delay_cb()
 {
     static uint32_t last_1hz, last_50hz, last_5s;
     if (!gcs[0].initialised || in_mavlink_delay) return;
@@ -2279,7 +2279,7 @@ static void plane_mavlink_delay_cb()
     }
     if (tnow - last_50hz > 20) {
         last_50hz = tnow;
-        gcs_update();
+        gcs_check_input();
         gcs_data_stream_send();
         notify.update();
     }
@@ -2319,7 +2319,7 @@ static void gcs_data_stream_send(void)
 /*
  *  look for incoming commands on the GCS links
  */
-static void gcs_update(void)
+static void gcs_check_input(void)
 {
     for (uint8_t i=0; i<num_gcs; i++) {
         if (gcs[i].initialised) {

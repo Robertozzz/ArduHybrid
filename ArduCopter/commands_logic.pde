@@ -1484,9 +1484,12 @@ static void plane_do_jump()
     non_nav_command_index = g.command_index;
     non_nav_command_ID = WAIT_COMMAND;
 
+#if LOGGING_ENABLED == ENABLED
     if (should_log(MASK_LOG_CMD)) {
         Log_Write_Cmd(g.command_index, &next_nav_command);
     }
+#endif
+
     handle_process_nav_cmd();
 }
 
@@ -1530,8 +1533,10 @@ static void plane_do_take_picture()
 {
 #if CAMERA == ENABLED
     camera.trigger_pic();
+#if LOGGING_ENABLED == ENABLED
     if (should_log(MASK_LOG_CAMERA)) {
         Log_Write_Camera();
     }
+#endif
 #endif
 }

@@ -725,7 +725,7 @@ AP_Param param_loader(var_info, WP_START_BYTE);
   they are expected to take (in microseconds)
  */
 static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
-    { read_radio,             1,    700 }, // 0
+    { plane_read_radio,             1,    700 }, // 0
     { check_short_failsafe,   1,   1000 },
     { ahrs_update,            1,   6400 },
     { update_speed_height,    1,   1600 },
@@ -743,7 +743,7 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { calc_altitude_error,    5,   1000 },
     { plane_update_commands,        5,   5000 },
     { obc_fs_check,           5,   1000 },
-    { gcs_update,             1,   1700 },
+    { gcs_check_input,             1,   1700 },
     { gcs_data_stream_send,   1,   3000 },
     { update_events,		  1,   1500 }, // 20
     { check_usb_mux,          5,    300 },
@@ -847,7 +847,7 @@ static void ahrs_update()
 {
 #if HIL_MODE != HIL_MODE_DISABLED
     // update hil before AHRS update
-    gcs_update();
+    gcs_check_input();
 #endif
 
     ahrs.update();

@@ -214,7 +214,7 @@ static void plane_init_home()
         g_gps->update();
 #if HIL_MODE != HIL_MODE_DISABLED
         // update hil gps so we have new_data
-        gcs_update();
+        gcs_check_input();
 #endif
     }
 

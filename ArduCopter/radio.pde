@@ -82,6 +82,22 @@ static void init_rc_out()
     }
     channel_rudder->enable_out();
 
+    // Initialization of servo outputs
+    for (uint8_t i=0; i<8; i++) {
+        RC_Channel::rc_channel(i)->output_trim();
+    }
+
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+    servo_write(CH_9,   g.rc_9.radio_trim);
+#endif
+#if CONFIG_HAL_BOARD == HAL_BOARD_APM2 || CONFIG_HAL_BOARD == HAL_BOARD_PX4
+    servo_write(CH_10,  g.rc_10.radio_trim);
+    servo_write(CH_11,  g.rc_11.radio_trim);
+#endif
+#if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+    servo_write(CH_12,  g.rc_12.radio_trim);
+#endif
+
     motors.set_update_rate(g.rc_speed);
     motors.set_frame_orientation(g.frame_orientation);
     motors.Init();                                              // motor initialisation
@@ -123,6 +139,12 @@ static void init_rc_out()
     pre_arm_rc_checks();
     if (ap.pre_arm_rc_check) {
         output_min();
+    }
+	
+    // setup PX4 to output the min throttle when safety off if arming
+    // is setup for min on disarm
+    if (arming.arming_required() == AP_Arming::YES_MIN_PWM) {
+        hal.rcout->set_safety_pwm(1UL<<(rcmap.throttle()-1), channel_throttle->radio_min);
     }
 }
 
@@ -171,7 +193,10 @@ static void rudder_arm_check()
             if (arming.arm(AP_Arming::RUDDER)) {
                 channel_throttle->enable_out();                        
                 //only log if arming was successful
+#if LOGGING_ENABLED == ENABLED
                 Log_Arm_Disarm();
+#endif
+
             }                
         }
     } else { 
@@ -221,6 +246,65 @@ static void read_radio()
             set_failsafe_radio(true);
         }
     }
+}
+
+static void plane_read_radio()
+{
+    if (!hal.rcin->valid_channels()) {
+        control_failsafe(channel_throttle->radio_in);
+        return;
+    }
+
+    plane_failsafe.last_valid_rc_ms = hal.scheduler->millis();
+
+    elevon.ch1_temp = channel_roll->read();
+    elevon.ch2_temp = channel_pitch->read();
+    uint16_t pwm_roll, pwm_pitch;
+
+    if (g.mix_mode == 0) {
+        pwm_roll = elevon.ch1_temp;
+        pwm_pitch = elevon.ch2_temp;
+    }else{
+        pwm_roll = BOOL_TO_SIGN(g.reverse_elevons) * (BOOL_TO_SIGN(g.reverse_ch2_elevon) * int16_t(elevon.ch2_temp - elevon.trim2) - BOOL_TO_SIGN(g.reverse_ch1_elevon) * int16_t(elevon.ch1_temp - elevon.trim1)) / 2 + 1500;
+        pwm_pitch = (BOOL_TO_SIGN(g.reverse_ch2_elevon) * int16_t(elevon.ch2_temp - elevon.trim2) + BOOL_TO_SIGN(g.reverse_ch1_elevon) * int16_t(elevon.ch1_temp - elevon.trim1)) / 2 + 1500;
+    }
+    
+    if (plane_control_mode == PLANE_TRAINING) {
+        // in training mode we don't want to use a deadzone, as we
+        // want manual pass through when not exceeding attitude limits
+        channel_roll->set_pwm_no_deadzone(pwm_roll);
+        channel_pitch->set_pwm_no_deadzone(pwm_pitch);
+        channel_throttle->set_pwm_no_deadzone(channel_throttle->read());
+        channel_rudder->set_pwm_no_deadzone(channel_rudder->read());
+    } else {
+        channel_roll->set_pwm(pwm_roll);
+        channel_pitch->set_pwm(pwm_pitch);
+        channel_throttle->set_pwm(channel_throttle->read());
+        channel_rudder->set_pwm(channel_rudder->read());
+    }
+
+    g.rc_5.set_pwm(hal.rcin->read(CH_5));
+    g.rc_6.set_pwm(hal.rcin->read(CH_6));
+    g.rc_7.set_pwm(hal.rcin->read(CH_7));
+    g.rc_8.set_pwm(hal.rcin->read(CH_8));
+
+    control_failsafe(channel_throttle->radio_in);
+
+    channel_throttle->servo_out = channel_throttle->control_in;
+
+    if (g.throttle_nudge && channel_throttle->servo_out > 50) {
+        float nudge = (channel_throttle->servo_out - 50) * 0.02f;
+        if (airspeed.use()) {
+            airspeed_nudge_cm = (aparm.airspeed_max * 100 - g.airspeed_cruise_cm) * nudge;
+        } else {
+            throttle_nudge = (aparm.plthr_max - aparm.plthr_cruise) * nudge;
+        }
+    } else {
+        airspeed_nudge_cm = 0;
+        throttle_nudge = 0;
+    }
+
+    rudder_arm_check();
 }
 
 static void control_failsafe(uint16_t pwm)
@@ -363,7 +447,7 @@ void aux_servos_update_fn()
 
 static void trim_control_surfaces()
 {
-    read_radio();
+    plane_read_radio();
     int16_t trim_roll_range = (channel_roll->radio_max - channel_roll->radio_min)/5;
     int16_t trim_pitch_range = (channel_pitch->radio_max - channel_pitch->radio_min)/5;
     if (channel_roll->radio_in < channel_roll->radio_min+trim_roll_range ||
@@ -400,7 +484,7 @@ static void trim_control_surfaces()
             elevon.trim2 = elevon.ch2_temp;
         }
         //Recompute values here using new values for elevon1_trim and elevon2_trim
-        //We cannot use radio_in[CH_ROLL] and radio_in[CH_PITCH] values from read_radio() because the elevon trim values have changed
+        //We cannot use radio_in[CH_ROLL] and radio_in[CH_PITCH] values from plane_read_radio() because the elevon trim values have changed
         uint16_t center                         = 1500;
         channel_roll->radio_trim       = center;
         channel_pitch->radio_trim      = center;
@@ -418,7 +502,12 @@ static void trim_control_surfaces()
 static void trim_radio()
 {
     for (uint8_t i = 0; i < 30; i++) {
-        read_radio();
+    if (isplane == false){
+		read_radio();
+		}
+	if (isplane == true){	
+        plane_read_radio();
+		}
     }
 
     g.rc_1.trim();      // roll
@@ -428,7 +517,10 @@ static void trim_radio()
     g.rc_1.save_eeprom();
     g.rc_2.save_eeprom();
     g.rc_4.save_eeprom();
+
+    if (isplane == true){
     trim_control_surfaces();
+	}
 }
 
 static bool throttle_failsafe_level(void)

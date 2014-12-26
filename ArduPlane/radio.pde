@@ -131,7 +131,7 @@ static void rudder_arm_check()
     }
 }
 
-static void read_radio()
+static void plane_read_radio()
 {
     if (!hal.rcin->valid_channels()) {
         control_failsafe(channel_throttle->radio_in);
@@ -288,7 +288,7 @@ void aux_servos_update_fn()
 
 static void trim_control_surfaces()
 {
-    read_radio();
+    plane_read_radio();
     int16_t trim_roll_range = (channel_roll->radio_max - channel_roll->radio_min)/5;
     int16_t trim_pitch_range = (channel_pitch->radio_max - channel_pitch->radio_min)/5;
     if (channel_roll->radio_in < channel_roll->radio_min+trim_roll_range ||
@@ -325,7 +325,7 @@ static void trim_control_surfaces()
             elevon.trim2 = elevon.ch2_temp;
         }
         //Recompute values here using new values for elevon1_trim and elevon2_trim
-        //We cannot use radio_in[CH_ROLL] and radio_in[CH_PITCH] values from read_radio() because the elevon trim values have changed
+        //We cannot use radio_in[CH_ROLL] and radio_in[CH_PITCH] values from plane_read_radio() because the elevon trim values have changed
         uint16_t center                         = 1500;
         channel_roll->radio_trim       = center;
         channel_pitch->radio_trim      = center;
@@ -343,7 +343,7 @@ static void trim_control_surfaces()
 static void trim_radio()
 {
     for (uint8_t i = 0; i < 30; i++) {
-        read_radio();
+        plane_read_radio();
     }
 
     trim_control_surfaces();

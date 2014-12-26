@@ -120,8 +120,8 @@ static void init_ardupilot()
 
     // allow servo set on all channels except first 4
 	ServoRelayEvents.set_channel_mask(0xFFF0);
-	
-    set_control_channels();
+
+    set_control_channels();	// Plane
 
     relay.init();
 
@@ -153,7 +153,7 @@ static void init_ardupilot()
     // Register the mavlink service callback. This will run
     // anytime there are more than 5ms remaining in a call to
     // hal.scheduler->delay.
-    hal.scheduler->register_delay_callback(plane_mavlink_delay_cb, 5);
+    hal.scheduler->register_delay_callback(mavlink_delay_cb, 5);
 
     // we start by assuming USB connected, as we initialed the serial
     // port with SERIAL0_BAUD. check_usb_mux() fixes this if need be.

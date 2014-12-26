@@ -128,6 +128,8 @@ static void init_ardupilot()
     // allow servo set on all channels except first 4
 	ServoRelayEvents.set_channel_mask(0xFFF0);
 
+    set_control_channels();	// Plane
+
     relay.init();
 
     // init EPM cargo gripper
@@ -157,6 +159,10 @@ static void init_ardupilot()
 
     rssi_analog_source      = hal.analogin->channel(g.rssi_pin);
     board_vcc_analog_source = hal.analogin->channel(ANALOG_INPUT_BOARD_VCC);
+
+    // keep a record of how many resets have happened. This can be
+    // used to detect in-flight resets
+    g.num_resets.set_and_save(g.num_resets+1);
 
 #if HIL_MODE != HIL_MODE_ATTITUDE
     barometer.init();
@@ -215,7 +221,7 @@ static void init_ardupilot()
      *  the RC library being initialised.
      */
     hal.scheduler->register_timer_failsafe(failsafe_check, 1000);
-	
+
 #if HIL_MODE != HIL_MODE_ATTITUDE
  #if CONFIG_ADC == ENABLED
     // begin filtering the ADC Gyros
@@ -235,6 +241,17 @@ static void init_ardupilot()
     if(g.optflow_enabled) {
         init_optflow();
     }
+		
+    // initialise airspeed sensor
+    airspeed.init();
+
+    // give AHRS the airspeed sensor
+    ahrs.set_airspeed(&airspeed);
+
+#if FENCE_TRIGGERED_PIN > 0
+    hal.gpio->pinMode(FENCE_TRIGGERED_PIN, OUTPUT);
+    digitalWrite(FENCE_TRIGGERED_PIN, LOW);
+#endif
 
     // initialise inertial nav
     inertial_nav.init();
@@ -623,6 +640,7 @@ static void update_auto_armed()
     }
 }
 
+#if LOGGING_ENABLED == ENABLED
 static bool should_log(uint32_t mask)
 {
     if (!(mask & g.log_bitmask) || in_mavlink_delay) {
@@ -646,6 +664,7 @@ static bool should_log(uint32_t mask)
     }
     return ret;
 }
+#endif
 
 /*
  *  map from a 8 bit EEPROM baud rate to a real baud rate

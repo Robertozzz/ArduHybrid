@@ -4019,34 +4019,6 @@ static void mavlink_delay_cb()
     in_mavlink_delay = false;
 }
 
-static void plane_mavlink_delay_cb()
-{
-    static uint32_t last_1hz, last_50hz, last_5s;
-    if (!gcs[0].initialised || in_mavlink_delay) return;
-
-    in_mavlink_delay = true;
-
-    uint32_t tnow = millis();
-    if (tnow - last_1hz > 1000) {
-        last_1hz = tnow;
-        gcs_send_message(MSG_HEARTBEAT);
-        gcs_send_message(MSG_EXTENDED_STATUS1);
-    }
-    if (tnow - last_50hz > 20) {
-        last_50hz = tnow;
-        gcs_update();
-        gcs_data_stream_send();
-        notify.update();
-    }
-    if (tnow - last_5s > 5000) {
-        last_5s = tnow;
-        gcs_send_text_P(SEVERITY_LOW, PSTR("Initialising APM..."));
-    }
-    check_usb_mux();
-
-    in_mavlink_delay = false;
-}
-
 /*
  *  send a message on both GCS links
  */
@@ -4067,18 +4039,6 @@ static void gcs_data_stream_send(void)
     for (uint8_t i=0; i<num_gcs; i++) {
         if (gcs[i].initialised) {
             gcs[i].data_stream_send();
-        }
-    }
-}
-
-/*
- *  look for incoming commands on the GCS links
- */
-static void gcs_update(void)
-{
-    for (uint8_t i=0; i<num_gcs; i++) {
-        if (gcs[i].initialised) {
-            gcs[i].update();
         }
     }
 }

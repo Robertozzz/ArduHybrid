@@ -207,7 +207,7 @@ plane_setup_flightmodes(uint8_t argc, const Menu::arg *argv)
 
     while(1) {
         delay(20);
-        read_radio();
+        plane_read_radio();
         switchPosition = readSwitch();
 
 
@@ -288,7 +288,13 @@ setup_radio(uint8_t argc, const Menu::arg *argv)
 
     for(i = 0; i < 100; i++) {
         delay(20);
-        read_radio();
+
+    if (isplane == false){
+		read_radio();
+		}
+	if (isplane == true){	
+        plane_read_radio();
+		}
     }
 
     if(g.rc_1.radio_in < 500) {
@@ -332,7 +338,12 @@ setup_radio(uint8_t argc, const Menu::arg *argv)
         delay(20);
         // Filters radio input - adjust filters in the radio.pde file
         // ----------------------------------------------------------
-        read_radio();
+    if (isplane == false){
+		read_radio();
+		}
+	if (isplane == true){	
+        plane_read_radio();
+		}
 
         g.rc_1.update_min_max();
         g.rc_2.update_min_max();
@@ -1006,6 +1017,8 @@ print_gyro_offsets(void)
                     (float)gyro_offsets.z);
 }
 
+#endif // CLI_ENABLED
+
 static void
 print_blanks(int16_t num)
 {
@@ -1097,5 +1110,3 @@ radio_input_switch(void)
         return 0;
     }
 }
-
-#endif // CLI_ENABLED

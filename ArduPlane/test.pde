@@ -108,7 +108,7 @@ test_radio_pwm(uint8_t argc, const Menu::arg *argv)
 
         // Filters radio input - adjust filters in the radio.pde file
         // ----------------------------------------------------------
-        read_radio();
+        plane_read_radio();
 
         cliSerial->printf_P(PSTR("IN:\t1: %d\t2: %d\t3: %d\t4: %d\t5: %d\t6: %d\t7: %d\t8: %d\n"),
                         (int)channel_roll->radio_in,
@@ -165,7 +165,7 @@ test_radio(uint8_t argc, const Menu::arg *argv)
 
     while(1) {
         delay(20);
-        read_radio();
+        plane_read_radio();
 
         channel_roll->calc_pwm();
         channel_pitch->calc_pwm();
@@ -199,7 +199,7 @@ test_failsafe(uint8_t argc, const Menu::arg *argv)
     print_hit_enter();
     for(int16_t i = 0; i < 50; i++) {
         delay(20);
-        read_radio();
+        plane_read_radio();
     }
 
     // read the radio to set trims
@@ -211,12 +211,12 @@ test_failsafe(uint8_t argc, const Menu::arg *argv)
     cliSerial->printf_P(PSTR("Unplug battery, throttle in neutral, turn off radio.\n"));
     while(channel_throttle->control_in > 0) {
         delay(20);
-        read_radio();
+        plane_read_radio();
     }
 
     while(1) {
         delay(20);
-        read_radio();
+        plane_read_radio();
 
         if(channel_throttle->control_in > 0) {
             cliSerial->printf_P(PSTR("THROTTLE CHANGED %d \n"), (int)channel_throttle->control_in);
