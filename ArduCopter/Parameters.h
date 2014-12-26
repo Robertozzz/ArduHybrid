@@ -411,7 +411,7 @@ public:
     AP_Int16        land_speed;
     AP_Int16        pilot_velocity_z_max;        // maximum vertical velocity the pilot may request
 
-#if GEOFENCE_ENABLED == ENABLED
+#if AC_FENCE == ENABLED
     AP_Int8 fence_action;					// Plane
     AP_Int8 fence_total;					// Plane
     AP_Int8 fence_channel;					// Plane

@@ -41,9 +41,11 @@ static int32_t read_barometer(void)
 static int32_t plane_read_barometer(void)
 {
     barometer.read();
+#if LOGGING_ENABLED
     if (should_log(MASK_LOG_IMU)) {
         Log_Write_Baro();
     }
+#endif
     return altitude_filter.apply(barometer.get_altitude() * 100.0);
 }
 
@@ -54,9 +56,11 @@ static void read_airspeed(void)
 {
     if (airspeed.enabled()) {
         airspeed.read();
+#if LOGGING_ENABLED == ENABLED
         if (should_log(MASK_LOG_IMU)) {
             Log_Write_Airspeed();
         }
+#endif
         calc_airspeed_errors();
     }
 }

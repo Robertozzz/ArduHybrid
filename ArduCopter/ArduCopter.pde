@@ -1,6 +1,6 @@
 /// -*- tab-width: 4; Mode: C++; c-basic-offset: 4; indent-tabs-mode: nil -*-
 
-#define THISFIRMWARE "ArduCopter V3.1.5"
+#define THISFIRMWARE "ArduHybrid V1.0"
 /*
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -157,7 +157,8 @@
 #include <APM_OBC.h>			// Plane
 #include <APM_Control.h>		// Plane
 
-static bool isplane = false;
+bool isplane = true;
+bool oldisplane = isplane;
 
 // key aircraft parameters passed to multiple libraries
 static AP_Vehicle::FixedWing aparm;	// Plane
@@ -209,6 +210,7 @@ static void plane_gcs_send_text_fmt(const prog_char_t *fmt, ...);
 ////////////////////////////////////////////////////////////////////////////////
 // Dataflash
 ////////////////////////////////////////////////////////////////////////////////
+
 #if CONFIG_HAL_BOARD == HAL_BOARD_APM2
 static DataFlash_APM2 DataFlash;
 #elif CONFIG_HAL_BOARD == HAL_BOARD_APM1
@@ -1173,6 +1175,14 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
 
 
 void setup() {
+
+		if (isplane == false){
+			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_100HZ;
+		}
+		if (isplane == true){
+			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
+		}
+		
     cliSerial = hal.console;
 
     // Load the default values of variables listed in var_info[]
@@ -1183,7 +1193,12 @@ void setup() {
     init_ardupilot();
 
     // initialise the main loop scheduler
-    scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
+		if (isplane == false){
+			scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
+		}
+		if (isplane == true){
+			scheduler.init(&plane_scheduler_tasks[0], sizeof(plane_scheduler_tasks)/sizeof(plane_scheduler_tasks[0]));
+		}
 }
 
 /*
@@ -1220,6 +1235,18 @@ static void perf_update(void)
 
 void loop()
 {
+	if (isplane != oldisplane){
+		if (isplane == false){
+			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_100HZ;
+			scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
+		}
+		if (isplane == true){
+			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
+			scheduler.init(&plane_scheduler_tasks[0], sizeof(plane_scheduler_tasks)/sizeof(plane_scheduler_tasks[0]));
+		}
+		oldisplane = isplane;
+	}
+
     // wait for an INS sample
     if (!ins.wait_for_sample(1000)) {
         Log_Write_Error(ERROR_SUBSYSTEM_MAIN, ERROR_CODE_MAIN_INS_DELAY);
@@ -1238,9 +1265,11 @@ void loop()
     // for mainloop failure monitoring
     mainLoop_count++;
 
+	if (isplane == false){
     // Execute the fast loop
     fast_loop();
-
+	}
+	
     // tell the scheduler one tick has passed
     scheduler.tick();
 
@@ -1249,8 +1278,16 @@ void loop()
     // in multiples of the main loop tick. So if they don't run on
     // the first call to the scheduler they won't run on a later
     // call until scheduler.tick() is called again
-    uint32_t time_available = (timer + 10000) - micros();
+if (isplane == false){
+	uint32_t time_available = (timer + 10000) - micros();
     scheduler.run(time_available - 300);
+}
+	
+if (isplane == true){
+    uint32_t time_available = (timer + 20000) - micros();
+    if (time_available > 19500) { time_available = 19500; }
+    scheduler.run(time_available);
+}
 }
 
 // END OF MAIN LOOP
@@ -2566,12 +2603,13 @@ static void ahrs_update()
 
     ahrs.update();
 
+#if LOGGING_ENABLED == ENABLED
     if (should_log(MASK_LOG_ATTITUDE_FAST))
         plane_Log_Write_Attitude();
 
     if (should_log(MASK_LOG_IMU))
         Log_Write_IMU();
-
+#endif
     // calculate a scaled roll limit based on current pitch
     roll_limit_cd = g.roll_limit_cd * cosf(ahrs.pitch);
     pitch_limit_min_cd = aparm.pitch_limit_min_cd * fabsf(cosf(ahrs.roll));
@@ -2598,9 +2636,11 @@ static void update_compass(void)
     if (g.compass_enabled && compass.read()) {
         ahrs.set_compass(&compass);
         compass.null_offsets();
+#if LOGGING_ENABLED
         if (should_log(MASK_LOG_COMPASS)) {
             plane_Log_Write_Compass();
         }
+#endif
     } else {
         ahrs.set_compass(NULL);
     }
@@ -2611,11 +2651,13 @@ static void update_compass(void)
  */
 static void update_logging1(void)
 {
+#if LOGGING_ENABLED == ENABLED
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_ATTITUDE_FAST))
         plane_Log_Write_Attitude();
 
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_IMU))
         Log_Write_IMU();
+#endif
 }
 
 /*
@@ -2623,6 +2665,7 @@ static void update_logging1(void)
  */
 static void update_logging2(void)
 {
+#if LOGGING_ENABLED == ENABLED
     if (should_log(MASK_LOG_CTUN))
         plane_Log_Write_Control_Tuning();
     
@@ -2634,6 +2677,7 @@ static void update_logging2(void)
     
     if (should_log(MASK_LOG_RCOUT))
         DataFlash.Log_Write_RCOUT();
+#endif
 }
 
 /*
@@ -2651,9 +2695,10 @@ static void obc_fs_check(void)
 
 static void one_second_loop()
 {
+#if LOGGING_ENABLED
     if (should_log(MASK_LOG_CURRENT))
         Log_Write_Current();
-
+#endif
     // send a heartbeat
     gcs_send_message(MSG_HEARTBEAT);
 
@@ -2679,8 +2724,10 @@ static void log_perf_info()
     if (scheduler.debug() != 0) {
         hal.console->printf_P(PSTR("perf_info_max_time=%lu\n"), (unsigned long)perf_info_max_time);
     }
+#if LOGGING_ENABLED == ENABLED
     if (should_log(MASK_LOG_PM))
         plane_Log_Write_Performance();
+#endif
     perf_info_max_time = 0;
     resetPerfData();
 }
@@ -2731,9 +2778,11 @@ static void update_GPS_50Hz(void)
     g_gps->update();
     if (g_gps->last_message_time_ms() != last_gps_reading) {
         last_gps_reading = g_gps->last_message_time_ms();
+#if LOGGING_ENABLED == ENABLED
         if (should_log(MASK_LOG_GPS)) {
             Log_Write_GPS();
         }
+#endif
     }
 }
 
@@ -3092,9 +3141,11 @@ static void update_alt()
                                                  takeoff_pitch_cd,
                                                  throttle_nudge,
                                                  relative_altitude());
+#if LOGGING_ENABLED
         if (should_log(MASK_LOG_TECS)) {
             Log_Write_TECS_Tuning();
         }
+#endif
     }
 
     // tell AHRS the airspeed to true airspeed ratio

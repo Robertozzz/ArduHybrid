@@ -224,7 +224,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(loiter_radius,          "WP_LOITER_RAD",  LOITER_RADIUS_DEFAULT),
 
-#if GEOFENCE_ENABLED == ENABLED
+#if AC_FENCE == ENABLED
     // @Param: FENCE_ACTION
     // @DisplayName: Action on geofence breach
     // @Description: What to do on fence breach. If this is set to 0 then no action is taken, and geofencing is disabled. If this is set to 1 then the plane will enter PLANE_GUIDED mode, with the target waypoint as the fence return point. If this is set to 2 then the fence breach is reported to the ground station, but no other action is taken. If set to 3 then the plane enters guided mode but the pilot retains manual throttle control.

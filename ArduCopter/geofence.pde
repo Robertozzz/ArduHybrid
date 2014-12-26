@@ -4,7 +4,7 @@
  *  Andrew Tridgell, December 2011
  */
 
-#if GEOFENCE_ENABLED == ENABLED
+#if AC_FENCE == ENABLED
 
 /*
  *  The state of geo-fencing. This structure is dynamically allocated

@@ -223,7 +223,7 @@ static NOINLINE void send_limits_status(mavlink_channel_t chan)
 }
 #endif
 
-#if GEOFENCE_ENABLED == ENABLED
+#if AC_FENCE == ENABLED
 static NOINLINE void send_fence_status(mavlink_channel_t chan)
 {
     geofence_send_status(chan);
@@ -1312,7 +1312,7 @@ static bool plane_mavlink_try_send_message(mavlink_channel_t chan, enum ap_messa
         send_statustext(chan);
         break;
 
-#if GEOFENCE_ENABLED == ENABLED
+#if AC_FENCE == ENABLED
     case MSG_FENCE_STATUS:
         CHECK_PAYLOAD_SIZE(FENCE_STATUS);
         send_fence_status(chan);
@@ -2983,7 +2983,9 @@ mission_failed:
                     if (arming.arm(AP_Arming::MAVLINK)) {
                         //only log if arming was successful
                         channel_throttle->enable_out();                        
+#if LOGGING_ENABLED == ENABLED
                         Log_Arm_Disarm();
+#endif
                         result = MAV_RESULT_ACCEPTED;
                     } else {
                         result = MAV_RESULT_FAILED;
@@ -2996,7 +2998,9 @@ mission_failed:
                         // reset the mission on disarm
                         plane_change_command(0);
                         //only log if disarming was successful
+#if LOGGING_ENABLED == ENABLED
                         Log_Arm_Disarm();
+#endif
                         result = MAV_RESULT_ACCEPTED;
                     } else {
                         result = MAV_RESULT_FAILED;
@@ -3639,7 +3643,7 @@ plane_mission_failed:
         break;
     }
 
-#if GEOFENCE_ENABLED == ENABLED
+#if AC_FENCE == ENABLED
     // receive a fence point from GCS and store in EEPROM
     case MAVLINK_MSG_ID_FENCE_POINT: {
         mavlink_fence_point_t packet;
