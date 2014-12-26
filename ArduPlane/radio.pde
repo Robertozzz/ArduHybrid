@@ -237,6 +237,55 @@ static void control_failsafe(uint16_t pwm)
     }
 }
 
+// aux_servos_update - update auxiliary servos assigned functions in case the user has changed them
+void aux_servos_update_fn()
+{
+// Quads can use RC5 and higher as auxiliary channels
+#if (FRAME_CONFIG == QUAD_FRAME)
+ #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_8, &g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
+ #else // APM1, APM2, SITL
+    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_8, &g.rc_10, &g.rc_11);
+ #endif
+
+// Tri's and Singles can use RC5, RC6, RC8 and higher
+#elif (FRAME_CONFIG == TRI_FRAME || FRAME_CONFIG == SINGLE_FRAME)
+ #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_8, &g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
+ #else // APM1, APM2, SITL
+    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_8, &g.rc_10, &g.rc_11);
+ #endif
+
+// Hexa and Y6 can use RC7 and higher
+#elif (FRAME_CONFIG == HEXA_FRAME || FRAME_CONFIG == Y6_FRAME)
+ #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+    update_aux_servo_function(&g.rc_7, &g.rc_8, &g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
+ #else
+    update_aux_servo_function(&g.rc_7, &g.rc_8, &g.rc_10, &g.rc_11);
+ #endif
+
+// Octa and X8 can use RC9 and higher
+#elif (FRAME_CONFIG == OCTA_FRAME || FRAME_CONFIG == OCTA_QUAD_FRAME)
+ #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+    update_aux_servo_function(&g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
+ #else
+    update_aux_servo_function(&g.rc_10, &g.rc_11);
+ #endif
+
+// Heli's can use RC5, RC6, RC7, not RC8, and higher
+#elif (FRAME_CONFIG == HELI_FRAME)
+ #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
+    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
+ #else // APM1, APM2, SITL
+    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_10, &g.rc_11);
+ #endif
+
+// throw compile error if frame type is unrecognise
+#else
+  #error Unrecognised frame type
+#endif
+}
+
 static void trim_control_surfaces()
 {
     read_radio();
@@ -293,60 +342,11 @@ static void trim_control_surfaces()
 
 static void trim_radio()
 {
-    for (uint8_t y = 0; y < 30; y++) {
+    for (uint8_t i = 0; i < 30; i++) {
         read_radio();
     }
 
     trim_control_surfaces();
-}
-
-// aux_servos_update - update auxiliary servos assigned functions in case the user has changed them
-void aux_servos_update_fn()
-{
-// Quads can use RC5 and higher as auxiliary channels
-#if (FRAME_CONFIG == QUAD_FRAME)
- #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
-    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_8, &g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
- #else // APM1, APM2, SITL
-    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_8, &g.rc_10, &g.rc_11);
- #endif
-
-// Tri's and Singles can use RC5, RC6, RC8 and higher
-#elif (FRAME_CONFIG == TRI_FRAME || FRAME_CONFIG == SINGLE_FRAME)
- #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
-    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_8, &g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
- #else // APM1, APM2, SITL
-    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_8, &g.rc_10, &g.rc_11);
- #endif
-
-// Hexa and Y6 can use RC7 and higher
-#elif (FRAME_CONFIG == HEXA_FRAME || FRAME_CONFIG == Y6_FRAME)
- #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
-    update_aux_servo_function(&g.rc_7, &g.rc_8, &g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
- #else
-    update_aux_servo_function(&g.rc_7, &g.rc_8, &g.rc_10, &g.rc_11);
- #endif
-
-// Octa and X8 can use RC9 and higher
-#elif (FRAME_CONFIG == OCTA_FRAME || FRAME_CONFIG == OCTA_QUAD_FRAME)
- #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
-    update_aux_servo_function(&g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
- #else
-    update_aux_servo_function(&g.rc_10, &g.rc_11);
- #endif
-
-// Heli's can use RC5, RC6, RC7, not RC8, and higher
-#elif (FRAME_CONFIG == HELI_FRAME)
- #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
-    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_9, &g.rc_10, &g.rc_11, &g.rc_12);
- #else // APM1, APM2, SITL
-    update_aux_servo_function(&g.rc_5, &g.rc_6, &g.rc_7, &g.rc_10, &g.rc_11);
- #endif
-
-// throw compile error if frame type is unrecognise
-#else
-  #error Unrecognised frame type
-#endif
 }
 
 static bool throttle_failsafe_level(void)

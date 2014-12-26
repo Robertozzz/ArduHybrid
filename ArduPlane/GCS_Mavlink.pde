@@ -15,7 +15,6 @@ static bool	gcs_out_of_time;
 // check if a message will fit in the payload space available
 #define CHECK_PAYLOAD_SIZE(id) if (payload_space < MAVLINK_MSG_ID_ ## id ## _LEN) return false
 
-// prototype this for use inside the GCS class
 
 /*
  *  !!NOTE!!
@@ -297,7 +296,6 @@ static void NOINLINE plane_send_ahrs(mavlink_channel_t chan)
         ahrs.get_error_rp(),
         ahrs.get_error_yaw());
 }
-
 
 #if HIL_MODE != HIL_MODE_DISABLED
 /*
@@ -741,7 +739,6 @@ static bool plane_mavlink_try_send_message(mavlink_channel_t chan, enum ap_messa
     return true;
 }
 
-
 #define MAX_DEFERRED_MESSAGES MSG_RETRY_DEFERRED
 static struct mavlink_queue {
     enum ap_message deferred_messages[MAX_DEFERRED_MESSAGES];
@@ -1132,14 +1129,14 @@ GCS_MAVLINK::send_text_P(gcs_severity severity, const prog_char_t *str)
         }
     }
     if (i < sizeof(m.text)) m.text[i] = 0;
-if (isplane == true){
+ if (isplane == true){
     plane_mavlink_send_text(chan, severity, (const char *)m.text);
 }
 }
 
 void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 {
-if (isplane == true){
+ if (isplane == true){
     struct Location tell_command = {};                // command for telemetry
 
     switch (msg->msgid) {
@@ -1757,7 +1754,7 @@ if (isplane == true){
         }
 
 
-        if (result != MAV_MISSION_ACCEPTED) goto mission_failed;
+        if (result != MAV_MISSION_ACCEPTED) goto plane_mission_failed;
 
         // Switch to map APM command fields into MAVLink command fields
         switch (tell_command.id) {
@@ -1833,7 +1830,7 @@ if (isplane == true){
             break;
         }
 
-        if (result != MAV_MISSION_ACCEPTED) goto mission_failed;
+        if (result != MAV_MISSION_ACCEPTED) goto plane_mission_failed;
 
         if(packet.current == 2) {                                               //current = 2 is a flag to tell us this is a "guided mode" waypoint and not for the mission
             guided_WP = tell_command;
@@ -1875,13 +1872,13 @@ if (isplane == true){
             // Check if receiving waypoints (mission upload expected)
             if (!waypoint_receiving) {
                 result = MAV_MISSION_ERROR;
-                goto mission_failed;
+                goto plane_mission_failed;
             }
 
             // check if this is the requested waypoint
             if (packet.seq != waypoint_request_i) {
                 result = MAV_MISSION_INVALID_SEQUENCE;
-                goto mission_failed;
+                goto plane_mission_failed;
             }
 
             plane_set_cmd_with_index(tell_command, packet.seq);
@@ -1906,7 +1903,7 @@ if (isplane == true){
         }
         break;
 
-mission_failed:
+plane_mission_failed:
         // we are rejecting the mission/waypoint
         mavlink_msg_mission_ack_send(
             chan,

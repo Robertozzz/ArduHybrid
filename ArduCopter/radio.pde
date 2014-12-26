@@ -3,6 +3,24 @@
 // Function that will read the radio data, limit servos and trigger a failsafe
 // ----------------------------------------------------------------------------
 
+static void set_control_channels(void)
+{
+    channel_roll     = RC_Channel::rc_channel(rcmap.roll()-1);
+	channel_pitch    = RC_Channel::rc_channel(rcmap.pitch()-1);
+    channel_throttle = RC_Channel::rc_channel(rcmap.throttle()-1);
+    channel_rudder   = RC_Channel::rc_channel(rcmap.yaw()-1);
+
+    // set rc channel ranges
+    channel_roll->set_angle(SERVO_MAX);
+    channel_pitch->set_angle(SERVO_MAX);
+    channel_rudder->set_angle(SERVO_MAX);
+    channel_throttle->set_range(0, 100);
+
+    if (!arming.is_armed() && arming.arming_required() == AP_Arming::YES_MIN_PWM) {
+        hal.rcout->set_safety_pwm(1UL<<(rcmap.throttle()-1), channel_throttle->radio_min);
+    }
+}
+
 static void default_dead_zones()
 {
     g.rc_1.set_default_dead_zone(30);
@@ -108,6 +126,60 @@ static void init_rc_out()
     }
 }
 
+// check for pilot input on rudder stick for arming
+static void rudder_arm_check() 
+{
+    //TODO: ensure rudder arming disallowed during radio calibration
+
+    //TODO: waggle ailerons and rudder and beep after rudder arming
+    
+    static uint32_t rudder_arm_timer;
+
+    if (arming.is_armed()) {
+        //already armed, no need to run remainder of this function
+        rudder_arm_timer = 0;
+        return;
+    } 
+
+    if (! arming.rudder_arming_enabled()) {
+        //parameter disallows rudder arming
+        return;
+    }
+
+    //if throttle is not down, then pilot cannot rudder arm
+    if (g.rc_3.control_in > 0) {
+        rudder_arm_timer = 0;
+        return;
+    }
+
+    //if not in a 'manual' mode then disallow rudder arming
+    if (auto_throttle_mode ) {
+        rudder_arm_timer = 0;
+        return;      
+    }
+
+    // full right rudder starts arming counter
+    if (g.rc_4.control_in > 4000) {
+        uint32_t now = millis();
+
+        if (rudder_arm_timer == 0 || 
+            now - rudder_arm_timer < 3000) {
+
+            if (rudder_arm_timer == 0) rudder_arm_timer = now;
+        } else {
+            //time to arm!
+            if (arming.arm(AP_Arming::RUDDER)) {
+                channel_throttle->enable_out();                        
+                //only log if arming was successful
+                Log_Arm_Disarm();
+            }                
+        }
+    } else { 
+        // not at full right rudder
+        rudder_arm_timer = 0;
+    }
+}
+
 // output_min - enable and output lowest possible value to motors
 void output_min()
 {
@@ -147,6 +219,53 @@ static void read_radio()
                 && g.failsafe_throttle && motors.armed() && !failsafe.radio) {
             Log_Write_Error(ERROR_SUBSYSTEM_RADIO, ERROR_CODE_RADIO_LATE_FRAME);
             set_failsafe_radio(true);
+        }
+    }
+}
+
+static void control_failsafe(uint16_t pwm)
+{
+    if(g.throttle_fs_enabled == 0)
+        return;
+
+    // Check for failsafe condition based on loss of GCS control
+    if (plane_failsafe.rc_override_active) {
+        if (millis() - plane_failsafe.last_heartbeat_ms > g.short_fs_timeout*1000) {
+            plane_failsafe.ch3_failsafe = true;
+            AP_Notify::flags.failsafe_radio = true;
+        } else {
+            plane_failsafe.ch3_failsafe = false;
+            AP_Notify::flags.failsafe_radio = false;
+        }
+
+        //Check for failsafe and debounce funky reads
+    } else if (g.throttle_fs_enabled) {
+        if (throttle_failsafe_level()) {
+            // we detect a failsafe from radio
+            // throttle has dropped below the mark
+            plane_failsafe.ch3_counter++;
+            if (plane_failsafe.ch3_counter == 10) {
+                plane_gcs_send_text_fmt(PSTR("MSG FS ON %u"), (unsigned)pwm);
+                plane_failsafe.ch3_failsafe = true;
+                AP_Notify::flags.failsafe_radio = true;
+            }
+            if (plane_failsafe.ch3_counter > 10) {
+                plane_failsafe.ch3_counter = 10;
+            }
+
+        }else if(plane_failsafe.ch3_counter > 0) {
+            // we are no longer in failsafe condition
+            // but we need to recover quickly
+            plane_failsafe.ch3_counter--;
+            if (plane_failsafe.ch3_counter > 3) {
+                plane_failsafe.ch3_counter = 3;
+            }
+            if (plane_failsafe.ch3_counter == 1) {
+                plane_gcs_send_text_fmt(PSTR("MSG FS OFF %u"), (unsigned)pwm);
+            } else if(plane_failsafe.ch3_counter == 0) {
+                plane_failsafe.ch3_failsafe = false;
+                AP_Notify::flags.failsafe_radio = false;
+            }
         }
     }
 }
@@ -309,5 +428,20 @@ static void trim_radio()
     g.rc_1.save_eeprom();
     g.rc_2.save_eeprom();
     g.rc_4.save_eeprom();
+    trim_control_surfaces();
 }
 
+static bool throttle_failsafe_level(void)
+{
+    if (!g.throttle_fs_enabled) {
+        return false;
+    }
+    if (hal.scheduler->millis() - plane_failsafe.last_valid_rc_ms > 2000) {
+        // we haven't had a valid RC frame for 2 seconds
+        return true;
+    }
+    if (channel_throttle->get_reverse()) {
+        return channel_throttle->radio_in >= g.throttle_fs_value;
+    }
+    return channel_throttle->radio_in <= g.throttle_fs_value;
+}

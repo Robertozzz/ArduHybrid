@@ -538,6 +538,13 @@ static void NOINLINE plane_send_ahrs(mavlink_channel_t chan)
         ahrs.get_error_yaw());
 }
 
+#if HIL_MODE != HIL_MODE_DISABLED
+/*
+  keep last HIL_STATE message to allow sending SIM_STATE
+ */
+static mavlink_hil_state_t last_hil_state;
+#endif
+
 // report simulator state
 static void NOINLINE send_simstate(mavlink_channel_t chan)
 {
@@ -691,7 +698,28 @@ static void NOINLINE send_servo_out(mavlink_channel_t chan)
  #endif
 #endif
 }
-#endif // HIL_MODE
+
+static void NOINLINE plane_send_servo_out(mavlink_channel_t chan)
+{
+    // normalized values scaled to -10000 to 10000
+    // This is used for HIL.  Do not change without discussing with
+    // HIL maintainers
+    mavlink_msg_rc_channels_scaled_send(
+        chan,
+        millis(),
+        0, // port 0
+        10000 * channel_roll->norm_output(),
+        10000 * channel_pitch->norm_output(),
+        10000 * channel_throttle->norm_output(),
+        10000 * channel_rudder->norm_output(),
+        0,
+        0,
+        0,
+        0,
+        receiver_rssi);
+}
+#endif
+
 static void NOINLINE send_radio_in(mavlink_channel_t chan)
 {
     mavlink_msg_rc_channels_raw_send(
@@ -1452,6 +1480,24 @@ void mavlink_send_text(mavlink_channel_t chan, gcs_severity severity, const char
     }
 }
 
+void plane_mavlink_send_text(mavlink_channel_t chan, gcs_severity severity, const char *str)
+{
+    if (telemetry_delayed(chan)) {
+        return;
+    }
+
+    if (severity == SEVERITY_LOW) {
+        // send via the deferred queuing system
+        mavlink_statustext_t *s = &gcs[chan-MAVLINK_COMM_0].pending_status;
+        s->severity = (uint8_t)severity;
+        strncpy((char *)s->text, str, sizeof(s->text));
+        plane_mavlink_send_message(chan, MSG_STATUSTEXT);
+    } else {
+        // send immediately
+        mavlink_msg_statustext_send(chan, severity, str);
+    }
+}
+
 /*
   default stream rates to 1Hz
  */
@@ -1790,9 +1836,9 @@ GCS_MAVLINK::send_message(enum ap_message id)
 if (isplane == false){
     mavlink_send_message(chan,id, packet_drops);
 }
-/*if (isplane == true){
+if (isplane == true){
     plane_mavlink_send_message(chan, id);
-}*/
+}
 }
 
 void
@@ -1810,9 +1856,9 @@ GCS_MAVLINK::send_text_P(gcs_severity severity, const prog_char_t *str)
 if (isplane == false){
     mavlink_send_text(chan, severity, (const char *)m.text);
 }
-/* if (isplane == true){
+ if (isplane == true){
     plane_mavlink_send_text(chan, severity, (const char *)m.text);
-}*/
+}
 }
 
 void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
@@ -2816,7 +2862,7 @@ mission_failed:
 
     }     // end switch
 }
-/* if (isplane == true){
+ if (isplane == true){
     struct Location tell_command = {};                // command for telemetry
 
     switch (msg->msgid) {
@@ -3434,7 +3480,7 @@ mission_failed:
         }
 
 
-        if (result != MAV_MISSION_ACCEPTED) goto mission_failed;
+        if (result != MAV_MISSION_ACCEPTED) goto plane_mission_failed;
 
         // Switch to map APM command fields into MAVLink command fields
         switch (tell_command.id) {
@@ -3510,7 +3556,7 @@ mission_failed:
             break;
         }
 
-        if (result != MAV_MISSION_ACCEPTED) goto mission_failed;
+        if (result != MAV_MISSION_ACCEPTED) goto plane_mission_failed;
 
         if(packet.current == 2) {                                               //current = 2 is a flag to tell us this is a "guided mode" waypoint and not for the mission
             guided_WP = tell_command;
@@ -3552,13 +3598,13 @@ mission_failed:
             // Check if receiving waypoints (mission upload expected)
             if (!waypoint_receiving) {
                 result = MAV_MISSION_ERROR;
-                goto mission_failed;
+                goto plane_mission_failed;
             }
 
             // check if this is the requested waypoint
             if (packet.seq != waypoint_request_i) {
                 result = MAV_MISSION_INVALID_SEQUENCE;
-                goto mission_failed;
+                goto plane_mission_failed;
             }
 
             plane_set_cmd_with_index(tell_command, packet.seq);
@@ -3583,7 +3629,7 @@ mission_failed:
         }
         break;
 
-mission_failed:
+plane_mission_failed:
         // we are rejecting the mission/waypoint
         mavlink_msg_mission_ack_send(
             chan,
@@ -3935,7 +3981,7 @@ mission_failed:
         break;
 
     } // end switch
-}*/
+}
 } // end handle mavlink
 
 /*
@@ -3973,6 +4019,34 @@ static void mavlink_delay_cb()
     in_mavlink_delay = false;
 }
 
+static void plane_mavlink_delay_cb()
+{
+    static uint32_t last_1hz, last_50hz, last_5s;
+    if (!gcs[0].initialised || in_mavlink_delay) return;
+
+    in_mavlink_delay = true;
+
+    uint32_t tnow = millis();
+    if (tnow - last_1hz > 1000) {
+        last_1hz = tnow;
+        gcs_send_message(MSG_HEARTBEAT);
+        gcs_send_message(MSG_EXTENDED_STATUS1);
+    }
+    if (tnow - last_50hz > 20) {
+        last_50hz = tnow;
+        gcs_update();
+        gcs_data_stream_send();
+        notify.update();
+    }
+    if (tnow - last_5s > 5000) {
+        last_5s = tnow;
+        gcs_send_text_P(SEVERITY_LOW, PSTR("Initialising APM..."));
+    }
+    check_usb_mux();
+
+    in_mavlink_delay = false;
+}
+
 /*
  *  send a message on both GCS links
  */
@@ -3993,6 +4067,18 @@ static void gcs_data_stream_send(void)
     for (uint8_t i=0; i<num_gcs; i++) {
         if (gcs[i].initialised) {
             gcs[i].data_stream_send();
+        }
+    }
+}
+
+/*
+ *  look for incoming commands on the GCS links
+ */
+static void gcs_update(void)
+{
+    for (uint8_t i=0; i<num_gcs; i++) {
+        if (gcs[i].initialised) {
+            gcs[i].update();
         }
     }
 }
@@ -4061,5 +4147,26 @@ void plane_gcs_send_text_fmt(const prog_char_t *fmt, ...)
             plane_mavlink_send_message((mavlink_channel_t)i, MSG_STATUSTEXT);
         }
     }
+}
+
+/*
+  send airspeed calibration data
+ */
+static void gcs_send_airspeed_calibration(const Vector3f &vg)
+{
+    for (uint8_t i=0; i<num_gcs; i++) {
+        if (comm_get_txspace((mavlink_channel_t)i) - MAVLINK_NUM_NON_PAYLOAD_BYTES >= 
+            MAVLINK_MSG_ID_AIRSPEED_AUTOCAL_LEN) {
+            airspeed.log_mavlink_send((mavlink_channel_t)i, vg);
+        }
+    }
+}
+
+/**
+   retry any deferred messages
+ */
+static void gcs_retry_deferred(void)
+{
+    gcs_send_message(MSG_RETRY_DEFERRED);
 }
 

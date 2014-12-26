@@ -1112,135 +1112,357 @@ get_throttle_rate_stabilized(int16_t target_rate)
     get_throttle_althold(controller_desired_alt, -g.pilot_velocity_z_max-250, g.pilot_velocity_z_max+250);   // 250 is added to give head room to alt hold controller
 }
 
-// get_throttle_land - high level landing logic
-// sends the desired acceleration in the accel based throttle controller
-// called at 50hz
-static void
-get_throttle_land()
-{
-    // if we are above 10m and the sonar does not sense anything perform regular alt hold descent
-    if (current_loc.alt >= LAND_START_ALT && !(g.sonar_enabled && sonar_alt_health >= SONAR_ALT_HEALTH_MAX)) {
-        get_throttle_althold_with_slew(LAND_START_ALT, -wp_nav.get_descent_velocity(), -abs(g.land_speed));
-    }else{
-        get_throttle_rate_stabilized(-abs(g.land_speed));
+////// PLANE SECTION
 
-        // disarm when the landing detector says we've landed and throttle is at min (or we're in failsafe so we have no pilot thorottle input)
-#if LAND_REQUIRE_MIN_THROTTLE_TO_DISARM == ENABLED
-        if( ap.land_complete && (g.rc_3.control_in == 0 || failsafe.radio) ) {
-#else
-        if (ap.land_complete) {
-#endif
-            init_disarm_motors();
+//****************************************************************
+// Function that controls aileron/rudder, elevator, rudder (if 4 channel control) and throttle to produce desired attitude and airspeed.
+//****************************************************************
+
+
+/*
+  get a speed scaling number for control surfaces. This is applied to
+  PIDs to change the scaling of the PID with speed. At high speed we
+  move the surfaces less, and at low speeds we move them more.
+ */
+static float get_speed_scaler(void)
+{
+    float aspeed, speed_scaler;
+    if (ahrs.airspeed_estimate(&aspeed)) {
+        if (aspeed > 0) {
+            speed_scaler = g.scaling_speed / aspeed;
+        } else {
+            speed_scaler = 2.0;
         }
-    }
-}
-
-// reset_land_detector - initialises land detector
-static void reset_land_detector()
-{
-    set_land_complete(false);
-    land_detector = 0;
-}
-
-// update_land_detector - checks if we have landed and updates the ap.land_complete flag
-// returns true if we have landed
-static bool update_land_detector()
-{
-    // detect whether we have landed by watching for low climb rate and minimum throttle
-    if (abs(climb_rate) < 20 && motors.limit.throttle_lower) {
-        if (!ap.land_complete) {
-            // run throttle controller if accel based throttle controller is enabled and active (active means it has been given a target)
-            if( land_detector < LAND_DETECTOR_TRIGGER) {
-                land_detector++;
-            }else{
-                set_land_complete(true);
-                land_detector = 0;
-            }
+        speed_scaler = constrain_float(speed_scaler, 0.5, 2.0);
+    } else {
+        if (channel_throttle->servo_out > 0) {
+            speed_scaler = 0.5 + ((float)PLTHR_CRUISE / channel_throttle->servo_out / 2.0);                 // First order taylor expansion of square root
+            // Should maybe be to the 2/7 power, but we aren't goint to implement that...
+        }else{
+            speed_scaler = 1.67;
         }
-    }else if (g.rc_3.control_in != 0 || failsafe.radio){    // zero throttle locks land_complete as true
-        // we've sensed movement up or down so reset land_detector
-        land_detector = 0;
-        if(ap.land_complete) {
-            set_land_complete(false);
-        }
+        // This case is constrained tighter as we don't have real speed info
+        speed_scaler = constrain_float(speed_scaler, 0.6, 1.67);
     }
-
-    // return current state of landing
-    return ap.land_complete;
-}
-
-// get_throttle_surface_tracking - hold copter at the desired distance above the ground
-// updates accel based throttle controller targets
-static void
-get_throttle_surface_tracking(int16_t target_rate)
-{
-    static uint32_t last_call_ms = 0;
-    float distance_error;
-    float velocity_correction;
-
-    uint32_t now = millis();
-
-    // reset target altitude if this controller has just been engaged
-    if( now - last_call_ms > 200 ) {
-        target_sonar_alt = sonar_alt + controller_desired_alt - current_loc.alt;
-    }
-    last_call_ms = now;
-
-    // adjust sonar target alt if motors have not hit their limits
-    if ((target_rate<0 && !motors.limit.throttle_lower) || (target_rate>0 && !motors.limit.throttle_upper)) {
-        target_sonar_alt += target_rate * 0.02f;
-    }
-
-    // do not let target altitude get too far from current altitude above ground
-    // Note: the 750cm limit is perhaps too wide but is consistent with the regular althold limits and helps ensure a smooth transition
-    target_sonar_alt = constrain_float(target_sonar_alt,sonar_alt-750,sonar_alt+750);
-
-    // calc desired velocity correction from target sonar alt vs actual sonar alt
-    distance_error = target_sonar_alt-sonar_alt;
-    velocity_correction = distance_error * g.sonar_gain;
-    velocity_correction = constrain_float(velocity_correction, -THR_SURFACE_TRACKING_VELZ_MAX, THR_SURFACE_TRACKING_VELZ_MAX);
-
-    // call regular rate stabilize alt hold controller
-    get_throttle_rate_stabilized(target_rate + velocity_correction);
+    return speed_scaler;
 }
 
 /*
- *  reset all I integrators
+  return true if the current settings and mode should allow for stick mixing
  */
-static void reset_I_all(void)
+static bool stick_mixing_enabled(void)
 {
-    reset_rate_I();
-    reset_throttle_I();
-    reset_optflow_I();
+    if (auto_throttle_mode) {
+        // we're in an auto mode. Check the stick mixing flag
+        if (g.stick_mixing != STICK_MIXING_DISABLED &&
+            geofence_stickmixing() &&
+            plane_failsafe.state == FAILSAFE_NONE &&
+            !throttle_failsafe_level()) {
+            // we're in an auto mode, and haven't triggered failsafe
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    if (plane_failsafe.ch3_failsafe && g.short_fs_action == 2) {
+        // don't do stick mixing in FBWA glide mode
+        return false;
+    }
+
+    // non-auto mode. Always do stick mixing
+    return true;
 }
 
-static void reset_rate_I()
+
+/*
+  this is the main roll stabilization function. It takes the
+  previously set nav_roll calculates roll servo_out to try to
+  stabilize the plane at the given roll
+ */
+static void stabilize_roll(float speed_scaler)
 {
-    g.pid_rate_roll.reset_I();
-    g.pid_rate_pitch.reset_I();
-    g.pid_rate_yaw.reset_I();
+    if (inverted_flight) {
+        // we want to fly upside down. We need to cope with wrap of
+        // the roll_sensor interfering with wrap of nav_roll, which
+        // would really confuse the PID code. The easiest way to
+        // handle this is to ensure both go in the same direction from
+        // zero
+        nav_roll_cd += 18000;
+        if (ahrs.roll_sensor < 0) nav_roll_cd -= 36000;
+    }
+
+    bool disable_integrator = false;
+    if (plane_control_mode == PLANE_STABILIZE && channel_roll->control_in != 0) {
+        disable_integrator = true;
+    }
+    channel_roll->servo_out = rollController.get_servo_out(nav_roll_cd - ahrs.roll_sensor, 
+                                                           speed_scaler, 
+                                                           disable_integrator);
 }
 
-static void reset_optflow_I(void)
+/*
+  this is the main pitch stabilization function. It takes the
+  previously set nav_pitch and calculates servo_out values to try to
+  stabilize the plane at the given attitude.
+ */
+static void stabilize_pitch(float speed_scaler)
 {
-    g.pid_optflow_roll.reset_I();
-    g.pid_optflow_pitch.reset_I();
-    of_roll = 0;
-    of_pitch = 0;
+    int32_t demanded_pitch = nav_pitch_cd + g.pitch_trim_cd + channel_throttle->servo_out * g.kff_throttle_to_pitch;
+    bool disable_integrator = false;
+    if (plane_control_mode == PLANE_STABILIZE && channel_pitch->control_in != 0) {
+        disable_integrator = true;
+    }
+    channel_pitch->servo_out = pitchController.get_servo_out(demanded_pitch - ahrs.pitch_sensor, 
+                                                             speed_scaler, 
+                                                             disable_integrator);
 }
 
-static void reset_throttle_I(void)
+/*
+  perform stick mixing on one channel
+  This type of stick mixing reduces the influence of the auto
+  controller as it increases the influence of the users stick input,
+  allowing the user full deflection if needed
+ */
+static void stick_mix_channel(RC_Channel *channel)
 {
-    // For Altitude Hold
-    g.pi_alt_hold.reset_I();
-    g.pid_throttle_accel.reset_I();
+    float ch_inf;
+        
+    ch_inf = (float)channel->radio_in - (float)channel->radio_trim;
+    ch_inf = fabsf(ch_inf);
+    ch_inf = min(ch_inf, 400.0);
+    ch_inf = ((400.0 - ch_inf) / 400.0);
+    channel->servo_out *= ch_inf;
+    channel->servo_out += channel->pwm_to_angle();
 }
 
-static void set_accel_throttle_I_from_pilot_throttle(int16_t pilot_throttle)
+/*
+  this gives the user control of the aircraft in stabilization modes
+ */
+static void stabilize_stick_mixing_direct()
 {
-    // shift difference between pilot's throttle and hover throttle into accelerometer I
-    g.pid_throttle_accel.set_integrator(pilot_throttle-g.throttle_cruise);
+    if (!stick_mixing_enabled() ||
+        plane_control_mode == PLANE_ACRO ||
+        plane_control_mode == PLANE_FLY_BY_WIRE_A ||
+        plane_control_mode == PLANE_FLY_BY_WIRE_B ||
+        plane_control_mode == PLANE_CRUISE ||
+        plane_control_mode == PLANE_TRAINING) {
+        return;
+    }
+    stick_mix_channel(channel_roll);
+    stick_mix_channel(channel_pitch);
 }
+
+/*
+  this gives the user control of the aircraft in stabilization modes
+  using FBW style controls
+ */
+static void stabilize_stick_mixing_fbw()
+{
+    if (!stick_mixing_enabled() ||
+        plane_control_mode == PLANE_ACRO ||
+        plane_control_mode == PLANE_FLY_BY_WIRE_A ||
+        plane_control_mode == PLANE_FLY_BY_WIRE_B ||
+        plane_control_mode == PLANE_CRUISE ||
+        plane_control_mode == PLANE_TRAINING ||
+        (plane_control_mode == PLANE_AUTO && g.auto_fbw_steer)) {
+        return;
+    }
+    // do FBW style stick mixing. We don't treat it linearly
+    // however. For inputs up to half the maximum, we use linear
+    // addition to the nav_roll and nav_pitch. Above that it goes
+    // non-linear and ends up as 2x the maximum, to ensure that
+    // the user can direct the plane in any direction with stick
+    // mixing.
+    float roll_input = channel_roll->norm_input();
+    if (roll_input > 0.5f) {
+        roll_input = (3*roll_input - 1);
+    } else if (roll_input < -0.5f) {
+        roll_input = (3*roll_input + 1);
+    }
+    nav_roll_cd += roll_input * roll_limit_cd;
+    nav_roll_cd = constrain_int32(nav_roll_cd, -roll_limit_cd, roll_limit_cd);
+    
+    float pitch_input = channel_pitch->norm_input();
+    if (fabsf(pitch_input) > 0.5f) {
+        pitch_input = (3*pitch_input - 1);
+    }
+    if (inverted_flight) {
+        pitch_input = -pitch_input;
+    }
+    if (pitch_input > 0) {
+        nav_pitch_cd += pitch_input * aparm.pitch_limit_max_cd;
+    } else {
+        nav_pitch_cd += -(pitch_input * pitch_limit_min_cd);
+    }
+    nav_pitch_cd = constrain_int32(nav_pitch_cd, pitch_limit_min_cd, aparm.pitch_limit_max_cd.get());
+}
+
+
+/*
+  stabilize the yaw axis. There are 3 modes of operation:
+
+    - hold a specific heading with ground steering
+    - rate controlled with ground steering
+    - yaw control for coordinated flight    
+ */
+static void stabilize_yaw(float speed_scaler)
+{
+    bool ground_steering = (channel_roll->control_in == 0 && fabsf(relative_altitude()) < g.ground_steer_alt);
+
+    if (steer_state.hold_course_cd != -1 && ground_steering) {
+        calc_nav_yaw_course();
+    } else if (ground_steering) {
+        calc_nav_yaw_ground();
+    } else {
+        calc_nav_yaw_coordinated(speed_scaler);
+    }
+}
+
+
+/*
+  a special stabilization function for training mode
+ */
+static void stabilize_training(float speed_scaler)
+{
+    if (training_manual_roll) {
+        channel_roll->servo_out = channel_roll->control_in;
+    } else {
+        // calculate what is needed to hold
+        stabilize_roll(speed_scaler);
+        if ((nav_roll_cd > 0 && channel_roll->control_in < channel_roll->servo_out) ||
+            (nav_roll_cd < 0 && channel_roll->control_in > channel_roll->servo_out)) {
+            // allow user to get out of the roll
+            channel_roll->servo_out = channel_roll->control_in;            
+        }
+    }
+
+    if (training_manual_pitch) {
+        channel_pitch->servo_out = channel_pitch->control_in;
+    } else {
+        stabilize_pitch(speed_scaler);
+        if ((nav_pitch_cd > 0 && channel_pitch->control_in < channel_pitch->servo_out) ||
+            (nav_pitch_cd < 0 && channel_pitch->control_in > channel_pitch->servo_out)) {
+            // allow user to get back to level
+            channel_pitch->servo_out = channel_pitch->control_in;            
+        }
+    }
+
+    stabilize_yaw(speed_scaler);
+}
+
+
+/*
+  this is the PLANE_ACRO mode stabilization function. It does rate
+  stabilization on roll and pitch axes
+ */
+static void stabilize_acro(float speed_scaler)
+{
+    float roll_rate = (channel_roll->control_in/4500.0f) * g.acro_roll_ratep;
+    float pitch_rate = (channel_pitch->control_in/4500.0f) * g.acro_pitch_ratep;
+
+    /*
+      check for special roll handling near the pitch poles
+     */
+    if (g.acro_locking && roll_rate == 0) {
+        /*
+          we have no roll stick input, so we will enter "roll locked"
+          mode, and hold the roll we had when the stick was released
+         */
+        if (!acro_state.locked_roll) {
+            acro_state.locked_roll = true;
+            acro_state.locked_roll_err = 0;
+        } else {
+            acro_state.locked_roll_err += ahrs.get_gyro().x * G_Dt;
+        }
+        int32_t roll_error_cd = -ToDeg(acro_state.locked_roll_err)*100;
+        nav_roll_cd = ahrs.roll_sensor + roll_error_cd;
+        // try to reduce the integrated angular error to zero. We set
+        // 'stabilze' to true, which disables the roll integrator
+        channel_roll->servo_out  = rollController.get_servo_out(roll_error_cd,
+                                                                speed_scaler,
+                                                                true);
+    } else {
+        /*
+          aileron stick is non-zero, use pure rate control until the
+          user releases the stick
+         */
+        acro_state.locked_roll = false;
+        channel_roll->servo_out  = rollController.get_rate_out(roll_rate,  speed_scaler);
+    }
+
+    if (g.acro_locking && pitch_rate == 0) {
+        /*
+          user has zero pitch stick input, so we lock pitch at the
+          point they release the stick
+         */
+        if (!acro_state.locked_pitch) {
+            acro_state.locked_pitch = true;
+            acro_state.locked_pitch_cd = ahrs.pitch_sensor;
+        }
+        // try to hold the locked pitch. Note that we have the pitch
+        // integrator enabled, which helps with inverted flight
+        nav_pitch_cd = acro_state.locked_pitch_cd;
+        channel_pitch->servo_out  = pitchController.get_servo_out(nav_pitch_cd - ahrs.pitch_sensor,
+                                                                  speed_scaler,
+                                                                  false);
+    } else {
+        /*
+          user has non-zero pitch input, use a pure rate controller
+         */
+        acro_state.locked_pitch = false;
+        channel_pitch->servo_out = pitchController.get_rate_out(pitch_rate, speed_scaler);
+    }
+
+    /*
+      manual rudder for now
+     */
+    channel_rudder->servo_out = channel_rudder->control_in;
+}
+
+/*
+  main stabilization function for all 3 axes
+ */
+static void plane_stabilize()
+{
+    if (plane_control_mode == PLANE_MANUAL) {
+        // nothing to do
+        return;
+    }
+    float speed_scaler = get_speed_scaler();
+
+    if (plane_control_mode == PLANE_TRAINING) {
+        stabilize_training(speed_scaler);
+    } else if (plane_control_mode == PLANE_ACRO) {
+        stabilize_acro(speed_scaler);
+    } else {
+        if (g.stick_mixing == STICK_MIXING_FBW && plane_control_mode != PLANE_STABILIZE) {
+            stabilize_stick_mixing_fbw();
+        }
+        stabilize_roll(speed_scaler);
+        stabilize_pitch(speed_scaler);
+        if (g.stick_mixing == STICK_MIXING_DIRECT || plane_control_mode == PLANE_STABILIZE) {
+            stabilize_stick_mixing_direct();
+        }
+        stabilize_yaw(speed_scaler);
+    }
+
+    /*
+      see if we should zero the attitude controller integrators. 
+     */
+    if (channel_throttle->control_in == 0 &&
+        relative_altitude_abs_cm() < 500 && 
+        fabs(barometer.get_climb_rate()) < 0.5f &&
+        g_gps->ground_speed_cm < 300) {
+        // we are low, with no climb rate, and zero throttle, and very
+        // low ground speed. Zero the attitude controller
+        // integrators. This prevents integrator buildup pre-takeoff.
+        rollController.reset_I();
+        pitchController.reset_I();
+        yawController.reset_I();
+    }
+}
+
 
 static void calc_throttle()
 {
@@ -1255,6 +1477,78 @@ static void calc_throttle()
     channel_throttle->servo_out = SpdHgt_Controller->get_throttle_demand();
 }
 
+/*****************************************
+* Calculate desired roll/pitch/yaw angles (in medium freq loop)
+*****************************************/
+
+/*
+  calculate yaw control for coordinated flight
+ */
+static void calc_nav_yaw_coordinated(float speed_scaler)
+{
+    bool disable_integrator = false;
+    if (plane_control_mode == PLANE_STABILIZE && channel_rudder->control_in != 0) {
+        disable_integrator = true;
+    }
+    channel_rudder->servo_out = yawController.get_servo_out(speed_scaler, disable_integrator);
+
+    // add in rudder mixing from roll
+    channel_rudder->servo_out += channel_roll->servo_out * g.kff_rudder_mix;
+    channel_rudder->servo_out += channel_rudder->control_in;
+    channel_rudder->servo_out = constrain_int16(channel_rudder->servo_out, -4500, 4500);
+}
+
+/*
+  calculate yaw control for ground steering with specific course
+ */
+static void calc_nav_yaw_course(void)
+{
+    // holding a specific navigation course on the ground. Used in
+    // auto-takeoff and landing
+    int32_t bearing_error_cd = nav_controller->bearing_error_cd();
+    channel_rudder->servo_out = steerController.get_steering_out_angle_error(bearing_error_cd);
+    if (stick_mixing_enabled()) {
+        stick_mix_channel(channel_rudder);
+    }
+    channel_rudder->servo_out = constrain_int16(channel_rudder->servo_out, -4500, 4500);
+}
+
+/*
+  calculate yaw control for ground steering
+ */
+static void calc_nav_yaw_ground(void)
+{
+    if (g_gps->ground_speed_cm < 100 && 
+        channel_throttle->control_in == 0) {
+        // manual rudder control while still
+        steer_state.locked_course = false;
+        steer_state.locked_course_err = 0;
+        channel_rudder->servo_out = channel_rudder->control_in;
+        return;
+    }
+
+    float steer_rate = (channel_rudder->control_in/4500.0f) * g.ground_steer_dps;
+    if (steer_rate != 0) {
+        // pilot is giving rudder input
+        steer_state.locked_course = false;        
+    } else if (!steer_state.locked_course) {
+        // pilot has released the rudder stick or we are still - lock the course
+        steer_state.locked_course = true;
+        steer_state.locked_course_err = 0;
+    }
+    if (!steer_state.locked_course) {
+        // use a rate controller at the pilot specified rate
+        channel_rudder->servo_out = steerController.get_steering_out_rate(steer_rate);
+    } else {
+        // use a error controller on the summed error
+        steer_state.locked_course_err += ahrs.get_gyro().z * G_Dt;
+        int32_t yaw_error_cd = -ToDeg(steer_state.locked_course_err)*100;
+        channel_rudder->servo_out = steerController.get_steering_out_angle_error(yaw_error_cd);
+    }
+    channel_rudder->servo_out = constrain_int16(channel_rudder->servo_out, -4500, 4500);
+}
+
+
 static void calc_nav_pitch()
 {
     // Calculate the Pitch of the plane
@@ -1262,6 +1556,14 @@ static void calc_nav_pitch()
     nav_pitch_cd = SpdHgt_Controller->get_pitch_demand();
     nav_pitch_cd = constrain_int32(nav_pitch_cd, pitch_limit_min_cd, aparm.pitch_limit_max_cd.get());
 }
+
+
+static void calc_nav_roll()
+{
+    nav_roll_cd = nav_controller->nav_roll_cd();
+    nav_roll_cd = constrain_int32(nav_roll_cd, -roll_limit_cd, roll_limit_cd);
+}
+
 
 /*****************************************
 * Throttle slew limit
@@ -1279,6 +1581,7 @@ static void throttle_slew_limit(int16_t last_throttle)
         channel_throttle->radio_out = constrain_int16(channel_throttle->radio_out, last_throttle - temp, last_throttle + temp);
     }
 }
+
 
 /*   Check for automatic takeoff conditions being met using the following sequence:
  *   1) Check for adequate GPS lock - if not return false
@@ -1361,6 +1664,7 @@ no_launch:
     return false;
 }
 
+
 /**
   Do we think we are flying?
   This is a heuristic so it could be wrong in some cases.  In particular, if we don't have GPS lock we'll fall
@@ -1380,6 +1684,7 @@ static bool is_flying(void)
 
     return inAir && gpsMovement && airspeedMovement;
 }
+
 
 /* We want to supress the throttle if we think we are on the ground and in an autopilot controlled throttle mode.
 
@@ -1737,5 +2042,139 @@ static void demo_servos(uint8_t i)
         mavlink_delay(400);
         i--;
     }
+}
+
+
+////// END PLANE SECTION
+
+
+// get_throttle_land - high level landing logic
+// sends the desired acceleration in the accel based throttle controller
+// called at 50hz
+static void
+get_throttle_land()
+{
+    // if we are above 10m and the sonar does not sense anything perform regular alt hold descent
+    if (current_loc.alt >= LAND_START_ALT && !(g.sonar_enabled && sonar_alt_health >= SONAR_ALT_HEALTH_MAX)) {
+        get_throttle_althold_with_slew(LAND_START_ALT, -wp_nav.get_descent_velocity(), -abs(g.land_speed));
+    }else{
+        get_throttle_rate_stabilized(-abs(g.land_speed));
+
+        // disarm when the landing detector says we've landed and throttle is at min (or we're in failsafe so we have no pilot thorottle input)
+#if LAND_REQUIRE_MIN_THROTTLE_TO_DISARM == ENABLED
+        if( ap.land_complete && (g.rc_3.control_in == 0 || failsafe.radio) ) {
+#else
+        if (ap.land_complete) {
+#endif
+            init_disarm_motors();
+        }
+    }
+}
+
+// reset_land_detector - initialises land detector
+static void reset_land_detector()
+{
+    set_land_complete(false);
+    land_detector = 0;
+}
+
+// update_land_detector - checks if we have landed and updates the ap.land_complete flag
+// returns true if we have landed
+static bool update_land_detector()
+{
+    // detect whether we have landed by watching for low climb rate and minimum throttle
+    if (abs(climb_rate) < 20 && motors.limit.throttle_lower) {
+        if (!ap.land_complete) {
+            // run throttle controller if accel based throttle controller is enabled and active (active means it has been given a target)
+            if( land_detector < LAND_DETECTOR_TRIGGER) {
+                land_detector++;
+            }else{
+                set_land_complete(true);
+                land_detector = 0;
+            }
+        }
+    }else if (g.rc_3.control_in != 0 || failsafe.radio){    // zero throttle locks land_complete as true
+        // we've sensed movement up or down so reset land_detector
+        land_detector = 0;
+        if(ap.land_complete) {
+            set_land_complete(false);
+        }
+    }
+
+    // return current state of landing
+    return ap.land_complete;
+}
+
+// get_throttle_surface_tracking - hold copter at the desired distance above the ground
+// updates accel based throttle controller targets
+static void
+get_throttle_surface_tracking(int16_t target_rate)
+{
+    static uint32_t last_call_ms = 0;
+    float distance_error;
+    float velocity_correction;
+
+    uint32_t now = millis();
+
+    // reset target altitude if this controller has just been engaged
+    if( now - last_call_ms > 200 ) {
+        target_sonar_alt = sonar_alt + controller_desired_alt - current_loc.alt;
+    }
+    last_call_ms = now;
+
+    // adjust sonar target alt if motors have not hit their limits
+    if ((target_rate<0 && !motors.limit.throttle_lower) || (target_rate>0 && !motors.limit.throttle_upper)) {
+        target_sonar_alt += target_rate * 0.02f;
+    }
+
+    // do not let target altitude get too far from current altitude above ground
+    // Note: the 750cm limit is perhaps too wide but is consistent with the regular althold limits and helps ensure a smooth transition
+    target_sonar_alt = constrain_float(target_sonar_alt,sonar_alt-750,sonar_alt+750);
+
+    // calc desired velocity correction from target sonar alt vs actual sonar alt
+    distance_error = target_sonar_alt-sonar_alt;
+    velocity_correction = distance_error * g.sonar_gain;
+    velocity_correction = constrain_float(velocity_correction, -THR_SURFACE_TRACKING_VELZ_MAX, THR_SURFACE_TRACKING_VELZ_MAX);
+
+    // call regular rate stabilize alt hold controller
+    get_throttle_rate_stabilized(target_rate + velocity_correction);
+}
+
+/*
+ *  reset all I integrators
+ */
+static void reset_I_all(void)
+{
+    reset_rate_I();
+    reset_throttle_I();
+    reset_optflow_I();
+}
+
+static void reset_rate_I()
+{
+    g.pid_rate_roll.reset_I();
+    g.pid_rate_pitch.reset_I();
+    g.pid_rate_yaw.reset_I();
+}
+
+static void reset_optflow_I(void)
+{
+    g.pid_optflow_roll.reset_I();
+    g.pid_optflow_pitch.reset_I();
+    of_roll = 0;
+    of_pitch = 0;
+}
+
+static void reset_throttle_I(void)
+{
+    // For Altitude Hold
+    g.pi_alt_hold.reset_I();
+    g.pid_throttle_accel.reset_I();
+}
+
+static void set_accel_throttle_I_from_pilot_throttle(int16_t pilot_throttle)
+{
+    // shift difference between pilot's throttle and hover throttle into accelerometer I
+    g.pid_throttle_accel.set_integrator(pilot_throttle-g.throttle_cruise);
 }
 
