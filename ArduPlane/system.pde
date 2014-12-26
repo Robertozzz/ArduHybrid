@@ -335,10 +335,10 @@ static void startup_ground()
     }
 }
 
-// plane_set_mode - change flight mode and perform any necessary initialisation
+// set_mode - change flight mode and perform any necessary initialisation
 // optional force parameter used to force the flight mode change (used only first time mode is set)
 // returns true if mode was succesfully set
-// PLANE_ACRO, PLANE_STABILIZE, ALTHOLD, LAND, DRIFT and SPORT can always be set successfully but the return state of other flight modes should be checked and the caller should deal with failures appropriately
+// ACRO, STABILIZE, ALTHOLD, LAND, DRIFT and SPORT can always be set successfully but the return state of other flight modes should be checked and the caller should deal with failures appropriately
 static void plane_set_mode(enum FlightMode mode)
 {
     if(plane_control_mode == mode) {
@@ -489,9 +489,6 @@ static void print_comma(void)
     cliSerial->print_P(PSTR(","));
 }
 
-/*
-  should we log a message type now?
- */
 static bool should_log(uint32_t mask)
 {
     if (!(mask & g.log_bitmask) || in_mavlink_delay) {

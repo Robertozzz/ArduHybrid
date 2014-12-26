@@ -305,11 +305,45 @@ static void init_ardupilot()
 #endif
 
 
+    // choose the nav controller
+    set_nav_controller();
+	
+	// Makes the servos wiggle once
+    if (!g.skip_gyro_cal) { demo_servos(1); }
+	
+	    // read the radio to set trims
+    trim_radio();
 
+	    // reset last heartbeat time, so we don't trigger failsafe on slow startup
+    plane_failsafe.last_heartbeat_ms = millis();
+	
+    plane_set_mode(PLANE_MANUAL);
+
+	//INS ground start
     startup_ground();
+	
+	// Makes the servos wiggle - 3 times signals ready to fly
+	    if (!g.skip_gyro_cal) { demo_servos(3); }
+	
+	// Save the settings for in-air restart
+    // ------------------------------------
+    //save_EEPROM_groundstart();
+	
+	// we don't want writes to the serial port to cause us to pause
+    // mid-flight, so set the serial ports non-blocking once we are
+    // ready to fly
+    hal.uartA->set_blocking_writes(false);
+    hal.uartC->set_blocking_writes(false);
+    if (hal.uartD != NULL) {
+        hal.uartD->set_blocking_writes(false);
+    }
 
-
-
+#if 0
+    // leave GPS blocking until we have support for correct handling
+    // of GPS config in uBlox when non-blocking
+    hal.uartB->set_blocking_writes(false);
+#endif
+	
     cliSerial->print_P(PSTR("\nReady to FLY "));
 }
 
@@ -334,6 +368,17 @@ static void startup_ground()
 
     // set landed flag
     set_land_complete(true);
+	
+ // ahrs.reset();  // necessary??
+	  
+	  
+    if (airspeed.enabled()) {
+        // initialize airspeed sensor
+        // --------------------------
+        zero_airspeed();
+    } else {
+        gcs_send_text_P(SEVERITY_LOW,PSTR("NO airspeed"));
+    }
 }
 
 // set_mode - change flight mode and perform any necessary initialisation
@@ -640,6 +685,75 @@ static void update_auto_armed()
     }
 }
 
+static void check_long_failsafe()
+{
+    uint32_t tnow = millis();
+    // only act on changes
+    // -------------------
+    if(plane_failsafe.state != FAILSAFE_LONG && plane_failsafe.state != FAILSAFE_GCS) {
+        if (plane_failsafe.rc_override_active && (tnow - plane_failsafe.last_heartbeat_ms) > g.long_fs_timeout*1000) {
+            failsafe_long_on_event(FAILSAFE_LONG);
+        } else if (!plane_failsafe.rc_override_active && 
+                   plane_failsafe.state == FAILSAFE_SHORT && 
+                   (tnow - plane_failsafe.ch3_timer_ms) > g.long_fs_timeout*1000) {
+            failsafe_long_on_event(FAILSAFE_LONG);
+        } else if (g.gcs_heartbeat_fs_enabled != GCS_FAILSAFE_OFF && 
+                   plane_failsafe.last_heartbeat_ms != 0 &&
+                   (tnow - plane_failsafe.last_heartbeat_ms) > g.long_fs_timeout*1000) {
+            failsafe_long_on_event(FAILSAFE_GCS);
+        } else if (g.gcs_heartbeat_fs_enabled == GCS_FAILSAFE_HB_RSSI && 
+                   plane_failsafe.last_radio_status_remrssi_ms != 0 &&
+                   (tnow - plane_failsafe.last_radio_status_remrssi_ms) > g.long_fs_timeout*1000) {
+            failsafe_long_on_event(FAILSAFE_GCS);
+        }
+    } else {
+        // We do not change state but allow for user to change mode
+        if (plane_failsafe.state == FAILSAFE_GCS && 
+            (tnow - plane_failsafe.last_heartbeat_ms) < g.short_fs_timeout*1000) {
+            plane_failsafe.state = FAILSAFE_NONE;
+        } else if (plane_failsafe.state == FAILSAFE_LONG && 
+                   plane_failsafe.rc_override_active && 
+                   (tnow - plane_failsafe.last_heartbeat_ms) < g.short_fs_timeout*1000) {
+            plane_failsafe.state = FAILSAFE_NONE;
+        } else if (plane_failsafe.state == FAILSAFE_LONG && 
+                   !plane_failsafe.rc_override_active && 
+                   !plane_failsafe.ch3_failsafe) {
+            plane_failsafe.state = FAILSAFE_NONE;
+        }
+    }
+}
+
+static void check_short_failsafe()
+{
+    // only act on changes
+    // -------------------
+    if(plane_failsafe.state == FAILSAFE_NONE) {
+        if(plane_failsafe.ch3_failsafe) {                                              // The condition is checked and the flag ch3_failsafe is set in radio.pde
+            failsafe_short_on_event(FAILSAFE_SHORT);
+        }
+    }
+
+    if(plane_failsafe.state == FAILSAFE_SHORT) {
+        if(!plane_failsafe.ch3_failsafe) {
+            failsafe_short_off_event();
+        }
+    }
+}
+
+static void resetPerfData(void) {
+    mainLoop_count                  = 0;
+    perf_info_max_time              = 0;
+    ahrs.renorm_range_count         = 0;
+    ahrs.renorm_blowup_count        = 0;
+    gps_fix_count                   = 0;
+    perf_mon_timer                  = millis();
+}
+
+static void print_comma(void)
+{
+    cliSerial->print_P(PSTR(","));
+}
+
 #if LOGGING_ENABLED == ENABLED
 static bool should_log(uint32_t mask)
 {
@@ -762,6 +876,39 @@ print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
         break;
     case SPORT:
         port->print_P(PSTR("SPORT"));
+        break;
+    case PLANE_MANUAL:
+        port->print_P(PSTR("Manual"));
+        break;
+    case PLANE_STABILIZE:
+        port->print_P(PSTR("PLANE_STABILIZE"));
+        break;
+    case PLANE_TRAINING:
+        port->print_P(PSTR("Training"));
+        break;
+    case PLANE_ACRO:
+        port->print_P(PSTR("PLANE_ACRO"));
+        break;
+    case PLANE_FLY_BY_WIRE_A:
+        port->print_P(PSTR("FBW_A"));
+        break;
+    case PLANE_FLY_BY_WIRE_B:
+        port->print_P(PSTR("FBW_B"));
+        break;
+    case PLANE_CRUISE:
+        port->print_P(PSTR("PLANE_CRUISE"));
+        break;
+    case PLANE_AUTO:
+        port->print_P(PSTR("PLANE_AUTO"));
+        break;
+    case PLANE_LOITER:
+        port->print_P(PSTR("PLANE_LOITER"));
+        break;
+    case PLANE_RTL:
+        port->print_P(PSTR("PLANE_RTL"));
+        break;
+    case PLANE_CIRCLE:
+        port->print_P(PSTR("PLANE_CIRCLE"));
         break;
     default:
         port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
