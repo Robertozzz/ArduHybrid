@@ -31,6 +31,9 @@
 #define CAMERA                DISABLED            // disable camera trigger to save 1k of flash
 #define CONFIG_SONAR          DISABLED            // disable sonar to save 1k of flash
 #define OBC_FAILSAFE 		  DISABLED
+#define FLIP				  DISABLED
+#define DRIFT				  DISABLED
+
 // features below are disabled by default
 //#define SPRAYER               ENABLED             // enable the crop sprayer feature (two ESC controlled pumps the speed of which depends upon the vehicle's horizontal velocity)
 //#define EPM_ENABLED           ENABLED             // enable epm cargo gripper costs 500bytes of flash

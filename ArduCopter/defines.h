@@ -195,14 +195,18 @@ enum {
 #define YAW_LOOK_AT_HOME    		    5       // point towards home (no pilot input accepted)
 #define YAW_LOOK_AT_HEADING    		    6       // point towards a particular angle (not pilot input accepted)
 #define YAW_LOOK_AHEAD					7		// WARNING!  CODE IN DEVELOPMENT NOT PROVEN
+#if DRIFT == ENABLED
 #define YAW_DRIFT                       8       //
+#endif
 #define YAW_RESETTOARMEDYAW				9       // point towards heading at time motors were armed
 
 #define ROLL_PITCH_STABLE           0       // pilot input roll, pitch angles
 #define ROLL_PITCH_ACRO             1       // pilot inputs roll, pitch rotation rates in body frame
 #define ROLL_PITCH_AUTO             2       // no pilot input.  autopilot roll, pitch is sent to stabilize controller inputs
 #define ROLL_PITCH_STABLE_OF        3       // pilot inputs roll, pitch angles which are mixed with optical flow based position controller lean anbles
+#if DRIFT == ENABLED
 #define ROLL_PITCH_DRIFT            4       //
+#endif
 #define ROLL_PITCH_LOITER           5       // pilot inputs the desired horizontal velocities
 #define ROLL_PITCH_SPORT            6       // pilot inputs roll, pitch rotation rates in earth frame
 #define ROLL_PITCH_AUTOTUNE         7       // description of new roll-pitch mode
@@ -293,7 +297,9 @@ enum {
 #define POSITION 8                      // AUTO control
 #define LAND 9                          // AUTO control
 #define OF_LOITER 10                    // Hold a single location using optical flow sensor
+#if DRIFT == ENABLED
 #define DRIFT 11                        // DRIFT mode (Note: 12 is no longer used)
+#endif
 #define SPORT 13                        // earth frame rate control
 #define NUM_MODES 14
 

@@ -1107,7 +1107,9 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
     { gcs_send_deferred,     2,     720 },
     { gcs_data_stream_send,  2,     950 },
     { update_mount,          2,     450 },
+#if LOGGING_ENABLED == ENABLED
     { ten_hz_logging_loop,  10,     300 },
+#endif
     { fifty_hz_logging_loop, 2,     220 },
     { perf_update,        1000,     200 },
     { read_receiver_rssi,   10,      50 },
@@ -1168,8 +1170,10 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { update_mount,           1,   1500 },
     { log_perf_info,        500,   1000 },
     { compass_save,        3000,   2500 },
+#if LOGGING_ENABLED == ENABLED
     { update_logging1,        5,   1700 },
     { update_logging2,        5,   1700 },
+#endif
 };
 
 
@@ -1304,6 +1308,7 @@ static void fast_loop()
     // --------------------------------------------------------------------
     update_trig();
 
+#if FLIP == ENABLED
 	// Acrobatic control
     if (ap.do_flip) {
         if(abs(g.rc_1.control_in) < 4000) {
@@ -1315,7 +1320,8 @@ static void fast_loop()
             Log_Write_Event(DATA_EXIT_FLIP);
         }
     }
-
+#endif
+	
     // run low level rate controllers that only require IMU data
     run_rate_controllers();
 
@@ -1412,6 +1418,7 @@ static void update_batt_compass(void)
     throttle_integrator += g.rc_3.servo_out;
 }
 
+#if LOGGING_ENABLED == ENABLED
 // ten_hz_logging_loop
 // should be run at 10hz
 static void ten_hz_logging_loop()
@@ -1426,6 +1433,7 @@ static void ten_hz_logging_loop()
         DataFlash.Log_Write_RCOUT();
     }
 }
+#endif
 
 // fifty_hz_logging_loop
 // should be run at 50hz
@@ -1435,7 +1443,7 @@ static void fifty_hz_logging_loop()
     // HIL for a copter needs very fast update of the servo values
     gcs_send_message(MSG_RADIO_OUT);
 #endif
-
+#if LOGGING_ENABLED == ENABLED
 #if HIL_MODE == HIL_MODE_DISABLED
     if (g.log_bitmask & MASK_LOG_ATTITUDE_FAST) {
         Log_Write_Attitude();
@@ -1444,6 +1452,7 @@ static void fifty_hz_logging_loop()
     if (g.log_bitmask & MASK_LOG_IMU) {
         DataFlash.Log_Write_IMU(ins);
     }
+#endif
 #endif
 }
 
@@ -1674,9 +1683,11 @@ bool set_yaw_mode(uint8_t new_yaw_mode)
                 yaw_initialised = true;
             }
             break;
+#if DRIFT == ENABLED
         case YAW_DRIFT:
             yaw_initialised = true;
             break;
+#endif
         case YAW_RESETTOARMEDYAW:
             control_yaw = ahrs.yaw_sensor; // store current yaw so we can start rotating back to correct one
             yaw_initialised = true;
@@ -1800,6 +1811,7 @@ void update_yaw_mode(void)
         get_look_ahead_yaw(pilot_yaw);
         break;
 
+#if DRIFT == ENABLED
     case YAW_DRIFT:
         // if we have landed reset yaw target to current heading
         if (ap.land_complete) {
@@ -1807,6 +1819,7 @@ void update_yaw_mode(void)
         }
         get_yaw_drift();
         break;
+#endif
 
     case YAW_RESETTOARMEDYAW:
         // if we are landed reset yaw target to current heading
@@ -1877,10 +1890,12 @@ bool set_roll_pitch_mode(uint8_t new_roll_pitch_mode)
             roll_pitch_initialised = true;
             break;
         case ROLL_PITCH_STABLE_OF:
+#if DRIFT == ENABLED
         case ROLL_PITCH_DRIFT:
             reset_roll_pitch_in_filters(g.rc_1.control_in, g.rc_2.control_in);
             roll_pitch_initialised = true;
             break;
+#endif
         case ROLL_PITCH_AUTO:
         case ROLL_PITCH_LOITER:
         case ROLL_PITCH_SPORT:
@@ -1996,9 +2011,11 @@ void update_roll_pitch_mode(void)
         get_stabilize_pitch(control_pitch);
         break;
 
+#if DRIFT == ENABLED
     case ROLL_PITCH_DRIFT:
         get_roll_pitch_drift();
         break;
+#endif
 
     case ROLL_PITCH_LOITER:
         // apply SIMPLE mode transform
@@ -2646,18 +2663,18 @@ static void update_compass(void)
     }
 }
 
+#if LOGGING_ENABLED == ENABLED
 /*
   do 10Hz logging
  */
 static void update_logging1(void)
 {
-#if LOGGING_ENABLED == ENABLED
+
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_ATTITUDE_FAST))
         plane_Log_Write_Attitude();
 
     if (should_log(MASK_LOG_ATTITUDE_MED) && !should_log(MASK_LOG_IMU))
         Log_Write_IMU();
-#endif
 }
 
 /*
@@ -2665,7 +2682,6 @@ static void update_logging1(void)
  */
 static void update_logging2(void)
 {
-#if LOGGING_ENABLED == ENABLED
     if (should_log(MASK_LOG_CTUN))
         plane_Log_Write_Control_Tuning();
     
@@ -2677,8 +2693,8 @@ static void update_logging2(void)
     
     if (should_log(MASK_LOG_RCOUT))
         DataFlash.Log_Write_RCOUT();
-#endif
 }
+#endif
 
 /*
   check for OBC failsafe check

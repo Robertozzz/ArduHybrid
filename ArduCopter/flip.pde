@@ -6,6 +6,7 @@
 //    Some states are fixed commands (for a fixed time)
 //    Some states are fixed commands (until some IMU condition)
 //    Some states include controls inside
+#if FLIP == ENABLED
 uint8_t flip_timer;
 uint8_t flip_state;
 
@@ -80,3 +81,4 @@ void roll_flip()
         break;
     }
 }
+#endif

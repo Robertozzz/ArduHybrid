@@ -492,6 +492,7 @@ static bool set_mode(uint8_t mode)
             }
             break;
 
+#if DRIFT == ENABLED
         case DRIFT:
             success = true;
             set_yaw_mode(YAW_DRIFT);
@@ -499,6 +500,7 @@ static bool set_mode(uint8_t mode)
             set_nav_mode(NAV_NONE);
             set_throttle_mode(DRIFT_THR);
             break;
+#endif
 
         case SPORT:
             success = true;
@@ -630,9 +632,11 @@ static bool mode_requires_GPS(uint8_t mode) {
         case RTL:
         case CIRCLE:
         case POSITION:
+#if DRIFT == ENABLED
         case DRIFT:
             return true;
-        default:
+#endif
+			default:
             return false;
     }
 
@@ -644,7 +648,9 @@ static bool manual_flight_mode(uint8_t mode) {
     switch(mode) {
         case ACRO:
         case STABILIZE:
+#if DRIFT == ENABLED
         case DRIFT:
+#endif
         case SPORT:
             return true;
         default:
@@ -871,9 +877,11 @@ print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
     case OF_LOITER:
         port->print_P(PSTR("OF_LOITER"));
         break;
+#if DRIFT == ENABLED
     case DRIFT:
         port->print_P(PSTR("DRIFT"));
         break;
+#endif
     case SPORT:
         port->print_P(PSTR("SPORT"));
         break;
