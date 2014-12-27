@@ -533,7 +533,7 @@ static float scaleLongUp = 1;
 static float scaleLongDown = 1;
 // A counter used to count down valid gps fixes to allow the gps estimate to settle
 // before recording our home position (and executing a ground start if we booted with an air start)
-static uint8_t ground_start_count      = 5;
+static uint8_t ground_start_count      = 10;
 // Used to compute a speed estimate from the first valid gps fixes to decide if we are
 // on the ground or in the air.  Used to decide if a ground start is appropriate if we
 // booted with an air start.
@@ -2826,7 +2826,7 @@ static void update_GPS_10Hz(void)
             // so that the altitude is more accurate
             // -------------------------------------
             if (current_loc.lat == 0) {
-                ground_start_count = 5;
+                ground_start_count = 10;
 
             } else {
                 plane_init_home();
