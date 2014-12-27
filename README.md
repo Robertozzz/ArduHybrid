@@ -5,12 +5,12 @@ THIS IS AN UNFINISHED BUILD AND NOT READY TO FLY!!!!
 
 todo:
 
+- MOTORS channel output MAPPING or Plane servo output mapping to separate servo outputs
 - Reduce sketch size to fit on APM2.
-- Build switching code between Plane/Copter using receiver input
+- Build switching code between Plane/Copter using RC transmitter input
 - Build switching code between Plane/Copter using mission commands
 - Figure out how to deal with failsafe and maybe switching between the two depending on distance to home/rally point
-- SERVO MASK for mount/aux
-- change default plane servo outputs to prevent interference with MOTORS. Keep motors on default outputs (1 to 8)
+- SERVO mask for mount/aux not to interfere with ch 1-8
 
 - g_gps->init(hal.uartB, GPS::GPS_ENGINE_AIRBORNE_4G); ??
 - AHRS sets  during init ??
