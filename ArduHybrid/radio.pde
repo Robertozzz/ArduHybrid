@@ -83,7 +83,7 @@ static void init_rc_out()
     channel_rudder->enable_out();
 
     // Initialization of servo outputs
-    for (uint8_t i=0; i<8; i++) {
+    for (uint8_t i=0; i<4; i++) {
         RC_Channel::rc_channel(i)->output_trim();
     }
 

@@ -555,7 +555,7 @@ static void servo_write(uint8_t ch, uint16_t pwm)
 
     #if (FRAME_CONFIG == QUAD_FRAME)
         // Quads can use RC5 and higher as servos
-        if (ch >= CH_5) servo_ok = true;
+        if (ch >= CH_9) servo_ok = true;
     #elif (FRAME_CONFIG == TRI_FRAME || FRAME_CONFIG == SINGLE_FRAME)
         // Tri's and Singles can use RC5, RC6, RC8 and higher
         if (ch == CH_5 || ch == CH_6 || ch >= CH_8) servo_ok = true;

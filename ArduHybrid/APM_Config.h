@@ -6,15 +6,15 @@
 // valid! You should switch to using a HAL_BOARD flag in your local config.mk.
 
 #define FRAME_CONFIG QUAD_FRAME
-/*
+/*   !!!! FOR THE MOMENT DO NOT USE MORE THAN 4 MOTORS !!!!
  *  options:
  *  QUAD_FRAME
  *  TRI_FRAME
- *  HEXA_FRAME
- *  Y6_FRAME
- *  OCTA_FRAME
- *  OCTA_QUAD_FRAME
- *  HELI_FRAME
+ *  HEXA_FRAME		NOT AVAILABLE
+ *  Y6_FRAME		NOT AVAILABLE
+ *  OCTA_FRAME		NOT AVAILABLE
+ *  OCTA_QUAD_FRAME	NOT AVAILABLE
+ *  HELI_FRAME		NOT AVAILABLE
  *  SINGLE_FRAME
  */
 
