@@ -558,7 +558,7 @@ static void servo_write(uint8_t ch, uint16_t pwm)
         if (ch >= CH_9) servo_ok = true;
     #elif (FRAME_CONFIG == TRI_FRAME || FRAME_CONFIG == SINGLE_FRAME)
         // Tri's and Singles can use RC5, RC6, RC8 and higher
-        if (ch == CH_5 || ch == CH_6 || ch >= CH_8) servo_ok = true;
+        if (ch >= CH_9) servo_ok = true;
     #elif (FRAME_CONFIG == HEXA_FRAME || FRAME_CONFIG == Y6_FRAME)
         // Hexa and Y6 can use RC7 and higher
         if (ch >= CH_7) servo_ok = true;
