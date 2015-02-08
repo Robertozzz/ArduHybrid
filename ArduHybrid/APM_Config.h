@@ -6,33 +6,33 @@
 // valid! You should switch to using a HAL_BOARD flag in your local config.mk.
 
 #define FRAME_CONFIG QUAD_FRAME
-/*   !!!! FOR THE MOMENT DO NOT USE MORE THAN 4 MOTORS !!!!
+/*
  *  options:
  *  QUAD_FRAME
  *  TRI_FRAME
- *  HEXA_FRAME		NOT AVAILABLE
- *  Y6_FRAME		NOT AVAILABLE
- *  OCTA_FRAME		NOT AVAILABLE
- *  OCTA_QUAD_FRAME	NOT AVAILABLE
- *  HELI_FRAME		NOT AVAILABLE
+ *  HEXA_FRAME
+ *  Y6_FRAME
+ *  OCTA_FRAME
+ *  OCTA_QUAD_FRAME
+ *  HELI_FRAME
  *  SINGLE_FRAME
  */
 
 // uncomment the lines below to save on flash space if compiling for the APM using Arduino IDE.  Top items save the most flash space
-#define CLI_ENABLED           DISABLED            // disable the CLI (command-line-interface) to save 21K of flash space
-#define LOGGING_ENABLED       DISABLED            // disable dataflash logging to save 11K of flash space
-#define GPS_PROTOCOL          GPS_PROTOCOL_UBLOX  // hard code GPS to Ublox to save 8k of flash
+//#define CLI_ENABLED           DISABLED            // disable the CLI (command-line-interface) to save 21K of flash space
+//#define LOGGING_ENABLED       DISABLED            // disable dataflash logging to save 11K of flash space
+//#define GPS_PROTOCOL          GPS_PROTOCOL_UBLOX  // hard code GPS to Ublox to save 8k of flash
 //#define GPS_PROTOCOL          GPS_PROTOCOL_MTK19  // hard cdoe GPS to Mediatek to save 10k of flash
-#define MOUNT                 DISABLED            // disable the camera gimbal to save 8K of flash space
-#define MOUNT2                DISABLED            // disable the camera gimbal to save 8K of flash space
-#define AUTOTUNE              DISABLED            // disable the auto tune functionality to save 7k of flash
-#define OPTFLOW               DISABLED            // disable optical flow sensor to save 5K of flash space
-#define AC_FENCE              DISABLED            // disable fence to save 2k of flash
-#define CAMERA                DISABLED            // disable camera trigger to save 1k of flash
-#define CONFIG_SONAR          DISABLED            // disable sonar to save 1k of flash
-#define OBC_FAILSAFE 		  DISABLED
-#define FLIP				  DISABLED
-#define DRIFT				  DISABLED
+//#define MOUNT                 DISABLED            // disable the camera gimbal to save 8K of flash space
+//#define MOUNT2                DISABLED            // disable the camera gimbal to save 8K of flash space
+//#define AUTOTUNE              DISABLED            // disable the auto tune functionality to save 7k of flash
+//#define OPTFLOW               DISABLED            // disable optical flow sensor to save 5K of flash space
+//#define AC_FENCE              DISABLED            // disable fence to save 2k of flash
+//#define CAMERA                DISABLED            // disable camera trigger to save 1k of flash
+//#define CONFIG_SONAR          DISABLED            // disable sonar to save 1k of flash
+//#define OBC_FAILSAFE 		  DISABLED
+//#define FLIP				  DISABLED
+//#define DRIFT				  DISABLED
 
 // features below are disabled by default
 //#define SPRAYER               ENABLED             // enable the crop sprayer feature (two ESC controlled pumps the speed of which depends upon the vehicle's horizontal velocity)

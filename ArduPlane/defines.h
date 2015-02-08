@@ -66,19 +66,19 @@ enum gcs_failsafe {
 #define T7 10000000
 
 enum FlightMode {
-    PLANE_MANUAL        = 20,
-    PLANE_CIRCLE        = 21,
-    PLANE_STABILIZE     = 22,
-    PLANE_TRAINING      = 23,
-    PLANE_ACRO          = 24,
-    PLANE_FLY_BY_WIRE_A = 25,
-    PLANE_FLY_BY_WIRE_B = 26,
-    PLANE_CRUISE        = 27,
-    PLANE_AUTO          = 30,
-    PLANE_RTL           = 31,
-    PLANE_LOITER        = 32,
-    PLANE_GUIDED        = 35,
-    PLANE_INITIALISING  = 36
+    PLANE_MANUAL        = 0,
+    PLANE_CIRCLE        = 1,
+    PLANE_STABILIZE     = 2,
+    PLANE_TRAINING      = 3,
+    PLANE_ACRO          = 4,
+    PLANE_FLY_BY_WIRE_A = 5,
+    PLANE_FLY_BY_WIRE_B = 6,
+    PLANE_CRUISE        = 7,
+    PLANE_AUTO          = 10,
+    PLANE_RTL           = 11,
+    PLANE_LOITER        = 12,
+    PLANE_GUIDED        = 15,
+    PLANE_INITIALISING  = 16
 };
 
 enum ChannelMixing {

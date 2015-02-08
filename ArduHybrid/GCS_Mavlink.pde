@@ -1602,7 +1602,7 @@ GCS_MAVLINK::update(void)
 #if CLI_ENABLED == ENABLED
         /* allow CLI to be started by hitting enter 3 times, if no
          *  heartbeat packets have been received */
-	if (isplane == false){
+	if (!isplane){
         if (mavlink_active == 0 && (millis() - _cli_timeout) < 20000 && 
             !motors.armed() && comm_is_idle(chan)) {
             if (c == '\n' || c == '\r') {
@@ -1615,7 +1615,7 @@ GCS_MAVLINK::update(void)
             }
         }
 	}
-	if (isplane == true){
+	if (isplane){
         if (mavlink_active == 0 && (millis() - _cli_timeout) < 20000 && 
             comm_is_idle(chan)) {
             if (c == '\n' || c == '\r') {
@@ -1641,7 +1641,7 @@ GCS_MAVLINK::update(void)
         }
     }
 
-if (isplane == false){
+if (!isplane){
     // Update packet drops counter
     packet_drops += status.packet_rx_drop_count;
 }
@@ -1660,12 +1660,12 @@ if (isplane == false){
     }
 
     // stop waypoint receiving if timeout
-if (isplane == false){
+if (!isplane){
     if (waypoint_receiving && (tnow - waypoint_timelast_receive) > waypoint_receive_timeout) {
         waypoint_receiving = false;
     }
 }
-if (isplane == true){
+if (isplane){
     // stop waypoint receiving if timeout
     if (waypoint_receiving && (millis() - waypoint_timelast_receive) > waypoint_receive_timeout) {
         waypoint_receiving = false;
@@ -1709,19 +1709,19 @@ bool GCS_MAVLINK::stream_trigger(enum streams stream_num)
 void
 GCS_MAVLINK::data_stream_send(void)
 {
-if (isplane == false){
+if (!isplane){
     if (waypoint_receiving) {
         // don't interfere with mission transfer
         return;
     }
 }
 
-if (isplane == false){
+if (!isplane){
     if (!in_mavlink_delay && !motors.armed()) {
         handle_log_send(DataFlash);
     }
 }
-if (isplane == true){
+if (isplane){
     if (!in_mavlink_delay) {
         handle_log_send(DataFlash);
     }
@@ -1743,7 +1743,7 @@ if (isplane == true){
     if (gcs_out_of_time) return;
 
     if (in_mavlink_delay) {
-if (isplane == true){
+if (isplane){
 #if HIL_MODE != HIL_MODE_DISABLED
         // in HIL we need to keep sending servo values to ensure
         // the simulator doesn't pause, otherwise our sensor
@@ -1760,7 +1760,7 @@ if (isplane == true){
         return;
     }
 
-if (isplane == true){
+if (isplane){
     if (gcs_out_of_time) return;
 }
     if (stream_trigger(STREAM_RAW_SENSORS)) {
@@ -1777,10 +1777,10 @@ if (isplane == true){
         send_message(MSG_CURRENT_WAYPOINT);
         send_message(MSG_GPS_RAW);
         send_message(MSG_NAV_CONTROLLER_OUTPUT);
-		if (isplane == false){
+		if (!isplane){
         send_message(MSG_LIMITS_STATUS);
 		}
-		if (isplane == true){
+		if (isplane){
         send_message(MSG_FENCE_STATUS);
 		}
     }
@@ -1822,7 +1822,7 @@ if (isplane == true){
     if (stream_trigger(STREAM_EXTRA3)) {
         send_message(MSG_AHRS);
         send_message(MSG_HWSTATUS);
-		if (isplane == true){
+		if (isplane){
         send_message(MSG_WIND);
         send_message(MSG_RANGEFINDER);
 		}
@@ -1833,10 +1833,10 @@ if (isplane == true){
 void
 GCS_MAVLINK::send_message(enum ap_message id)
 {
-if (isplane == false){
+if (!isplane){
     mavlink_send_message(chan,id, packet_drops);
 }
-if (isplane == true){
+if (isplane){
     plane_mavlink_send_message(chan, id);
 }
 }
@@ -1853,17 +1853,17 @@ GCS_MAVLINK::send_text_P(gcs_severity severity, const prog_char_t *str)
         }
     }
     if (i < sizeof(m.text)) m.text[i] = 0;
-if (isplane == false){
+if (!isplane){
     mavlink_send_text(chan, severity, (const char *)m.text);
 }
- if (isplane == true){
+ if (isplane){
     plane_mavlink_send_text(chan, severity, (const char *)m.text);
 }
 }
 
 void GCS_MAVLINK::handleMessage(mavlink_message_t* msg)
 {
-if (isplane == false){
+if (!isplane){
     struct Location tell_command;
     memset(&tell_command, 0, sizeof(tell_command));
 
@@ -2862,7 +2862,7 @@ mission_failed:
 
     }     // end switch
 }
- if (isplane == true){
+ if (isplane){
     struct Location tell_command = {};                // command for telemetry
 
     switch (msg->msgid) {
@@ -3146,7 +3146,7 @@ mission_failed:
             break;
 
         // send waypoint
-        tell_command = get_cmd_with_index_raw(packet.seq);
+        tell_command = get_cmd_with_index(packet.seq);
 
         // set frame of waypoint
         uint8_t frame;
@@ -3573,7 +3573,34 @@ mission_failed:
             plane_set_mode(PLANE_GUIDED);
 
             // make any new wp uploaded instant (in case we are already in Guided mode)
-            set_guided_WP();
+
+			
+			//            set_guided_WP();  WORKAROUND FOR PIXHAWK BUILD FAIL
+    if (g.loiter_radius < 0) {
+        loiter.direction = -1;
+    } else {
+        loiter.direction = 1;
+    }
+
+    // copy the current location into the OldWP slot
+    // ---------------------------------------
+    prev_WP = current_loc;
+
+    // Load the next_WP slot
+    // ---------------------
+    next_WP = guided_WP;
+
+    // used to control FBW and limit the rate of climb
+    // -----------------------------------------------
+    target_altitude_cm = current_loc.alt;
+
+    setup_glide_slope();
+
+    loiter_angle_reset();
+	// END WORKAROUND
+	
+
+
 
             // verify we recevied the command
             mavlink_msg_mission_ack_send(

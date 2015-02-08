@@ -159,6 +159,9 @@
 
 bool isplane = true;
 bool oldisplane = isplane;
+bool transit;
+uint16_t vtolservo1;
+unsigned long transittimer;
 
 // key aircraft parameters passed to multiple libraries
 static AP_Vehicle::FixedWing aparm;	// Plane
@@ -1180,10 +1183,10 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
 
 void setup() {
 
-		if (isplane == false){
+		if (!isplane){
 			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_100HZ;
 		}
-		if (isplane == true){
+		if (isplane){
 			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
 		}
 		
@@ -1197,10 +1200,10 @@ void setup() {
     init_ardupilot();
 
     // initialise the main loop scheduler
-		if (isplane == false){
+		if (!isplane){
 			scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
 		}
-		if (isplane == true){
+		if (isplane){
 			scheduler.init(&plane_scheduler_tasks[0], sizeof(plane_scheduler_tasks)/sizeof(plane_scheduler_tasks[0]));
 		}
 }
@@ -1238,13 +1241,43 @@ static void perf_update(void)
 }
 
 void loop()
-{
+{ 
+    uint16_t vtolservo = hal.rcin->read(4);
+			
+ 
+ if(vtolservo<1500 && isplane == false && transit == 0){
+	gcs_send_text_fmt(PSTR("vtolservo %d"),vtolservo);
+	transit=1;
+	gcs_send_text_fmt(PSTR("CHANGE < 1500  change to transit"));
+	hal.rcout->write(10, 1500);
+	hal.rcout->write(11, 1500);
+	transittimer = millis();
+	}
+
+	
+ if(vtolservo<1500 && isplane == false && transit == 1){
+	if (millis() > (transittimer + 5000)){
+		gcs_send_text_fmt(PSTR("CHANGE > 1500  change to plane"));
+		transit = 0;isplane=true;
+		hal.rcout->write(10, 1900);
+		hal.rcout->write(11, 1900);
+		}
+	}
+ 
+ if(vtolservo>1500 && (isplane == true || transit == 1)){ plane_gcs_send_text_fmt(PSTR("vtolservo %d"),vtolservo);
+	isplane=false;
+	gcs_send_text_fmt(PSTR("CHANGE > 1500 change to copter"));
+	hal.rcout->write(10, 1100);
+	hal.rcout->write(11, 1100);
+	}
+  
+
 	if (isplane != oldisplane){
-		if (isplane == false){
+		if (!isplane){
 			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_100HZ;
 			scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
 		}
-		if (isplane == true){
+		if (isplane){
 			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
 			scheduler.init(&plane_scheduler_tasks[0], sizeof(plane_scheduler_tasks)/sizeof(plane_scheduler_tasks[0]));
 		}
@@ -1269,7 +1302,7 @@ void loop()
     // for mainloop failure monitoring
     mainLoop_count++;
 
-	if (isplane == false){
+	if (!isplane){
     // Execute the fast loop
     fast_loop();
 	}
@@ -1282,12 +1315,12 @@ void loop()
     // in multiples of the main loop tick. So if they don't run on
     // the first call to the scheduler they won't run on a later
     // call until scheduler.tick() is called again
-if (isplane == false){
+if (!isplane){
 	uint32_t time_available = (timer + 10000) - micros();
     scheduler.run(time_available - 300);
 }
 	
-if (isplane == true){
+if (isplane){
     uint32_t time_available = (timer + 20000) - micros();
     if (time_available > 19500) { time_available = 19500; }
     scheduler.run(time_available);
@@ -2810,8 +2843,8 @@ static void update_GPS_10Hz(void)
     // get position from AHRS
     have_position = ahrs.get_projected_position(current_loc);
 
-    if (g_gps->new_data && g_gps->status() >= GPS::GPS_OK_FIX_3D) {
-        g_gps->new_data = false;
+//    if (g_gps->new_data && g_gps->status() >= GPS::GPS_OK_FIX_3D) {
+//        g_gps->new_data = false;
 
         // for performance
         // ---------------
@@ -2853,9 +2886,16 @@ static void update_GPS_10Hz(void)
 
         if (!arming.is_armed() ||
             hal.util->safety_switch_state() == AP_HAL::Util::SAFETY_DISARMED) {
-            update_home();
+ 
+ 
+ //           update_home(); WORKAROUND FOR PIXHAWK BUILD FAIL
+		home.lng        = g_gps->longitude;                                 // Lon * 10**7
+		home.lat        = g_gps->latitude;                                  // Lat * 10**7
+		home.alt        = max(g_gps->altitude_cm, 0);
+		barometer.update_calibration();
+	// END WORKAROUND
+	
         }
-    }
 
     calc_gndspeed_undershoot();
 }

@@ -289,10 +289,10 @@ setup_radio(uint8_t argc, const Menu::arg *argv)
     for(i = 0; i < 100; i++) {
         delay(20);
 
-    if (isplane == false){
+    if (!isplane){
 		read_radio();
 		}
-	if (isplane == true){	
+	if (isplane){	
         plane_read_radio();
 		}
     }
@@ -338,10 +338,10 @@ setup_radio(uint8_t argc, const Menu::arg *argv)
         delay(20);
         // Filters radio input - adjust filters in the radio.pde file
         // ----------------------------------------------------------
-    if (isplane == false){
+    if (!isplane){
 		read_radio();
 		}
-	if (isplane == true){	
+	if (isplane){	
         plane_read_radio();
 		}
 

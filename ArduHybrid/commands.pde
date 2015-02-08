@@ -276,7 +276,7 @@ static void set_next_WP(const struct Location *wp)  // Plane
     loiter_angle_reset();
 }
 
-static void set_guided_WP(void)  // Plane
+static void set_guided_WP(void)  // Plane // see also workaround in GCS MAVLINK
 {
     if (g.loiter_radius < 0) {
         loiter.direction = -1;
@@ -381,7 +381,7 @@ static void plane_init_home()
   this is called as long as we have 3D lock and the arming switch is
   not pushed
 */
-static void update_home()  // Plane
+static void update_home()  // Plane / see also workaround in ARDUHYBRID
 {
     home.lng        = g_gps->longitude;                                 // Lon * 10**7
     home.lat        = g_gps->latitude;                                  // Lat * 10**7

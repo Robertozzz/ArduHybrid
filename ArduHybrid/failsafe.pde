@@ -43,7 +43,7 @@ void failsafe_check()
         return;
     }
 
-	if (isplane == false){
+	if (!isplane){
 		if (failsafe_enabled && tnow - last_timestamp > 2000000) {
 			// motors are running but we have gone 2 second since the
 			// main loop ran. That means we're in trouble and should
@@ -61,7 +61,7 @@ void failsafe_check()
     }
 	}
 	
-	if (isplane == true){
+	if (isplane){
     if (tnow - last_timestamp > 200000) {
         // we have gone at least 0.2 seconds since the main loop
         // ran. That means we're in trouble, or perhaps are in

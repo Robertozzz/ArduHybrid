@@ -83,7 +83,7 @@ static void init_rc_out()
     channel_rudder->enable_out();
 
     // Initialization of servo outputs
-    for (uint8_t i=0; i<4; i++) {
+    for (uint8_t i=0; i<8; i++) {
         RC_Channel::rc_channel(i)->output_trim();
     }
 
@@ -502,10 +502,10 @@ static void trim_control_surfaces()
 static void trim_radio()
 {
     for (uint8_t i = 0; i < 30; i++) {
-    if (isplane == false){
+    if (!isplane){
 		read_radio();
 		}
-	if (isplane == true){	
+	if (isplane){	
         plane_read_radio();
 		}
     }
@@ -518,7 +518,7 @@ static void trim_radio()
     g.rc_2.save_eeprom();
     g.rc_4.save_eeprom();
 
-    if (isplane == true){
+    if (isplane){
     trim_control_surfaces();
 	}
 }

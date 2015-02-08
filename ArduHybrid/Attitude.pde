@@ -1796,6 +1796,57 @@ static void channel_output_mixer(uint8_t mixing_type, int16_t &chan1_out, int16_
 /*****************************************
 * Set the flight control servos based on the current calculated values
 *****************************************/
+
+ // PLANE TO COPTER MOTOR MAP  - NEEDS WORK
+void throttle_plane_to_copter(){  
+    #if (FRAME_CONFIG == QUAD_FRAME)  // NEEDS WORK, THIS IS FOR X FRAME
+        hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
+		hal.rcout->write(1, channel_throttle->radio_min);
+	    hal.rcout->write(2, channel_throttle->radio_out);	// motor 3
+		hal.rcout->write(3, channel_throttle->radio_min);
+		    // Route configurable aux. functions to their respective servos
+		g.rc_5.output_ch(CH_5);
+		g.rc_6.output_ch(CH_6);
+		g.rc_7.output_ch(CH_7);
+		g.rc_8.output_ch(CH_8);
+		
+    #elif (FRAME_CONFIG == TRI_FRAME)
+		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
+	    hal.rcout->write(1, channel_throttle->radio_out);	// motor 2
+		hal.rcout->write(2, channel_throttle->radio_trim); // center the tail servo
+		hal.rcout->write(3, channel_throttle->radio_min);
+		    // Route configurable aux. functions to their respective servos
+		g.rc_5.output_ch(CH_5);
+		g.rc_6.output_ch(CH_6);
+		g.rc_7.output_ch(CH_7);
+		g.rc_8.output_ch(CH_8);
+		
+    #elif (FRAME_CONFIG == Y6_FRAME)  // FRAME Y6B!!!
+		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
+		hal.rcout->write(1, channel_throttle->radio_out);	// motor 2
+	    hal.rcout->write(2, channel_throttle->radio_min);
+		hal.rcout->write(3, channel_throttle->radio_min);
+	    hal.rcout->write(4, channel_throttle->radio_out);	// motor 5
+		hal.rcout->write(5, channel_throttle->radio_out);	// motor 6
+		    // Route configurable aux. functions to their respective servos
+		g.rc_7.output_ch(CH_7);
+		g.rc_8.output_ch(CH_8);
+
+	#elif (FRAME_CONFIG == OCTA_QUAD_FRAME)  // FRAME X
+		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
+		hal.rcout->write(1, channel_throttle->radio_out);	// motor 2
+	    hal.rcout->write(2, channel_throttle->radio_min);
+		hal.rcout->write(3, channel_throttle->radio_min);
+	    hal.rcout->write(4, channel_throttle->radio_out);	// motor 5
+		hal.rcout->write(5, channel_throttle->radio_out);	// motor 6
+	    hal.rcout->write(6, channel_throttle->radio_min);
+		hal.rcout->write(7, channel_throttle->radio_min);
+    #else
+        // throw compile error if frame type is unrecognise
+        #error Unrecognised frame type
+    #endif 
+}
+
 static void plane_set_servos(void)
 {
     int16_t last_throttle = channel_throttle->radio_out;
@@ -1818,15 +1869,15 @@ static void plane_set_servos(void)
         // pwm_to_angle_dz() to ensure we don't trim the value for the
         // deadzone of the main aileron channel, otherwise the 2nd
         // aileron won't quite follow the first one
-        RC_Channel_aux::set_servo_out(RC_Channel_aux::k_aileron, channel_roll->pwm_to_angle_dz(0));
-        RC_Channel_aux::set_servo_out(RC_Channel_aux::k_elevator, channel_pitch->pwm_to_angle_dz(0));
-        RC_Channel_aux::set_servo_out(RC_Channel_aux::k_rudder, channel_rudder->pwm_to_angle_dz(0));
+//        RC_Channel_aux::set_servo_out(RC_Channel_aux::k_aileron, channel_roll->pwm_to_angle_dz(0));
+//        RC_Channel_aux::set_servo_out(RC_Channel_aux::k_elevator, channel_pitch->pwm_to_angle_dz(0));
+//        RC_Channel_aux::set_servo_out(RC_Channel_aux::k_rudder, channel_rudder->pwm_to_angle_dz(0));
 
         // this variant assumes you have the corresponding
         // input channel setup in your transmitter for manual control
         // of the 2nd aileron
-        RC_Channel_aux::copy_radio_in_out(RC_Channel_aux::k_aileron_with_input);
-        RC_Channel_aux::copy_radio_in_out(RC_Channel_aux::k_elevator_with_input);
+//        RC_Channel_aux::copy_radio_in_out(RC_Channel_aux::k_aileron_with_input);
+//        RC_Channel_aux::copy_radio_in_out(RC_Channel_aux::k_elevator_with_input);
         RC_Channel_aux::copy_radio_in_out(RC_Channel_aux::k_flap_auto);
 
         if (g.mix_mode == 0 && g.elevon_output == MIXING_DISABLED) {
@@ -1838,15 +1889,15 @@ static void plane_set_servos(void)
     } else {
         if (g.mix_mode == 0) {
             // both types of secondary aileron are slaved to the roll servo out
-            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_aileron, channel_roll->servo_out);
-            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_aileron_with_input, channel_roll->servo_out);
+//            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_aileron, channel_roll->servo_out);
+//            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_aileron_with_input, channel_roll->servo_out);
 
             // both types of secondary elevator are slaved to the pitch servo out
-            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_elevator, channel_pitch->servo_out);
-            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_elevator_with_input, channel_pitch->servo_out);
+//            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_elevator, channel_pitch->servo_out);
+//            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_elevator_with_input, channel_pitch->servo_out);
 
             // setup secondary rudder
-            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_rudder, channel_rudder->servo_out);
+//            RC_Channel_aux::set_servo_out(RC_Channel_aux::k_rudder, channel_rudder->servo_out);
         }else{
             /*Elevon mode*/
             float ch1;
@@ -2005,15 +2056,14 @@ static void plane_set_servos(void)
 
     // send values to the PWM timers for output
     // ----------------------------------------
-    channel_roll->output();
-    channel_pitch->output();
-    channel_throttle->output();
-    channel_rudder->output();
+
+    RC_Channel_aux::set_radio(RC_Channel_aux::k_aileron, channel_roll->radio_out);
+    RC_Channel_aux::set_radio(RC_Channel_aux::k_elevator, channel_pitch->radio_out);
+    RC_Channel_aux::set_radio(RC_Channel_aux::k_rudder, channel_rudder->radio_out);
+ 	throttle_plane_to_copter();
+      
     // Route configurable aux. functions to their respective servos
-    g.rc_5.output_ch(CH_5);
-    g.rc_6.output_ch(CH_6);
-    g.rc_7.output_ch(CH_7);
-    g.rc_8.output_ch(CH_8);
+
  #if CONFIG_HAL_BOARD == HAL_BOARD_PX4
     g.rc_9.output_ch(CH_9);
  #endif

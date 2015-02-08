@@ -844,80 +844,66 @@ static void
 print_flight_mode(AP_HAL::BetterStream *port, uint8_t mode)
 {
     switch (mode) {
-    case STABILIZE:
-        port->print_P(PSTR("STABILIZE"));
+    case 0:
+        if (isplane){port->print_P(PSTR("MANUAL"));}
+		else {port->print_P(PSTR("STABILIZE"));}
         break;
-    case ACRO:
-        port->print_P(PSTR("ACRO"));
+    case 1:
+        if (isplane){port->print_P(PSTR("CIRCLE"));}
+		else {port->print_P(PSTR("ACRO"));}
         break;
-    case ALT_HOLD:
-        port->print_P(PSTR("ALT_HOLD"));
+    case 2:
+        if (isplane){port->print_P(PSTR("STABILIZE"));}
+		else {port->print_P(PSTR("ALT_HOLD"));}
         break;
-    case AUTO:
-        port->print_P(PSTR("AUTO"));
+    case 3:
+        if (isplane){port->print_P(PSTR("TRAINING"));}
+		else {port->print_P(PSTR("AUTO"));}
         break;
-    case GUIDED:
-        port->print_P(PSTR("GUIDED"));
+    case 4:
+        if (isplane){port->print_P(PSTR("ACRO"));}
+		else {port->print_P(PSTR("GUIDED"));}
         break;
-    case LOITER:
-        port->print_P(PSTR("LOITER"));
+    case 5:
+        if (isplane){port->print_P(PSTR("FBW_A"));}
+		else {port->print_P(PSTR("LOITER"));}
         break;
-    case RTL:
-        port->print_P(PSTR("RTL"));
+    case 6:
+        if (isplane){port->print_P(PSTR("FBW_B"));}
+		else {port->print_P(PSTR("RTL"));}
         break;
-    case CIRCLE:
-        port->print_P(PSTR("CIRCLE"));
+    case 7:
+        if (isplane){port->print_P(PSTR("CRUISE"));}
+		else {port->print_P(PSTR("CIRCLE"));}
         break;
-    case POSITION:
+    case 8:
         port->print_P(PSTR("POSITION"));
         break;
-    case LAND:
+    case 9:
         port->print_P(PSTR("LAND"));
         break;
-    case OF_LOITER:
-        port->print_P(PSTR("OF_LOITER"));
+    case 10:
+        if (isplane){port->print_P(PSTR("AUTO"));}
+		else {port->print_P(PSTR("OF_LOITER"));}
         break;
-#if DRIFT == ENABLED
-    case DRIFT:
-        port->print_P(PSTR("DRIFT"));
+    case 11:
+        if (isplane){port->print_P(PSTR("RTL"));}
+		else {port->print_P(PSTR("DRIFT"));}
         break;
-#endif
-    case SPORT:
+    case 12:
+        port->print_P(PSTR("LOITER"));
+        break;
+    case 13:
         port->print_P(PSTR("SPORT"));
         break;
-    case PLANE_MANUAL:
-        port->print_P(PSTR("Manual"));
+    case 15:
+        port->print_P(PSTR("GUIDED"));
         break;
-    case PLANE_STABILIZE:
-        port->print_P(PSTR("PLANE_STABILIZE"));
+    case 16:
+        port->print_P(PSTR("INITIALIZING"));
         break;
-    case PLANE_TRAINING:
-        port->print_P(PSTR("Training"));
-        break;
-    case PLANE_ACRO:
-        port->print_P(PSTR("PLANE_ACRO"));
-        break;
-    case PLANE_FLY_BY_WIRE_A:
-        port->print_P(PSTR("FBW_A"));
-        break;
-    case PLANE_FLY_BY_WIRE_B:
-        port->print_P(PSTR("FBW_B"));
-        break;
-    case PLANE_CRUISE:
-        port->print_P(PSTR("PLANE_CRUISE"));
-        break;
-    case PLANE_AUTO:
-        port->print_P(PSTR("PLANE_AUTO"));
-        break;
-    case PLANE_LOITER:
-        port->print_P(PSTR("PLANE_LOITER"));
-        break;
-    case PLANE_RTL:
-        port->print_P(PSTR("PLANE_RTL"));
-        break;
-    case PLANE_CIRCLE:
-        port->print_P(PSTR("PLANE_CIRCLE"));
-        break;
+
+		
     default:
         port->printf_P(PSTR("Mode(%u)"), (unsigned)mode);
         break;
