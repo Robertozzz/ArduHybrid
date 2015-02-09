@@ -163,9 +163,10 @@ public:
         k_param_ground_steer_dps,				// Plane
         k_param_rally_limit_km,					// Plane
         k_param_hil_err_limit,					// Plane
-
-
-
+		k_param_hybridservo_copter,
+		k_param_hybridservo_transition,
+		k_param_hybridservo_plane,
+		k_param_transitionspeed,
         // 70: AP_Limits Library
         k_param_fence = 70,
         k_param_gps_glitch,
@@ -426,6 +427,11 @@ public:
     AP_Float hil_err_limit;					// Plane
 #endif
 
+	// HYBRID conversion servo values
+	AP_Int16	hybridservo_copter;
+	AP_Int16	hybridservo_transition;
+	AP_Int16	hybridservo_plane;
+	AP_Int16	transitionspeed;
     // Feed-forward gains
     AP_Float kff_rudder_mix;				// Plane
     AP_Float kff_pitch_to_throttle;			// Plane

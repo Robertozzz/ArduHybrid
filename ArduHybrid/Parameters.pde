@@ -785,6 +785,34 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(plane_flight_mode6, "PLFLTMODE6",               PLANE_FLIGHT_MODE_6),
 
+    // @Param: hybridservo_copter_value
+    // @DisplayName: hybridservo_copter_value
+    // @Description: 
+    // @Values: 800-2000
+    // @User: Standard
+    GSCALAR(hybridservo_copter, "HYBCOPVAL",               HYBRIDSERVO_COPTER),
+
+    // @Param: hybridservo_transition_value
+    // @DisplayName: hybridservo_transition_value
+    // @Description: 
+    // @Values: 800-2000
+    // @User: Standard
+    GSCALAR(hybridservo_transition, "HYBTRANSVAL",               HYBRIDSERVO_TRANSITION),
+	
+    // @Param: hybridservo_plane_value
+    // @DisplayName: hybridservo_plane_value
+    // @Description: 
+    // @Values: 800-2000
+    // @User: Standard
+    GSCALAR(hybridservo_plane, "HYBPLANEVAL",               HYBRIDSERVO_PLANE),
+
+	// @Param: Hybrid transitionspeed
+    // @DisplayName: Hybrid transitionspeed
+    // @Description: 
+    // @Values:
+    // @User: Standard
+    GSCALAR(transitionspeed, "TRANSSPEED",               TRANSITIONSPEED),
+	
     // @Param: LIM_ROLL_CD
     // @DisplayName: Maximum Bank Angle
     // @Description: The maximum commanded bank angle in either direction

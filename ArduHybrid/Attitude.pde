@@ -1798,7 +1798,7 @@ static void channel_output_mixer(uint8_t mixing_type, int16_t &chan1_out, int16_
 *****************************************/
 
  // PLANE TO COPTER MOTOR MAP  - NEEDS WORK
-void throttle_plane_to_copter(){  
+void throttle_plane_to_copter(){ 
     #if (FRAME_CONFIG == QUAD_FRAME)  // NEEDS WORK, THIS IS FOR X FRAME
         hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
 		hal.rcout->write(1, channel_throttle->radio_min);
@@ -1854,14 +1854,14 @@ static void plane_set_servos(void)
     if (plane_control_mode == PLANE_MANUAL) {
         // do a direct pass through of radio values
         if (g.mix_mode == 0 || g.elevon_output != MIXING_DISABLED) {
-            channel_roll->radio_out                = channel_roll->radio_in;
-            channel_pitch->radio_out               = channel_pitch->radio_in;
+            channel_roll->radio_out                	= channel_roll->radio_in;
+            channel_pitch->radio_out               	= channel_pitch->radio_in;
         } else {
-            channel_roll->radio_out                = channel_roll->read();
-            channel_pitch->radio_out               = channel_pitch->read();
+            channel_roll->radio_out                	= channel_roll->read();
+            channel_pitch->radio_out               	= channel_pitch->read();
         }
-        channel_throttle->radio_out    = channel_throttle->radio_in;
-        channel_rudder->radio_out              = channel_rudder->radio_in;
+			channel_throttle->radio_out    			= channel_throttle->radio_in;
+			channel_rudder->radio_out             	= channel_rudder->radio_in;
 
         // setup extra channels. We want this to come from the
         // main input channel, but using the 2nd channels dead
@@ -2083,11 +2083,11 @@ static void demo_servos(uint8_t i)
     while(i > 0) {
         gcs_send_text_P(SEVERITY_LOW,PSTR("Demo Servos!"));
         demoing_servos = true;
-        servo_write(1, 1400);
+        hal.rcout->write(7, 1400);
         mavlink_delay(400);
-        servo_write(1, 1600);
+        hal.rcout->write(7, 1600);
         mavlink_delay(200);
-        servo_write(1, 1500);
+        hal.rcout->write(7, 1500);
         demoing_servos = false;
         mavlink_delay(400);
         i--;

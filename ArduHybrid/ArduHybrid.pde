@@ -1246,29 +1246,27 @@ void loop()
 			
  
  if(vtolservo<1500 && isplane == false && transit == 0){
-	gcs_send_text_fmt(PSTR("vtolservo %d"),vtolservo);
 	transit=1;
 	gcs_send_text_fmt(PSTR("CHANGE < 1500  change to transit"));
-	hal.rcout->write(10, 1500);
-	hal.rcout->write(11, 1500);
+	RC_Channel_aux::set_radio(RC_Channel_aux::k_hybridservo, g.hybridservo_transition);
 	transittimer = millis();
 	}
 
 	
  if(vtolservo<1500 && isplane == false && transit == 1){
-	if (millis() > (transittimer + 5000)){
-		gcs_send_text_fmt(PSTR("CHANGE > 1500  change to plane"));
-		transit = 0;isplane=true;
-		hal.rcout->write(10, 1900);
-		hal.rcout->write(11, 1900);
-		}
+	if (millis() > (transittimer + g.transitionspeed)){
+	set_control_channels();
+	gcs_send_text_fmt(PSTR("CHANGE > 1500  change to plane"));
+	transit = 0;isplane=true;
+	RC_Channel_aux::set_radio(RC_Channel_aux::k_hybridservo, g.hybridservo_plane);
+	}
 	}
  
- if(vtolservo>1500 && (isplane == true || transit == 1)){ plane_gcs_send_text_fmt(PSTR("vtolservo %d"),vtolservo);
-	isplane=false;
+ if(vtolservo>1500 && (isplane == true || transit == 1)){
+	init_rc_in();
+	isplane=false;transit=0;
 	gcs_send_text_fmt(PSTR("CHANGE > 1500 change to copter"));
-	hal.rcout->write(10, 1100);
-	hal.rcout->write(11, 1100);
+	RC_Channel_aux::set_radio(RC_Channel_aux::k_hybridservo, g.hybridservo_copter);
 	}
   
 

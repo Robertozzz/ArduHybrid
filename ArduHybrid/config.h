@@ -437,6 +437,20 @@
 #endif
 
 
+#if !defined(HYBRIDSERVO_COPTER)
+ # define HYBRIDSERVO_COPTER 		1400
+#endif
+#if !defined(HYBRIDSERVO_TRANSITION)
+ # define HYBRIDSERVO_TRANSITION 	1500
+#endif
+#if !defined(HYBRIDSERVO_PLANE)
+ # define HYBRIDSERVO_PLANE 		1600
+#endif
+#if !defined(TRANSITIONSPEED)
+ # define TRANSITIONSPEED 		2500
+#endif
+
+
 //////////////////////////////////////////////////////////////////////////////
 // Throttle Failsafe
 //
