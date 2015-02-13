@@ -825,7 +825,7 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @Description: Servo out channel for switching hybrid mode.
     // @Values: Tri/Quad: 5-13  Y6/HEX: 7-13  Octa: 9-13
     // @User: Standard
-    GSCALAR(hybridswitching_radio_out, "HYBSWITCHIN",              HYBRIDSWITCHING_OUT),
+    GSCALAR(hybridswitching_radio_out, "HYBSWITCHOUT",              HYBRIDSWITCHING_OUT),
 
     // @Param: LIM_ROLL_CD
     // @DisplayName: Maximum Bank Angle

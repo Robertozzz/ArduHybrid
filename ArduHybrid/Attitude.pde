@@ -1800,7 +1800,8 @@ static void channel_output_mixer(uint8_t mixing_type, int16_t &chan1_out, int16_
  // PLANE TO COPTER MOTOR MAP  - NEEDS WORK
 void throttle_plane_to_copter(){ 
     #if (FRAME_CONFIG == QUAD_FRAME)  // NEEDS WORK, THIS IS FOR X FRAME
-        hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
+       // if (g.frame_orientation == 1){  // beginning of X+ different motors
+		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
 		hal.rcout->write(1, channel_throttle->radio_min);
 	    hal.rcout->write(2, channel_throttle->radio_out);	// motor 3
 		hal.rcout->write(3, channel_throttle->radio_min);

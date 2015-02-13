@@ -164,7 +164,7 @@ unsigned long transittimer;
 bool radio_out_old;
 bool radio_in_old;
 bool radioinpwm_old;
-bool change_to_plane;
+bool change_to_plane = false;
 
 
 // key aircraft parameters passed to multiple libraries
@@ -1135,7 +1135,7 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
 #ifdef USERHOOK_SUPERSLOWLOOP
     { userhook_SuperSlowLoop,100,   100 },
 #endif
-	{ hybridswitching,   	 10,    100 },
+	{ hybrid_switching_read_radios,   	 10,    100 },
 };
 
 /*
@@ -1182,7 +1182,7 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { update_logging1,        5,   1700 },
     { update_logging2,        5,   1700 },
 #endif
-	{ hybridswitching,   	  5,    100 },
+	{ hybrid_switching_read_radios,   	  5,    100 },
 };
 
 
@@ -1248,7 +1248,8 @@ static void perf_update(void)
 
 void loop()
 { 
-
+	hybrid_switching_changeover_code();
+	
     // wait for an INS sample
     if (!ins.wait_for_sample(1000)) {
         Log_Write_Error(ERROR_SUBSYSTEM_MAIN, ERROR_CODE_MAIN_INS_DELAY);
@@ -3173,16 +3174,15 @@ static void update_alt()
     airspeed.set_EAS2TAS(barometer.get_EAS2TAS());
 }
 
-static void hybridswitching()
+static void hybrid_switching_read_radios()
 {
 	uint16_t radioinpwm;
 	uint16_t radiooutpwm;
 	bool radio_in;
 	bool radio_out;
 	
-   	if (g.hybridswitching_radio_in != 0){ radioinpwm = hal.rcin->read(g.hybridswitching_radio_in-1);}else{radioinpwm = 2000;}
-	if (g.hybridswitching_radio_out != 0){ radiooutpwm = hal.rcout->read(g.hybridswitching_radio_out-1);}else{radiooutpwm = 2000;}
-
+   	if (g.hybridswitching_radio_in != 0){ radioinpwm = hal.rcin->read(g.hybridswitching_radio_in-1);}else{radioinpwm = 1100;}
+	if (g.hybridswitching_radio_out != 0){ radiooutpwm = hal.rcout->read(g.hybridswitching_radio_out-1);}else{radiooutpwm = 1100;}
 	
 	if (radioinpwm 	< 1500){radio_in 	= LOW;} else {radio_in 	= HIGH;}
 	if (radiooutpwm < 1500){radio_out	= LOW;} else {radio_out = HIGH;}
@@ -3193,7 +3193,10 @@ static void hybridswitching()
 	if (g.hybridswitching_radio_in == g.flight_mode_channel && (radioinpwm > (radioinpwm_old+50) || radioinpwm < (radioinpwm_old-50)))
 		{change_to_plane = radio_in	;	radio_in_old = radio_in		;	radioinpwm_old = radioinpwm;}
 	
- 
+}
+
+static void hybrid_switching_changeover_code()
+{	
  if(change_to_plane && isplane == false && transit == 0){
 	transit=1;
 	gcs_send_text_fmt(PSTR("Change to transit"));

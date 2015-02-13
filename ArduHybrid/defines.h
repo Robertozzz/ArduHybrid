@@ -493,8 +493,8 @@ enum {
 
 // EEPROM addresses
 #define EEPROM_MAX_ADDR         4096
-// parameters get the first 1536 + 1280 bytes of EEPROM, remainder is for waypoints
-#define WP_START_BYTE 0x1100 // where in memory home WP is stored + all other
+// parameters get the first 1536 bytes of EEPROM, remainder is for waypoints
+#define WP_START_BYTE 0x600 // where in memory home WP is stored + all other
                             // WP
 #define WP_SIZE 15
 
