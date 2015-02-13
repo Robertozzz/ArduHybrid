@@ -163,10 +163,9 @@ public:
         k_param_ground_steer_dps,				// Plane
         k_param_rally_limit_km,					// Plane
         k_param_hil_err_limit,					// Plane
-		k_param_hybridservo_copter,
-		k_param_hybridservo_transition,
-		k_param_hybridservo_plane,
-		k_param_transitionspeed,
+
+
+		
         // 70: AP_Limits Library
         k_param_fence = 70,
         k_param_gps_glitch,
@@ -175,16 +174,16 @@ public:
         k_param_single_servo_2,
         k_param_single_servo_3,
         k_param_single_servo_4,
-        // 78: Heli
-        k_param_heli_servo_1 = 78,
-        k_param_heli_servo_2,
-        k_param_heli_servo_3,
-        k_param_heli_servo_4,
-        k_param_heli_pitch_ff,
-        k_param_heli_roll_ff,
-        k_param_heli_yaw_ff,
-        k_param_heli_stab_col_min,
-        k_param_heli_stab_col_max,
+        // 78: Hybrid
+        k_param_hybridservo_copter = 78,
+		k_param_hybridservo_transition,
+		k_param_hybridservo_plane,
+		k_param_transitionspeed,
+		k_param_hybridswitching_radio_in,
+		k_param_hybridswitching_radio_out,
+
+
+
         // 88: Motors
         k_param_motors = 88,
         // 90: Inertial Nav
@@ -192,10 +191,8 @@ public:
         k_param_wp_nav,
         // 93: Arming parameters
         k_param_arming = 93,							// Plane
-
         // 95: Extra parameters
         k_param_fence_retalt = 95,					// Plane
-
         // 97: Telemetry control
         k_param_gcs0 = 97,
         k_param_gcs1,
@@ -206,7 +203,6 @@ public:
         k_param_gcs2,
         k_param_serial0_baud,					// Plane
         k_param_serial2_baud,
-
         // 107: Fly-by-wire control
         k_param_airspeed_min = 107,				// Plane
         k_param_airspeed_max,					// Plane
@@ -289,14 +285,12 @@ public:
         k_param_failsafe_battery_enabled,
         k_param_throttle_mid,
         k_param_failsafe_gps_enabled,
-        k_param_failsafe_gcs, ////////duplicates with plane???!!!!
+        k_param_failsafe_gcs,
         k_param_rcmap,
-
         // 191: Feed-forward gains
         k_param_kff_rudder_mix = 191,			// Plane
         k_param_kff_throttle_to_pitch,			// Plane
         k_param_scaling_speed,					// Plane
-
         // 195: flight modes
         k_param_flight_mode_channel = 195,		// Plane
         k_param_flight_mode1,
@@ -312,7 +306,6 @@ public:
         k_param_plane_flight_mode5,
         k_param_plane_flight_mode6,
         k_param_simple_modes,
-
         // 210: Waypoint data
         k_param_waypoint_mode = 210,			// Plane
         k_param_command_total,
@@ -348,7 +341,6 @@ public:
         k_param_acro_balance_roll,
         k_param_acro_balance_pitch,
         k_param_acro_yaw_p,
-
         // 245: other objects
         k_param_obc = 245,						// Plane
         k_param_rollController,					// Plane
@@ -427,11 +419,14 @@ public:
     AP_Float hil_err_limit;					// Plane
 #endif
 
-	// HYBRID conversion servo values
+	// HYBRID conversion
 	AP_Int16	hybridservo_copter;
 	AP_Int16	hybridservo_transition;
 	AP_Int16	hybridservo_plane;
 	AP_Int16	transitionspeed;
+	AP_Int8	hybridswitching_radio_in;
+	AP_Int8	hybridswitching_radio_out;
+	
     // Feed-forward gains
     AP_Float kff_rudder_mix;				// Plane
     AP_Float kff_pitch_to_throttle;			// Plane
@@ -547,15 +542,6 @@ public:
     AP_Int16 acro_pitch_ratep;				// Plane
     AP_Int8  acro_locking;					// Plane
 
-#if FRAME_CONFIG ==     HELI_FRAME
-    // Heli
-    RC_Channel      heli_servo_1, heli_servo_2, heli_servo_3, heli_servo_4;     // servos for swash plate and tail
-    AP_Float        heli_pitch_ff;												// pitch rate feed-forward
-    AP_Float        heli_roll_ff;												// roll rate feed-forward
-    AP_Float        heli_yaw_ff;												// yaw rate feed-forward
-    AP_Int16        heli_stab_col_min;                                          // min collective while pilot directly controls collective in stabilize mode
-    AP_Int16        heli_stab_col_max;                                          // min collective while pilot directly controls collective in stabilize mode
-#endif
 #if FRAME_CONFIG ==     SINGLE_FRAME
     // Single
     RC_Channel      single_servo_1, single_servo_2, single_servo_3, single_servo_4;     // servos for four flaps

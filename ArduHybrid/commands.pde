@@ -81,7 +81,7 @@ static struct Location get_cmd_with_index(int i)
         temp.lng = hal.storage->read_dword(mem);         // lon is stored in decimal * 10,000,000
     }
 
-    // Add on home altitude if we are a nav command (or other command with altitude) and stored alt is relative
+    if (!isplane){// Add on home altitude if we are a nav command (or other command with altitude) and stored alt is relative
     //if((temp.id < MAV_CMD_NAV_LAST || temp.id == MAV_CMD_CONDITION_CHANGE_ALT) && (temp.options & MASK_OPTIONS_RELATIVE_ALT)){
     //temp.alt += home.alt;
     //}
@@ -90,6 +90,7 @@ static struct Location get_cmd_with_index(int i)
         // If were relative, just offset from home
         temp.lat        +=      home.lat;
         temp.lng        +=      home.lng;
+		}
     }
 
     return temp;

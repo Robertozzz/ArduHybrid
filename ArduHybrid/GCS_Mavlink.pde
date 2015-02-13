@@ -3146,7 +3146,7 @@ mission_failed:
             break;
 
         // send waypoint
-        tell_command = get_cmd_with_index(packet.seq);
+        tell_command = get_cmd_with_index(packet.seq); // removed RAW, WORKAROUND FOR PIXHAWK BUILD FAIL. see: static struct Location get_cmd_with_index(int i) isplane exclusion as well.
 
         // set frame of waypoint
         uint8_t frame;
@@ -3575,7 +3575,7 @@ mission_failed:
             // make any new wp uploaded instant (in case we are already in Guided mode)
 
 			
-			//            set_guided_WP();  WORKAROUND FOR PIXHAWK BUILD FAIL
+			//            set_guided_WP(); // WORKAROUND FOR PIXHAWK BUILD FAIL
     if (g.loiter_radius < 0) {
         loiter.direction = -1;
     } else {

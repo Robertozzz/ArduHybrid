@@ -157,11 +157,15 @@
 #include <APM_OBC.h>			// Plane
 #include <APM_Control.h>		// Plane
 
-bool isplane = true;
+bool isplane = false;
 bool oldisplane = isplane;
 bool transit;
-uint16_t vtolservo1;
 unsigned long transittimer;
+bool radio_out_old;
+bool radio_in_old;
+bool radioinpwm_old;
+bool change_to_plane;
+
 
 // key aircraft parameters passed to multiple libraries
 static AP_Vehicle::FixedWing aparm;	// Plane
@@ -1131,6 +1135,7 @@ static const AP_Scheduler::Task scheduler_tasks[] PROGMEM = {
 #ifdef USERHOOK_SUPERSLOWLOOP
     { userhook_SuperSlowLoop,100,   100 },
 #endif
+	{ hybridswitching,   	 10,    100 },
 };
 
 /*
@@ -1177,6 +1182,7 @@ static const AP_Scheduler::Task plane_scheduler_tasks[] PROGMEM = {
     { update_logging1,        5,   1700 },
     { update_logging2,        5,   1700 },
 #endif
+	{ hybridswitching,   	  5,    100 },
 };
 
 
@@ -1242,45 +1248,6 @@ static void perf_update(void)
 
 void loop()
 { 
-    uint16_t vtolservo = hal.rcin->read(4);
-			
- 
- if(vtolservo<1500 && isplane == false && transit == 0){
-	transit=1;
-	gcs_send_text_fmt(PSTR("CHANGE < 1500  change to transit"));
-	RC_Channel_aux::set_radio(RC_Channel_aux::k_hybridservo, g.hybridservo_transition);
-	transittimer = millis();
-	}
-
-	
- if(vtolservo<1500 && isplane == false && transit == 1){
-	if (millis() > (transittimer + g.transitionspeed)){
-	set_control_channels();
-	gcs_send_text_fmt(PSTR("CHANGE > 1500  change to plane"));
-	transit = 0;isplane=true;
-	RC_Channel_aux::set_radio(RC_Channel_aux::k_hybridservo, g.hybridservo_plane);
-	}
-	}
- 
- if(vtolservo>1500 && (isplane == true || transit == 1)){
-	init_rc_in();
-	isplane=false;transit=0;
-	gcs_send_text_fmt(PSTR("CHANGE > 1500 change to copter"));
-	RC_Channel_aux::set_radio(RC_Channel_aux::k_hybridservo, g.hybridservo_copter);
-	}
-  
-
-	if (isplane != oldisplane){
-		if (!isplane){
-			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_100HZ;
-			scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
-		}
-		if (isplane){
-			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
-			scheduler.init(&plane_scheduler_tasks[0], sizeof(plane_scheduler_tasks)/sizeof(plane_scheduler_tasks[0]));
-		}
-		oldisplane = isplane;
-	}
 
     // wait for an INS sample
     if (!ins.wait_for_sample(1000)) {
@@ -2841,8 +2808,8 @@ static void update_GPS_10Hz(void)
     // get position from AHRS
     have_position = ahrs.get_projected_position(current_loc);
 
-//    if (g_gps->new_data && g_gps->status() >= GPS::GPS_OK_FIX_3D) {
-//        g_gps->new_data = false;
+    if (g_gps->new_data && g_gps->status() >= GPS::GPS_OK_FIX_3D) {
+        g_gps->new_data = false;
 
         // for performance
         // ---------------
@@ -2886,7 +2853,7 @@ static void update_GPS_10Hz(void)
             hal.util->safety_switch_state() == AP_HAL::Util::SAFETY_DISARMED) {
  
  
- //           update_home(); WORKAROUND FOR PIXHAWK BUILD FAIL
+    //        update_home();// WORKAROUND FOR PIXHAWK BUILD FAIL
 		home.lng        = g_gps->longitude;                                 // Lon * 10**7
 		home.lat        = g_gps->latitude;                                  // Lat * 10**7
 		home.alt        = max(g_gps->altitude_cm, 0);
@@ -2894,7 +2861,7 @@ static void update_GPS_10Hz(void)
 	// END WORKAROUND
 	
         }
-
+    }
     calc_gndspeed_undershoot();
 }
 
@@ -3205,5 +3172,64 @@ static void update_alt()
     // tell AHRS the airspeed to true airspeed ratio
     airspeed.set_EAS2TAS(barometer.get_EAS2TAS());
 }
+
+static void hybridswitching()
+{
+	uint16_t radioinpwm;
+	uint16_t radiooutpwm;
+	bool radio_in;
+	bool radio_out;
+	
+   	if (g.hybridswitching_radio_in != 0){ radioinpwm = hal.rcin->read(g.hybridswitching_radio_in-1);}else{radioinpwm = 2000;}
+	if (g.hybridswitching_radio_out != 0){ radiooutpwm = hal.rcout->read(g.hybridswitching_radio_out-1);}else{radiooutpwm = 2000;}
+
+	
+	if (radioinpwm 	< 1500){radio_in 	= LOW;} else {radio_in 	= HIGH;}
+	if (radiooutpwm < 1500){radio_out	= LOW;} else {radio_out = HIGH;}
+	
+	if (radio_in != radio_in_old)	{change_to_plane = radio_in		;	radio_in_old 	= radio_in;}
+	if (radio_out != radio_out_old)	{change_to_plane = radio_out	;	radio_out_old 	= radio_out;}
+
+	if (g.hybridswitching_radio_in == g.flight_mode_channel && (radioinpwm > (radioinpwm_old+50) || radioinpwm < (radioinpwm_old-50)))
+		{change_to_plane = radio_in	;	radio_in_old = radio_in		;	radioinpwm_old = radioinpwm;}
+	
+ 
+ if(change_to_plane && isplane == false && transit == 0){
+	transit=1;
+	gcs_send_text_fmt(PSTR("Change to transit"));
+	RC_Channel_aux::set_radio(RC_Channel_aux::k_hybridservo, g.hybridservo_transition);
+	transittimer = millis();
+	}
+
+	
+ if(change_to_plane && isplane == false && transit == 1){
+	if (millis() > (transittimer + g.transitionspeed)){
+	set_control_channels();
+	gcs_send_text_fmt(PSTR("Change to plane"));
+	transit = 0;isplane=true;
+	RC_Channel_aux::set_radio(RC_Channel_aux::k_hybridservo, g.hybridservo_plane);
+	}
+	}
+ 
+ if(!change_to_plane && (isplane == true || transit == 1)){
+	init_rc_in();
+	isplane=false;transit=0;
+	gcs_send_text_fmt(PSTR("Change to copter"));
+	RC_Channel_aux::set_radio(RC_Channel_aux::k_hybridservo, g.hybridservo_copter);
+	}
+  
+	if (isplane != oldisplane){
+		if (!isplane){
+			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_100HZ;
+			scheduler.init(&scheduler_tasks[0], sizeof(scheduler_tasks)/sizeof(scheduler_tasks[0]));
+		}
+		if (isplane){
+			AP_InertialSensor::Sample_rate ins_sample_rate = AP_InertialSensor::RATE_50HZ;
+			scheduler.init(&plane_scheduler_tasks[0], sizeof(plane_scheduler_tasks)/sizeof(plane_scheduler_tasks[0]));
+		}
+		oldisplane = isplane;
+	}
+}
+
 
 AP_HAL_MAIN();

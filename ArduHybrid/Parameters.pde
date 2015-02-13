@@ -813,6 +813,20 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Standard
     GSCALAR(transitionspeed, "TRANSSPEED",               TRANSITIONSPEED),
 	
+	// @Param: hybridswitching_radio_in
+    // @DisplayName: Hybrid switching radio in channel
+    // @Description: Radio in channel for switching hybrid mode.
+    // @Values:1-8
+    // @User: Standard
+    GSCALAR(hybridswitching_radio_in, "HYBSWITCHIN",               HYBRIDSWITCHING_IN),
+
+	// @Param: hybridswitching_radio_out
+    // @DisplayName: Hybrid switching radio out channel
+    // @Description: Servo out channel for switching hybrid mode.
+    // @Values: Tri/Quad: 5-13  Y6/HEX: 7-13  Octa: 9-13
+    // @User: Standard
+    GSCALAR(hybridswitching_radio_out, "HYBSWITCHIN",              HYBRIDSWITCHING_OUT),
+
     // @Param: LIM_ROLL_CD
     // @DisplayName: Maximum Bank Angle
     // @Description: The maximum commanded bank angle in either direction
@@ -1123,63 +1137,6 @@ const AP_Param::Info var_info[] PROGMEM = {
     // @User: Advanced
     // @Values: 0:Very Soft, 25:Soft, 50:Medium, 75:Crisp, 100:Very Crisp
     GSCALAR(rc_feel_rp, "RC_FEEL_RP",  RC_FEEL_RP_VERY_CRISP),
-
-#if FRAME_CONFIG ==     HELI_FRAME
-    // @Group: HS1_
-    // @Path: ../libraries/RC_Channel/RC_Channel.cpp
-    GGROUP(heli_servo_1,    "HS1_", RC_Channel),
-    // @Group: HS2_
-    // @Path: ../libraries/RC_Channel/RC_Channel.cpp
-    GGROUP(heli_servo_2,    "HS2_", RC_Channel),
-    // @Group: HS3_
-    // @Path: ../libraries/RC_Channel/RC_Channel.cpp
-    GGROUP(heli_servo_3,    "HS3_", RC_Channel),
-    // @Group: HS4_
-    // @Path: ../libraries/RC_Channel/RC_Channel.cpp
-    GGROUP(heli_servo_4,    "HS4_", RC_Channel),
-
-    // @Param: RATE_PIT_FF
-    // @DisplayName: Rate Pitch Feed Forward
-    // @Description: Rate Pitch Feed Forward (for TradHeli Only)
-    // @Range: 0 10
-    // @Increment: 0.01
-    // @User: Standard
-	GSCALAR(heli_pitch_ff, "RATE_PIT_FF",            HELI_PITCH_FF),
-
-    // @Param: RATE_RLL_FF
-    // @DisplayName: Rate Roll Feed Forward
-    // @Description: Rate Roll Feed Forward (for TradHeli Only)
-    // @Range: 0 10
-    // @Increment: 0.01
-    // @User: Standard
-	GSCALAR(heli_roll_ff, "RATE_RLL_FF",            HELI_ROLL_FF),
-
-    // @Param: RATE_YAW_FF
-    // @DisplayName: Rate Yaw Feed Forward
-    // @Description: Rate Yaw Feed Forward (for TradHeli Only)
-    // @Range: 0 10
-    // @Increment: 0.01
-    // @User: Standard
-	GSCALAR(heli_yaw_ff, "RATE_YAW_FF",            HELI_YAW_FF),
-
-    // @Param: H_STAB_COL_MIN
-    // @DisplayName: Heli Stabilize Throttle Collective Minimum
-    // @Description: Helicopter's minimum collective position while pilot directly controls collective in stabilize mode
-    // @Range: 0 500
-    // @Units: Percent*10
-    // @Increment: 1
-    // @User: Standard
-    GSCALAR(heli_stab_col_min, "H_STAB_COL_MIN", HELI_STAB_COLLECTIVE_MIN_DEFAULT),
-
-    // @Param: H_STAB_COL_MAX
-    // @DisplayName: Stabilize Throttle Maximum
-    // @Description: Helicopter's maximum collective position while pilot directly controls collective in stabilize mode
-    // @Range: 500 1000
-    // @Units: Percent*10
-    // @Increment: 1
-    // @User: Standard
-    GSCALAR(heli_stab_col_max, "H_STAB_COL_MAX", HELI_STAB_COLLECTIVE_MAX_DEFAULT),
-#endif
 
 #if FRAME_CONFIG ==     SINGLE_FRAME
     // @Group: SS1_

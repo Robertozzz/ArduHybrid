@@ -447,7 +447,14 @@
  # define HYBRIDSERVO_PLANE 		1600
 #endif
 #if !defined(TRANSITIONSPEED)
- # define TRANSITIONSPEED 		2500
+ # define TRANSITIONSPEED 		1500
+#endif
+
+#if !defined(HYBRIDSWITCHING_IN)
+ # define HYBRIDSWITCHING_IN 		0
+#endif
+#if !defined(HYBRIDSWITCHING_OUT)
+ # define HYBRIDSWITCHING_OUT 		0
 #endif
 
 
