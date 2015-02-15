@@ -1797,24 +1797,43 @@ static void channel_output_mixer(uint8_t mixing_type, int16_t &chan1_out, int16_
 * Set the flight control servos based on the current calculated values
 *****************************************/
 
- // PLANE TO COPTER MOTOR MAP  - NEEDS WORK
+ // PLANE TO COPTER MOTOR MAP  - NEEDS WORK -- NEEDS DOUBLE CHECK!!!
 void throttle_plane_to_copter(){ 
-    #if (FRAME_CONFIG == QUAD_FRAME)  // NEEDS WORK, THIS IS FOR X FRAME
-       // if (g.frame_orientation == 1){  // beginning of X+ different motors
-		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
+    #if (FRAME_CONFIG == QUAD_FRAME)  
+       if (g.frame_orientation == 0){  // + Frame
+		hal.rcout->write(0, channel_throttle->radio_min);	
 		hal.rcout->write(1, channel_throttle->radio_min);
-	    hal.rcout->write(2, channel_throttle->radio_out);	// motor 3
+	    hal.rcout->write(2, channel_throttle->radio_out);	// Motor 3 used
 		hal.rcout->write(3, channel_throttle->radio_min);
-		    // Route configurable aux. functions to their respective servos
+		}
+	   if (g.frame_orientation == 0){  // X Frame
+		hal.rcout->write(0, channel_throttle->radio_out);	// Motor 1 used
+		hal.rcout->write(1, channel_throttle->radio_min);
+	    hal.rcout->write(2, channel_throttle->radio_out);	// Motor 3 used
+		hal.rcout->write(3, channel_throttle->radio_min);
+		}
+	   if (g.frame_orientation == 2){  // V Frame
+		hal.rcout->write(0, channel_throttle->radio_min);
+		hal.rcout->write(1, channel_throttle->radio_min);
+	    hal.rcout->write(2, channel_throttle->radio_min);	
+		hal.rcout->write(3, channel_throttle->radio_min);
+		}
+	   if (g.frame_orientation == 3){  // H Frame
+		hal.rcout->write(0, channel_throttle->radio_out);	// Motor 1 used
+		hal.rcout->write(1, channel_throttle->radio_min);
+	    hal.rcout->write(2, channel_throttle->radio_out);	// Motor 3 used	
+		hal.rcout->write(3, channel_throttle->radio_min);
+		}
+		// Route configurable aux. functions to their respective servos
 		g.rc_5.output_ch(CH_5);
 		g.rc_6.output_ch(CH_6);
 		g.rc_7.output_ch(CH_7);
 		g.rc_8.output_ch(CH_8);
 		
     #elif (FRAME_CONFIG == TRI_FRAME)
-		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
-	    hal.rcout->write(1, channel_throttle->radio_out);	// motor 2
-		hal.rcout->write(2, channel_throttle->radio_trim); // center the tail servo
+		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1 used
+	    hal.rcout->write(1, channel_throttle->radio_out);	// motor 2 used
+		hal.rcout->write(2, channel_throttle->radio_trim);  // center the tail servo
 		hal.rcout->write(3, channel_throttle->radio_min);
 		    // Route configurable aux. functions to their respective servos
 		g.rc_5.output_ch(CH_5);
@@ -1822,27 +1841,49 @@ void throttle_plane_to_copter(){
 		g.rc_7.output_ch(CH_7);
 		g.rc_8.output_ch(CH_8);
 		
-    #elif (FRAME_CONFIG == Y6_FRAME)  // FRAME Y6B!!!
-		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
-		hal.rcout->write(1, channel_throttle->radio_out);	// motor 2
+    #elif (FRAME_CONFIG == Y6_FRAME)
+	   if (g.frame_orientation == 1){  // Y6A Frame
+		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1 used
+		hal.rcout->write(1, channel_throttle->radio_out);	// motor 2 used
+	    hal.rcout->write(2, channel_throttle->radio_out);	// motor 3 used
+		hal.rcout->write(3, channel_throttle->radio_min);
+	    hal.rcout->write(4, channel_throttle->radio_out);	// motor 5 used
+		hal.rcout->write(5, channel_throttle->radio_min);	
+	//	}
+	   if (g.frame_orientation == 10){  // Y6B Frame
+		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1 used
+		hal.rcout->write(1, channel_throttle->radio_out);	// motor 2 used
 	    hal.rcout->write(2, channel_throttle->radio_min);
 		hal.rcout->write(3, channel_throttle->radio_min);
-	    hal.rcout->write(4, channel_throttle->radio_out);	// motor 5
-		hal.rcout->write(5, channel_throttle->radio_out);	// motor 6
+	    hal.rcout->write(4, channel_throttle->radio_out);	// motor 5 used
+		hal.rcout->write(5, channel_throttle->radio_out);	// motor 6 used
+		}
 		    // Route configurable aux. functions to their respective servos
 		g.rc_7.output_ch(CH_7);
 		g.rc_8.output_ch(CH_8);
 
-	#elif (FRAME_CONFIG == OCTA_QUAD_FRAME)  // FRAME X
-		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1
-		hal.rcout->write(1, channel_throttle->radio_out);	// motor 2
+	#elif (FRAME_CONFIG == OCTA_QUAD_FRAME)
+	  /* if (g.frame_orientation == 0){  // + Frame  ?? Does not exist?
+		hal.rcout->write(0, channel_throttle->radio_min);
+		hal.rcout->write(1, channel_throttle->radio_min);
 	    hal.rcout->write(2, channel_throttle->radio_min);
 		hal.rcout->write(3, channel_throttle->radio_min);
-	    hal.rcout->write(4, channel_throttle->radio_out);	// motor 5
-		hal.rcout->write(5, channel_throttle->radio_out);	// motor 6
+	    hal.rcout->write(4, channel_throttle->radio_min);
+		hal.rcout->write(5, channel_throttle->radio_min);
 	    hal.rcout->write(6, channel_throttle->radio_min);
 		hal.rcout->write(7, channel_throttle->radio_min);
-    #else
+		}*/
+       if (g.frame_orientation == 1){  // X Frame
+		hal.rcout->write(0, channel_throttle->radio_out);	// motor 1 used
+		hal.rcout->write(1, channel_throttle->radio_out);	// motor 2 used
+	    hal.rcout->write(2, channel_throttle->radio_min);
+		hal.rcout->write(3, channel_throttle->radio_min);
+	    hal.rcout->write(4, channel_throttle->radio_out);	// motor 5 used
+		hal.rcout->write(5, channel_throttle->radio_out);	// motor 6 used
+	    hal.rcout->write(6, channel_throttle->radio_min);
+		hal.rcout->write(7, channel_throttle->radio_min);
+		}
+		#else
         // throw compile error if frame type is unrecognise
         #error Unrecognised frame type
     #endif 

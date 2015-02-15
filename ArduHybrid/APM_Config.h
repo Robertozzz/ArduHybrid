@@ -10,12 +10,12 @@
  *  options:
  *  QUAD_FRAME
  *  TRI_FRAME
- *  HEXA_FRAME
+ *  HEXA_FRAME			// DO NOT USE
  *  Y6_FRAME
- *  OCTA_FRAME
+ *  OCTA_FRAME			// DO NOT USE
  *  OCTA_QUAD_FRAME
- *  HELI_FRAME
- *  SINGLE_FRAME
+ *  HELI_FRAME			// DO NOT USE
+ *  SINGLE_FRAME		// DO NOT USE
  */
 
 // uncomment the lines below to save on flash space if compiling for the APM using Arduino IDE.  Top items save the most flash space
