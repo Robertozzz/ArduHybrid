@@ -165,6 +165,8 @@ bool radio_out_old;
 bool radio_in_old;
 bool radioinpwm_old;
 bool change_to_plane = false;
+bool copteroldarmed;
+bool planeoldarmed;
 
 
 // key aircraft parameters passed to multiple libraries
@@ -1249,6 +1251,20 @@ static void perf_update(void)
 void loop()
 { 
 	hybrid_switching_changeover_code();
+	
+/*	  if (motors.armed() != copteroldarmed){
+				if (motors.armed()){channel_throttle->enable_out();}
+				else{channel_throttle->disable_out();}
+				copteroldarmed = motors.armed();
+				planeoldarmed = motors.armed();
+				}
+      if (arming.is_armed() != planeoldarmed){
+	  			motors.armed(arming.is_armed());
+				copteroldarmed = arming.is_armed();
+				planeoldarmed = arming.is_armed();
+				}
+*/
+	
 	
     // wait for an INS sample
     if (!ins.wait_for_sample(1000)) {
@@ -3197,6 +3213,7 @@ static void hybrid_switching_read_radios()
 
 static void hybrid_switching_changeover_code()
 {	
+
  if(change_to_plane && isplane == false && transit == 0){
 	transit=1;
 	gcs_send_text_fmt(PSTR("Change to transit"));
