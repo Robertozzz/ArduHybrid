@@ -168,7 +168,6 @@ bool change_to_plane = false;
 bool copteroldarmed;
 bool planeoldarmed;
 
-
 // key aircraft parameters passed to multiple libraries
 static AP_Vehicle::FixedWing aparm;	// Plane
 
@@ -1251,21 +1250,7 @@ static void perf_update(void)
 void loop()
 { 
 	hybrid_switching_changeover_code();
-	
-/*	  if (motors.armed() != copteroldarmed){
-				if (motors.armed()){channel_throttle->enable_out();}
-				else{channel_throttle->disable_out();}
-				copteroldarmed = motors.armed();
-				planeoldarmed = motors.armed();
-				}
-      if (arming.is_armed() != planeoldarmed){
-	  			motors.armed(arming.is_armed());
-				copteroldarmed = arming.is_armed();
-				planeoldarmed = arming.is_armed();
-				}
-*/
-	
-	
+
     // wait for an INS sample
     if (!ins.wait_for_sample(1000)) {
         Log_Write_Error(ERROR_SUBSYSTEM_MAIN, ERROR_CODE_MAIN_INS_DELAY);
@@ -3251,5 +3236,19 @@ static void hybrid_switching_changeover_code()
 	}
 }
 
+static void arming_link_code()
+{
+	  if (motors.armed() != copteroldarmed){
+				if (motors.armed()){arming.arm(AP_Arming::RUDDER);}
+				else {arming.disarm();}
+				copteroldarmed = motors.armed();
+				planeoldarmed = motors.armed();
+				}
+      if (arming.is_armed() != planeoldarmed){
+	  			motors.armed(arming.is_armed());
+				copteroldarmed = arming.is_armed();
+				planeoldarmed = arming.is_armed();
+				}
+}
 
 AP_HAL_MAIN();

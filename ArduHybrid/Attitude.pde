@@ -1799,6 +1799,7 @@ static void channel_output_mixer(uint8_t mixing_type, int16_t &chan1_out, int16_
 
  // PLANE TO COPTER MOTOR MAP  - NEEDS WORK -- NEEDS DOUBLE CHECK!!!
 void throttle_plane_to_copter(){ 
+	channel_throttle->radio_out = constrain_int16(channel_throttle->radio_out, channel_throttle->radio_min, channel_throttle->radio_max);
     #if (FRAME_CONFIG == QUAD_FRAME)  
        if (g.frame_orientation == 0){  // + Frame
 		hal.rcout->write(0, channel_throttle->radio_min);	
@@ -1806,7 +1807,7 @@ void throttle_plane_to_copter(){
 	    hal.rcout->write(2, channel_throttle->radio_out);	// Motor 3 used
 		hal.rcout->write(3, channel_throttle->radio_min);
 		}
-	   if (g.frame_orientation == 0){  // X Frame
+	   if (g.frame_orientation == 1){  // X Frame
 		hal.rcout->write(0, channel_throttle->radio_out);	// Motor 1 used
 		hal.rcout->write(1, channel_throttle->radio_min);
 	    hal.rcout->write(2, channel_throttle->radio_out);	// Motor 3 used
